@@ -1,0 +1,35 @@
+
+|--------------------------------|
+|        Mappings Section        |
+|--------------------------------|
+
+df doctype => '<!DOCTYPE html>'
+
+df ( lang [lang] ) => '<head lang="[lang]">'
+
+df ( head [title] ) =>
+	''''
+	<head>
+		 <meta charset="UTF-8">
+		 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		 <title>[title]</title>
+		 <link rel="stylesheet" href="styles.css"> <!-- Optional: Link to a CSS file -->
+	</head>
+	''''
+
+df ( tag [tag] [child] ) =>
+	````
+	<tag>
+		[child]
+	</tag>
+	````
+
+|--------------------------------|
+|      Application Section       |
+|--------------------------------|
+
+> doctype
+> lang 'en'
+> head 'Example exr-html'
+> tag 'body' [tag 'div' 'Hello']
+
