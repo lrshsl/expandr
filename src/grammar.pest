@@ -1,0 +1,22 @@
+WHITESPACE = _{ " " | "\t" | NEWLINE }
+COMMENT    = _{ "|" ~ (!("|" | NEWLINE) ~ ANY)* ~ ANY }
+
+mapping = {
+    "df" ~ arg ~ "=>" ~ outstring
+  | "df" ~ "(" ~ arg* ~ ")" ~ "=>" ~ outstring
+}
+
+arg     = { ident | varexpr }
+varexpr = { "[" ~ ident ~ "]" }
+
+ident = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "-")* }
+
+outstring        = { long_outstring | single_outstring }
+single_outstring = _{ "'" ~ (!("'" | NEWLINE) ~ ANY)* ~ "'" }
+long_outstring   = _{ "''''" ~ (!"'" ~ ANY)* ~ "''''" }
+
+expr = { ">" ~ (!NEWLINE ~ ANY)* }
+
+prog = {
+    SOI ~ (mapping | expr)* ~ EOI
+}
