@@ -1,0 +1,32 @@
+# Ignore everything by default
+*
+
+# Only include the following
+!/.gitignore
+
+!/README.md
+!/LICENSE
+!/LICENSE.md
+!/Cargo.toml
+
+# Include the src directory and all its subdirectories, and all .rs files within them
+!/src/
+!/src/**
+!/src/**/*.rs
+
+# Include everything in the examples/ directory
+!/examples/
+!/examples/**
+!/examples/**/*
+
+# Include everything in the docs/ directory except docs/generated/
+!/docs/
+!/docs/**
+!/docs/**/*
+
+
+
+
+# Added by cargo
+
+/target
