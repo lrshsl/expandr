@@ -5,9 +5,9 @@
 
 df doctype => '<!DOCTYPE html>'
 
-df ( lang [lang] ) => '<head lang="[lang]">'
+df language [lang] => '<head lang="[lang]">'
 
-df ( head [title] ) =>
+df head [title] =>
 	''''
 	<head>
 		 <meta charset="UTF-8">
@@ -16,7 +16,7 @@ df ( head [title] ) =>
 	</head>
 	''''
 
-df ( tag [tag] [child] ) =>
+df tag [tag] [child] =>
 	''''
 	<tag>
 		[child]
@@ -27,8 +27,8 @@ df ( tag [tag] [child] ) =>
 |      Application Section       |
 |--------------------------------|
 
-> doctype
-> lang 'en'
-> head 'Example exr-html'
-> tag 'body' [tag 'div' 'Hello']
+doctype,
+language 'en',
+head 'Example exr-html',
+tag 'body' [tag 'div' 'Hello'],
 
