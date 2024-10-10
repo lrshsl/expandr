@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fs::read_to_string};
+use std::{
+    collections::HashMap,
+    fs::{read_to_string, File},
+    io::Write,
+};
 
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
@@ -8,22 +12,36 @@ use pest_derive::Parser;
 pub struct ExrParser;
 
 fn main() {
-    let file_contents = read_to_string("examples/example.exr").unwrap();
-    let mut parse_result = ExrParser::parse(Rule::prog, &file_contents).unwrap();
-    let prog = parse_result.next().unwrap();
-    println!("{}", format_pair(prog, 0, false));
-    println!("\n\n\n");
-    // let mappings = prog
-    //     .into_inner()
-    //     .filter(|p| matches!(p.as_rule(), Rule::mapping))
-    //     .map(|p| {
-    //         let name = p.into_inner().next();
-    //         name
-    //     });
-    // let symbols = HashMap::from_iter(mappings);
+    let file_contents = read_to_string("examples/example.exr").expect("Could not open file");
+
+    // -- AST -- //
+    let mut parse_result = ExrParser::parse(Rule::prog, &file_contents).expect("Parser error");
+    let prog = parse_result.next().expect("Program rule always exists");
+
+    let ast_file =
+        File::create("output/ast").expect("Could not open file (output directory exists?)");
+    write!(&ast_file, "{}", format_pair(&prog, 0, false)).expect("Could not write to file");
+
+    // -- Symbols -- //
+    let mappings = prog
+        .into_inner()
+        .filter(|p| matches!(p.as_rule(), Rule::mapping))
+        .map(|p| {
+            let name = p
+                .clone()
+                .into_inner()
+                .next()
+                .expect("Mappings have to have a name");
+            (name.as_str(), p.clone())
+        });
+    let symbols: HashMap<&str, Pair<'_, Rule>> = HashMap::from_iter(mappings);
+
+    let symbols_file =
+        File::create("output/symbols").expect("Could not open file (output directory exists?)");
+    write!(&symbols_file, "{:#?}", symbols).expect("Could not write to file");
 }
 
-fn format_pair(pair: Pair<Rule>, indent_level: usize, is_newline: bool) -> String {
+fn format_pair(pair: &Pair<Rule>, indent_level: usize, is_newline: bool) -> String {
     let indent = if is_newline {
         "  ".repeat(indent_level)
     } else {
@@ -36,7 +54,7 @@ fn format_pair(pair: Pair<Rule>, indent_level: usize, is_newline: bool) -> Strin
         .into_iter()
         .map(|pair| {
             format_pair(
-                pair,
+                &pair,
                 if len > 1 {
                     indent_level + 1
                 } else {
