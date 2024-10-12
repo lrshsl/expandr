@@ -26,7 +26,8 @@ df tag [tag] [child] =>
 |      Application Section       |
 |--------------------------------|
 
-doctype,
-language 'en',
-head 'Example exr-html',
-tag 'body' [tag 'div' 'Hello'],
+doctype
+[language 'en']
+[head 'Example exr-html']
+[tag 'body' [tag 'div' [tag 'h1' 'Title is here']]]
+

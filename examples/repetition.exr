@@ -1,0 +1,13 @@
+
+|| Repetition operators
+||
+|| - nothing => exactly once
+|| - '?' => one or zero
+|| - '+' => one or more
+|| - '*' => any number
+||
+
+df cat [arg*] => '[arg*]'
+
+
+[cat 'Hello' ' ' 'World']

@@ -1,29 +1,34 @@
 prog = {
-    SOI ~ ( mapping | expr ~ "," )* ~ EOI
+    SOI ~ ( mapping | varexpr )* ~ EOI
 }
 
 mapping = {
 	"df" ~ name ~ param* ~ "=>" ~ outstring
 }
 
-param   = { ident | varexpr }
-varexpr = { "[" ~ expr ~ "]" }
+expr	  = { name ~ arg* }
 
 arg	  = { outstring | varexpr }
+param   = { ident | varexpr | repexpr }
+
+varexpr = { "[" ~ expr ~ "]" }
+repexpr = { "[" ~ expr ~ repspec ~ "]" }
+repspec = { "?" | "+" | "*" }
 
 name	  = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "-")* }
 ident   = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "-")* }
 
-outstring        = { long_outstring | single_outstring }
-single_outstring = _{ "'" ~ single_string_inner ~ "'" }
+outstring			  = { long_outstring | single_outstring }
+single_outstring    = _{ "'" ~ single_string_inner ~ "'" }
 single_string_inner = @{ (!"'" ~ ANY)* }
 
-long_outstring   = _{ "''''" ~ long_string_inner ~ "''''" }
+long_outstring    = _{ "''''" ~ long_string_inner ~ "''''" }
 long_string_inner = @{ (!"''''" ~ ANY)* }
 
-expr = { name ~ arg* }
-
 WHITESPACE = _{ " " | "\t" | NEWLINE }
-COMMENT    = _{ "|" ~ (!("|" | NEWLINE) ~ ANY)* ~ ANY }
+COMMENT    = _{
+	"||" ~ (!("||" | NEWLINE) ~ ANY)* ~ ANY{2}
+		|	"|" ~ (!("|" | NEWLINE) ~ ANY)* ~ ANY
+}
 
 
