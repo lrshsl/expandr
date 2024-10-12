@@ -17,9 +17,9 @@ df head [title] =>
 
 df tag [tag] [child] =>
 	''''
-	<[tag]>
-		[child]
-	</[tag]>
+<[tag]>
+	[child]
+</[tag]>
 	''''
 
 |--------------------------------|
@@ -29,4 +29,4 @@ df tag [tag] [child] =>
 doctype,
 language 'en',
 head 'Example exr-html',
-|tag 'body' [tag 'div' 'Hello'],
+tag 'body' [tag 'div' 'Hello'],

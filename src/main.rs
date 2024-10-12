@@ -1,7 +1,8 @@
 use std::{
     collections::HashMap,
     fs::{read_to_string, File},
-    io::Write, ops::Deref,
+    io::Write,
+    ops::Deref,
 };
 
 use pest::{iterators::Pair, Parser};
@@ -45,38 +46,59 @@ fn main() {
     let exprs = prog
         .into_inner()
         .filter(|p| matches!(p.as_rule(), Rule::expr))
-        .map(|p| {
-            let args = p.clone().into_inner().filter(|p| matches!(p.as_rule(), Rule::arg));
-            let name = p
-                .into_inner()
-                .next()
-                .expect("Expressions have to have a name");
-            let Some(mapping) = symbols.get(name.as_str()) else {
-                panic!("Undefined symbol: {name}");
-            };
-            let params = mapping.clone().into_inner().filter(|p| matches!(&p.as_rule(), Rule::param));
-            let outstring = mapping.clone().into_inner().last().expect("Expression must have a outstring");
-            let mut expanded = outstring.into_inner().next().unwrap().as_str().to_owned();
-            for (param, arg) in params.zip(args) {
-                let param_inner = param.clone().into_inner().next().expect("Param cannot be empty..");
-                let param_str = match param_inner.as_rule() {
-                    Rule::outstring => param_inner.into_inner().next().unwrap().as_str(),
-                    Rule::varexpr => param_inner.as_str(),
-                    _ => unimplemented!("Param {:?}", param.line_col()),
-                };
-                let arg_inner = arg.clone().into_inner().next().expect("Arg cannot be empty..");
-                let arg_str = match arg_inner.as_rule() {
-                    Rule::outstring => arg_inner.into_inner().next().unwrap().as_str(),
-                    _ => unimplemented!("Arg {:?}", arg.line_col()),
-                };
-                expanded = expanded.replace(param_str, arg_str)
-            }
-            expanded
-        });
+        .map(|p| expand_expr(&symbols, p));
 
     exprs.for_each(|e| println!("{e}"));
 }
 
+fn expand_expr(symbols: &HashMap<&str, Pair<'_, Rule>>, pair: Pair<Rule>) -> String {
+    let args = pair
+        .clone()
+        .into_inner()
+        .filter(|p| matches!(p.as_rule(), Rule::arg));
+    let name = pair
+        .clone()
+        .into_inner()
+        .next()
+        .expect("Expressions have to have a name");
+    let Some(mapping) = symbols.get(name.as_str()) else {
+        panic!("Undefined symbol: {name}\nWhile parsing {pair:#?}");
+    };
+    let params = mapping
+        .clone()
+        .into_inner()
+        .filter(|p| matches!(&p.as_rule(), Rule::param));
+    let outstring = mapping
+        .clone()
+        .into_inner()
+        .last()
+        .expect("Expression must have a outstring");
+    let mut expanded = outstring.into_inner().next().unwrap().as_str().to_owned();
+    for (param, arg) in params.zip(args) {
+        let param_inner = param
+            .clone()
+            .into_inner()
+            .next()
+            .expect("Param cannot be empty..");
+        let param_str = match param_inner.as_rule() {
+            Rule::outstring => param_inner.into_inner().next().unwrap().as_str(),
+            Rule::varexpr => param_inner.as_str(),
+            _ => unimplemented!("Param {:?}", param.line_col()),
+        };
+        let arg_inner = arg
+            .clone()
+            .into_inner()
+            .next()
+            .expect("Arg cannot be empty..");
+        let arg_str = match arg_inner.as_rule() {
+            Rule::outstring => arg_inner.into_inner().next().unwrap().as_str(),
+            Rule::varexpr => &expand_expr(symbols, arg_inner.into_inner().next().unwrap()),
+            _ => unimplemented!("Arg {:?}", arg.line_col()),
+        };
+        expanded = expanded.replace(param_str, arg_str)
+    }
+    expanded
+}
 fn format_all<'a>(pairs: impl IntoIterator<Item = Pair<'a, Rule>>) -> String {
     let mut result = String::new();
     for pair in pairs {
