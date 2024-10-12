@@ -1,4 +1,3 @@
-
 |--------------------------------|
 |        Mappings Section        |
 |--------------------------------|
@@ -9,18 +8,18 @@ df language [lang] => '<head lang="[lang]">'
 
 df head [title] =>
 	''''
-	<head>
-		 <meta charset="UTF-8">
-		 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-		 <title>[title]</title>
-	</head>
+<head>
+	 <meta charset="UTF-8">
+	 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	 <title>[title]</title>
+</head>
 	''''
 
 df tag [tag] [child] =>
 	''''
-	<tag>
+	<[tag]>
 		[child]
-	</tag>
+	</[tag]>
 	''''
 
 |--------------------------------|
@@ -30,5 +29,4 @@ df tag [tag] [child] =>
 doctype,
 language 'en',
 head 'Example exr-html',
-tag 'body' [tag 'div' 'Hello'],
-
+|tag 'body' [tag 'div' 'Hello'],

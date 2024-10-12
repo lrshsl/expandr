@@ -6,19 +6,22 @@ mapping = {
 	"df" ~ name ~ param* ~ "=>" ~ outstring
 }
 
-param   = _{ ident | varexpr }
-varexpr = { "[" ~ ident ~ "]" }
+param   = { ident | varexpr }
+varexpr = { "[" ~ expr ~ "]" }
 
-arg	  = _{ outstring | "[" ~ expr ~ "]" }
+arg	  = { outstring | varexpr }
 
-name	= @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "-")* }
-ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "-")* }
+name	  = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "-")* }
+ident   = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "-")* }
 
-outstring        = @{ long_outstring | single_outstring }
-single_outstring = @{ "'" ~ (!("'" | NEWLINE) ~ ANY)* ~ "'" }
-long_outstring   = @{ "''''" ~ (!"'" ~ ANY)* ~ "''''" }
+outstring        = { long_outstring | single_outstring }
+single_outstring = _{ "'" ~ single_string_inner ~ "'" }
+single_string_inner = @{ (!"'" ~ ANY)* }
 
-expr = { name ~ arg*  }
+long_outstring   = _{ "''''" ~ long_string_inner ~ "''''" }
+long_string_inner = @{ (!"''''" ~ ANY)* }
+
+expr = { name ~ arg* }
 
 WHITESPACE = _{ " " | "\t" | NEWLINE }
 COMMENT    = _{ "|" ~ (!("|" | NEWLINE) ~ ANY)* ~ ANY }
