@@ -31,3 +31,5 @@ doctype
 [head 'Example exr-html']
 [tag 'body' [tag 'div' [tag 'h1' 'Title is here']]]
 
+
+| vim: ft=exr

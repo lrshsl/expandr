@@ -11,3 +11,5 @@ df cat [arg*] => '[arg*]'
 
 
 [cat 'Hello' ' ' 'World']
+
+| vim: ft=exr

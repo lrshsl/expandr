@@ -19,10 +19,10 @@ name	  = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "-")* }
 ident   = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "-")* }
 
 outstring			  = { long_outstring | single_outstring }
-single_outstring    = _{ "'" ~ single_string_inner ~ "'" }
+single_outstring    = ${ "'" ~ single_string_inner ~ "'" }
 single_string_inner = @{ (!"'" ~ ANY)* }
 
-long_outstring    = _{ "''''" ~ long_string_inner ~ "''''" }
+long_outstring    = ${ "''''" ~ long_string_inner ~ "''''" }
 long_string_inner = @{ (!"''''" ~ ANY)* }
 
 WHITESPACE = _{ " " | "\t" | NEWLINE }
@@ -31,4 +31,6 @@ COMMENT    = _{
 		|	"|" ~ (!("|" | NEWLINE) ~ ANY)* ~ ANY
 }
 
+
+// vim: ft=pest
 
