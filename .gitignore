@@ -9,6 +9,8 @@
 !/LICENSE.md
 !/Cargo.toml
 
+!exr.vim
+
 # Include the src directory and all its subdirectories, and all .rs files within them
 !/src/
 !/src/**
