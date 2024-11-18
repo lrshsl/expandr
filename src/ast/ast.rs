@@ -24,7 +24,7 @@ impl<'s> Parsable<'s> for Ast<'s> {
                     mappings.insert(name, mapping);
                 }
                 Token::Symbol('[') => exprs.push(Expr::parse(parser)?),
-                _ => todo!(),
+                tok => todo!("{tok:?}"),
             }
         }
 

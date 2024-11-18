@@ -15,7 +15,7 @@ impl<'s> Expandable<'s> for Expr<'s> {
                 let mapping = mappings
                     .get(name)
                     .expect(&format!("Mapping not found: {name}"));
-                if mapping.args.len() == 0 {
+                if mapping.params.len() == 0 {
                     if let Expr::String(output) = mapping.translation {
                         output.replace(name, &mapping.translation.expand(mappings))
                     } else {
@@ -34,14 +34,12 @@ impl<'s> Parsable<'s> for Expr<'s> {
     where
         Self: Sized,
     {
-        parser.advance();
-        let token = parser.current();
-        match token {
+        match parser.next_token() {
             Some(Token::Ident(_)) => {
                 let name = parser.slice();
                 let mut args = Vec::new();
                 loop {
-                    match parser.current().expect("lexer error") {
+                    match parser.next_token().expect("lexer error") {
                         Token::Symbol(']') | Token::Define | Token::Symbol(',') => break,
                         Token::String(value) => args.push(Expr::String(value)),
                         Token::TemplateString(value) => args.push(Expr::String(value)),

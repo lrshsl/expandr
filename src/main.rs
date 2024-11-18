@@ -14,7 +14,7 @@ mod parser;
 const SOURCE: &'static str = r###"
 df doctype => '<!DOCTYPE html>'
 
-doctype
+[doctype]
 "###;
 
 fn main() {

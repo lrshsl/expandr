@@ -4,7 +4,7 @@ use crate::lexer::{FileContext, Token};
 
 #[derive(Debug)]
 pub enum ParsingError<'s> {
-    AbruptEof(&'s str, FileContext<'s>, Vec<Token<'s>>),
+    AbruptEof(FileContext<'s>),
     UnexpectedToken(&'s str, FileContext<'s>, Token<'s>, Vec<Token<'s>>),
     TokenError(String),
 }

@@ -25,8 +25,8 @@ pub enum Token<'s> {
     #[regex(r#""([^"\\]|\\["\\bnfrt])*""#)]
     String(&'s str),
 
-    #[regex(r#"'[^']'"#)]
-    #[regex(r#"''''[^'][^'][^'][^']''''"#)]
+    #[regex(r#"'[^']*'"#)]
+    #[regex(r#"''''([^'][^'][^'][^'])*''''"#)]
     TemplateString(&'s str),
 
     // Misc
