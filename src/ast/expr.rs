@@ -40,7 +40,9 @@ impl<'s> Parsable<'s> for Expr<'s> {
                 let mut args = Vec::new();
                 loop {
                     match parser.next_token().expect("lexer error") {
-                        Token::Symbol(']') | Token::Define | Token::Symbol(',') => break,
+                        Token::Symbol(']') | Token::Define | Token::Map | Token::Symbol(',') => {
+                            break
+                        }
                         Token::String(value) => args.push(Expr::String(value)),
                         Token::TemplateString(value) => args.push(Expr::String(value)),
 

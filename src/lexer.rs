@@ -12,6 +12,9 @@ pub struct FileContext<'source> {
 #[logos(skip r"[ \t\r\f]+")]
 pub enum Token<'s> {
     // Keywords
+    #[token(r"map")]
+    Map,
+
     #[token(r"df")]
     Define,
 

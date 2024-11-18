@@ -15,7 +15,7 @@ impl<'s> Parsable<'s> for Ast<'s> {
 
         while let Some(token) = parser.next_token() {
             match token {
-                Token::Define => {
+                Token::Map => {
                     let Some(Token::Ident(name)) = parser.next_token() else {
                         panic!("Abrubt eof");
                         // return ParsingError::AbruptEof(, (), ())

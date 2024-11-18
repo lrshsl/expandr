@@ -2,11 +2,11 @@
 |        Mappings Section        |
 |--------------------------------|
 
-df doctype => '<!DOCTYPE html>'
+map doctype => '<!DOCTYPE html>'
 
-df language [lang] => '<head lang="[lang]">'
+map language [lang] => '<head lang="[lang]">'
 
-df head [title] =>
+map head [title] =>
 	''''
 <head>
 	 <meta charset="UTF-8">
@@ -15,7 +15,7 @@ df head [title] =>
 </head>
 	''''
 
-df tag [tag] [child] =>
+map tag [tag] [child] =>
 	''''
 <[tag]>
 	[child]

@@ -7,7 +7,7 @@ elseif exists('b:current_syntax')
 	finish
 endif
 
-syn keyword		exrDefine				df
+syn keyword		exrDefine				map df
 syn match		exrBecomes				"=>"
 
 syn region		exrOutString			start="'"		end="'"		contains=exrExpr,exrString

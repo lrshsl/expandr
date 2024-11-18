@@ -12,7 +12,7 @@ mod lexer;
 mod parser;
 
 const SOURCE: &'static str = r###"
-df doctype => '<!DOCTYPE html>'
+map doctype => '<!DOCTYPE html>'
 
 [doctype]
 "###;
