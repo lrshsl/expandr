@@ -1,26 +1,32 @@
-use std::{collections::HashMap, fs, io::Write as _};
+use std::{fs, io::Write as _};
 
-use ast::{Ast, Expr, Mapping};
-use expand::Expand as _;
+use ast::Ast;
+use expand::Expandable as _;
+use lexer::FileContext;
+use logos::Logos;
+use parser::{Parsable as _, Parser};
 
 mod ast;
 mod expand;
+mod lexer;
+mod parser;
+
+const SOURCE: &'static str = r###"
+df doctype => '<!DOCTYPE html>'
+
+doctype
+"###;
 
 fn main() {
-    let ast = {
-        let mappings = HashMap::from([(
-            "doctype",
-            Mapping {
-                args: vec![],
-                translation: Expr::String("<!DOCTYPE html>"),
-            },
-        )]);
-        let exprs = vec![Expr::MappingApplication {
-            name: "doctype",
-            args: vec![],
-        }];
-        Ast { mappings, exprs }
-    };
+    let mut parser = Parser::new(Logos::lexer_with_extras(
+        SOURCE,
+        FileContext {
+            filename: "test1".to_string(),
+            source: SOURCE,
+            line: 1,
+        },
+    ));
+    let ast = Ast::parse(&mut parser).unwrap();
 
     let ast_file = fs::File::create("output/ast").expect("Could not open file output/ast");
     write!(&ast_file, "{ast:#?}").expect("Could not write to file");
