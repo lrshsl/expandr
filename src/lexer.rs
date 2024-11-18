@@ -25,11 +25,20 @@ pub enum Token<'s> {
     #[regex(r"(_|[[:alpha:]])[[:word:]]*")]
     Ident(&'s str),
 
-    #[regex(r#""([^"\\]|\\["\\bnfrt])*""#)]
+    #[regex(r#""([^"\\]|\\["\\bnfrt])*""#, |lex| {
+        let slice = lex.slice();
+        &slice[1..(slice.len() - 1)]
+    })]
     String(&'s str),
 
-    #[regex(r#"'[^']*'"#)]
-    #[regex(r#"''''([^'][^'][^'][^'])*''''"#)]
+    #[regex(r#"'[^']*'"#, |lex| {
+        let slice = lex.slice();
+        &slice[1..(slice.len() - 1)]
+    })]
+    #[regex(r#"''''([^'][^'][^'][^'])*''''"#, |lex| {
+        let slice = lex.slice();
+        &slice[4..(slice.len() - 4)]
+    })]
     TemplateString(&'s str),
 
     // Misc
