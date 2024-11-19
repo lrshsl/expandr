@@ -11,16 +11,3 @@ pub use expr::Expr;
 
 mod mapping;
 pub use mapping::Mapping;
-
-#[derive(Debug)]
-pub struct ParamExpr<'s> {
-    expr: Expr<'s>,
-    number_repetitions: Repetition,
-}
-
-#[derive(Debug)]
-pub enum Repetition {
-    Exactly(usize),
-    Optional,
-    Any,
-}

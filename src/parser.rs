@@ -43,6 +43,15 @@ impl<'s> Parser<'s> {
         self.current()
     }
 
+    pub fn context(&self) -> FileContext<'s> {
+        self.lexer.extras.clone()
+    }
+
+    pub fn unpack_token(&self) -> Result<Token<'s>, ParsingError<'s>> {
+        self.current()
+            .ok_or(ParsingError::AbruptEof(self.lexer.extras.clone()))
+    }
+
     pub fn current(&self) -> Option<Token<'s>> {
         match self.current_token {
             None => None,

@@ -16,9 +16,9 @@ impl<'s> Parsable<'s> for Ast<'s> {
         while let Some(token) = parser.next_token() {
             match token {
                 Token::Map => {
-                    let Some(Token::Ident(name)) = parser.next_token() else {
-                        panic!("Abrubt eof");
-                        // return ParsingError::AbruptEof(, (), ())
+                    parser.advance();
+                    let Token::Ident(name) = parser.unpack_token()? else {
+                        panic!("Expecting ident after keyword 'map'");
                     };
                     let mapping = Mapping::parse(parser)?;
                     mappings.insert(name, mapping);

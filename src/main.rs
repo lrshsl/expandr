@@ -13,8 +13,11 @@ mod parser;
 
 const SOURCE: &'static str = r###"
 map doctype => '<!DOCTYPE html>'
+map language [lang] => '<head lang="[lang]">'
 
 [doctype]
+[language 'en']
+
 "###;
 
 fn main() {
