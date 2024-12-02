@@ -1,8 +1,24 @@
 use super::*;
 
 #[derive(Debug)]
+pub struct Params<'s> {
+    pub entries: Vec<MappingParam<'s>>,
+}
+
+impl<'s> Params<'s> {
+    pub fn matches_args(&self, other: &Vec<Expr<'_>>) -> bool {
+        self.entries.len() == other.len()
+            && self
+                .entries
+                .iter()
+                .zip(other.iter())
+                .all(|(a, b)| a.matches_arg(b))
+    }
+}
+
+#[derive(Debug)]
 pub struct Mapping<'s> {
-    pub params: Vec<MappingParam<'s>>,
+    pub params: Params<'s>,
     pub translation: Expr<'s>,
 }
 
@@ -15,16 +31,17 @@ impl<'s> Parsable<'s> for Mapping<'s> {
         while parser.unpack_token()? != Token::Becomes {
             params.push(MappingParam::parse(parser)?);
         }
-        parser.advance();
-        let translation = match parser
-            .current()
-            .ok_or(ParsingError::AbruptEof(parser.lexer.extras.clone()))?
-        {
-            Token::TemplateString(value) => Expr::String(value),
+        parser.advance(); // Skip '=>'
+        let translation = match parser.unpack_token()? {
+            Token::TemplateString(value) => {
+                parser.advance();
+                Expr::String(value)
+            }
+            Token::Symbol('[') => Expr::parse(parser)?,
             tok => panic!("Unexpected token: {tok:?}"),
         };
         Ok(Self {
-            params,
+            params: Params { entries: params },
             translation,
         })
     }
@@ -37,6 +54,16 @@ pub enum MappingParam<'s> {
         name: &'s str,
         rep: Option<Repetition>,
     },
+}
+
+impl MappingParam<'_> {
+    fn matches_arg(&self, arg: &Expr<'_>) -> bool {
+        match (self, arg) {
+            (Self::ParamExpr { .. }, Expr::String(_) | Expr::MappingApplication { .. }) => true,
+            (Self::Ident(self_value), Expr::Ident(other_value)) => self_value == other_value,
+            _ => false,
+        }
+    }
 }
 
 impl<'s> Parsable<'s> for MappingParam<'s> {

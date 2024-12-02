@@ -15,6 +15,22 @@ map head [title] =>
 </head>
 	''''
 
+map tag [tag] style [style] contains [child] =>
+	''''
+<[tag] style="[style]">
+	[child]
+</[tag]>
+	''''
+
+|map tag1 [tag] bg [bg] [child] => [tag [tag] style "background: [bg]" contains [child]]
+
+map tag [tag] bg [bg] [child] =>
+	''''
+<[tag] style="background=[bg]">
+	[child]
+</[tag]>
+	''''
+
 map tag [tag] [child] =>
 	''''
 <[tag]>
@@ -26,10 +42,15 @@ map tag [tag] [child] =>
 |      Application Section       |
 |--------------------------------|
 
+
 [doctype]
 [language 'en']
 [head 'Example exr-html']
-[tag 'body' [tag 'div' [tag 'h1' 'Title is here']]]
 
+[tag 'body'
+	[tag 'div' bg 'black'
+		[tag 'h1' 'Title is here']
+	]
+]
 
 | vim: ft=exr

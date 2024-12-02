@@ -4,8 +4,8 @@ use crate::lexer::{FileContext, Token};
 
 #[derive(Debug)]
 pub enum ParsingError<'s> {
-    AbruptEof(FileContext<'s>),
-    UnexpectedToken(&'s str, FileContext<'s>, Token<'s>, Vec<Token<'s>>),
+    AbruptEof(FileContext),
+    UnexpectedToken(&'s str, FileContext, Token<'s>, Vec<Token<'s>>),
     TokenError(String),
 }
 
@@ -26,11 +26,13 @@ pub struct Parser<'s> {
 
 impl<'s> Parser<'s> {
     pub fn new(lexer: LogosLexer<'s>) -> Self {
-        Self {
+        let mut instance = Self {
             lexer,
             current_token: None,
             current_slice: "",
-        }
+        };
+        instance.advance();
+        instance
     }
 
     pub fn advance(&mut self) {
@@ -38,18 +40,13 @@ impl<'s> Parser<'s> {
         self.current_slice = self.lexer.slice();
     }
 
-    pub fn next_token(&mut self) -> Option<Token<'s>> {
-        self.advance();
-        self.current()
-    }
-
-    pub fn context(&self) -> FileContext<'s> {
+    pub fn context(&self) -> FileContext {
         self.lexer.extras.clone()
     }
 
     pub fn unpack_token(&self) -> Result<Token<'s>, ParsingError<'s>> {
         self.current()
-            .ok_or(ParsingError::AbruptEof(self.lexer.extras.clone()))
+            .ok_or(ParsingError::AbruptEof(self.context()))
     }
 
     pub fn current(&self) -> Option<Token<'s>> {

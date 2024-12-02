@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
-pub(self) use crate::parser::{Parsable, Parser, ParsingError};
-pub(self) use crate::{expand::Expandable, lexer::Token};
+pub(self) use crate::{
+    expand::{Expandable, ProgramContext},
+    lexer::Token,
+    parser::{Parsable, Parser, ParsingError},
+};
 
 mod ast;
 pub use ast::Ast;

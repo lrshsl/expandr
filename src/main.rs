@@ -11,21 +11,13 @@ mod expand;
 mod lexer;
 mod parser;
 
-const SOURCE: &'static str = r###"
-map doctype => '<!DOCTYPE html>'
-map language [lang] => '<head lang="[lang]">'
-
-[doctype]
-[language 'en']
-
-"###;
-
 fn main() {
+    let filename = "examples/example.exr";
+    let source = fs::read_to_string(filename).expect("Could not read file");
     let mut parser = Parser::new(Logos::lexer_with_extras(
-        SOURCE,
+        source.as_str(),
         FileContext {
-            filename: "test1".to_string(),
-            source: SOURCE,
+            filename: filename.to_string(),
             line: 1,
         },
     ));
@@ -39,7 +31,7 @@ fn main() {
         output.push_str(&expr.expand(&ast.mappings));
     }
 
-    let output_file = fs::File::create("output/out").expect("Could not open file output/out");
+    let output_file = fs::File::create("output/out.html").expect("Could not open file output/out");
     write!(&output_file, "{output}").expect("Could not write to file");
     println!("{output}")
 }

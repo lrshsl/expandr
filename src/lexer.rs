@@ -1,14 +1,13 @@
 use logos::{Logos, Skip};
 
 #[derive(Debug, Clone)]
-pub struct FileContext<'source> {
+pub struct FileContext {
     pub filename: String,
-    pub source: &'source str,
     pub line: usize,
 }
 
 #[derive(Logos, Debug, PartialEq, Clone, Copy)]
-#[logos(extras = FileContext<'s>)]
+#[logos(extras = FileContext)]
 #[logos(skip r"[ \t\r\f]+")]
 pub enum Token<'s> {
     // Keywords
@@ -35,7 +34,7 @@ pub enum Token<'s> {
         let slice = lex.slice();
         &slice[1..(slice.len() - 1)]
     })]
-    #[regex(r#"''''([^'][^'][^'][^'])*''''"#, |lex| {
+    #[regex(r#"''''([^'{4}])*''''"#, |lex| {
         let slice = lex.slice();
         &slice[4..(slice.len() - 4)]
     })]
@@ -48,10 +47,10 @@ pub enum Token<'s> {
     })]
     Newline,
 
-    #[regex(r"\|\|[^\n]*\|\|", logos::skip, priority = 3)]
+    #[regex(r"\|\|[^\n]*(\|\||\n)", logos::skip, priority = 3)]
     DocComment,
 
-    #[regex(r"\|[^\n|]*", logos::skip, priority = 2)]
+    #[regex(r"\|[^\n|]*(\||\n)", logos::skip, priority = 2)]
     Comment,
 
     #[regex(r".", |lex| lex.slice().chars().next().expect("Wrong: empty symbol"), priority = 1)]
@@ -69,7 +68,6 @@ mod tests {
             INPUT,
             FileContext {
                 filename: "test_set_print".to_string(),
-                source: INPUT,
                 line: 1,
             },
         );
