@@ -14,7 +14,7 @@ impl<'s> Expandable<'s> for Expr<'s> {
         match self {
             Expr::String(val) => val.to_string(),
 
-            Expr::Ident(_) => String::new(),
+            Expr::Ident(ident) => unreachable!("Should not try to expand an ident: {ident}"),
 
             Expr::MappingApplication { name, args } => {
                 let mut matching_mappings = mappings
@@ -27,7 +27,7 @@ impl<'s> Expandable<'s> for Expr<'s> {
                     panic!("No such mapping found: {name}, {args:?}");
                 };
                 if let Some(second_mapping) = matching_mappings.next() {
-                    panic!("Found several matching mappings: {mapping:?} and {second_mapping:?} both match for {name}, {args:?}")
+                    panic!("Found several matching mappings: {mapping:?} and {second_mapping:?} (and possibly more) match for {name}, {args:?}")
                 }
 
                 let Expr::String(output) = mapping.translation else {
@@ -47,9 +47,12 @@ impl<'s> Expandable<'s> for Expr<'s> {
 
                                 output.replace(&format!("[{name}]"), &expanded_arg)
                             }
-                            &Some(_) => todo!(),
+                            Some(_) => todo!(),
                         },
-                        MappingParam::Ident(_) => output,
+                        MappingParam::Ident(_) => {
+                            args.next();
+                            output
+                        }
                     }
                 }
                 output

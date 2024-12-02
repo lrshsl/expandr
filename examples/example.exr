@@ -22,7 +22,7 @@ map tag [tag] style [style] contains [child] =>
 </[tag]>
 	''''
 
-|map tag1 [tag] bg [bg] [child] => [tag [tag] style "background: [bg]" contains [child]]
+|map tag [tag] bg [bg] [child] => [tag [tag] style "background: [bg]" contains [child]]
 
 map tag [tag] bg [bg] [child] =>
 	''''

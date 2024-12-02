@@ -12,7 +12,7 @@ impl<'s> Params<'s> {
                 .entries
                 .iter()
                 .zip(other.iter())
-                .all(|(a, b)| a.matches_arg(b))
+                .all(|(param, arg)| param.matches_arg(arg))
     }
 }
 
