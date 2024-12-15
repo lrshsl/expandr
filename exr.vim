@@ -10,11 +10,12 @@ endif
 syn keyword		exrDefine				map df
 syn match		exrBecomes				"=>"
 
-syn region		exrOutString			start="'"		end="'"		contains=exrExpr,exrString
-syn region		exrOutMultiString		start="''''"	end="''''"	contains=exrExpr,exrString
-syn region		exrString				start='"'		end='"'		contains=exrExpr
-syn region		exrExpr					start="\["		end="\W"
-syn match		exrExpr					"]"
+syn match		exrIdent					"[a-zA-Z][-a-zA-Z0-9]*"
+
+syn region		exrOutString			start="'"		end="'"		keepend contains=exrExpr,exrString
+syn region		exrOutMultiString		start="''''"	end="''''"	keepend contains=exrExpr,exrString
+syn region		exrString				start='"'		end='"'		keepend contains=exrExpr contained
+syn region		exrExpr					start=/\[[a-zA-Z][-a-zA-Z0-9]*/		end=/\]/		keepend contains=ALL
 
 syn match		exrComment				"||[^|]*\(\n\|||\)\||[^|]*\(\n\||\)"
 
@@ -25,7 +26,9 @@ hi def link		exrBecomes				Keyword
 hi def link		exrOutString			String
 hi def link		exrOutMultiString		String
 hi def link		exrString				Orange
+
 hi def link		exrExpr					Special
+hi def link		exrMapName				Special
 
 hi def link		exrComment				Comment
 
