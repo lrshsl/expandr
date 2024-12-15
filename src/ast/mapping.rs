@@ -32,14 +32,7 @@ impl<'s> Parsable<'s> for Mapping<'s> {
             params.push(MappingParam::parse(parser)?);
         }
         parser.advance(); // Skip '=>'
-        let translation = match parser.unpack_token()? {
-            Token::TemplateString(value) => {
-                parser.advance();
-                Expr::String(value)
-            }
-            Token::Symbol('[') => Expr::parse(parser)?,
-            tok => panic!("Unexpected token: {tok:?}"),
-        };
+        let translation = Expr::parse(parser)?;
         Ok(Self {
             params: Params { entries: params },
             translation,
@@ -59,7 +52,9 @@ pub enum MappingParam<'s> {
 impl MappingParam<'_> {
     fn matches_arg(&self, arg: &Expr<'_>) -> bool {
         match (self, arg) {
-            (Self::ParamExpr { .. }, Expr::String(_) | Expr::MappingApplication { .. }) => true,
+            (Self::ParamExpr { .. }, Expr::TemplateString(_) | Expr::MappingApplication { .. }) => {
+                true
+            }
             (Self::Ident(self_value), Expr::Ident(other_value)) => self_value == other_value,
             _ => false,
         }

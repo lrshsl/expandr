@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 pub(self) use crate::{
     expand::{Expandable, ProgramContext},
     lexer::Token,
@@ -11,6 +9,9 @@ pub use ast::Ast;
 
 mod expr;
 pub use expr::Expr;
+
+mod template_string;
+pub use template_string::TemplateString;
 
 mod mapping;
 pub use mapping::Mapping;

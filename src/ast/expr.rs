@@ -4,20 +4,20 @@ use super::*;
 
 #[derive(Debug)]
 pub enum Expr<'s> {
-    String(&'s str),
+    TemplateString(TemplateString<'s>),
     MappingApplication { name: &'s str, args: Vec<Expr<'s>> },
     Ident(&'s str),
 }
 
 impl<'s> Expandable<'s> for Expr<'s> {
-    fn expand(&self, mappings: &'s ProgramContext) -> String {
+    fn expand(&self, ctx: &'s ProgramContext) -> String {
         match self {
-            Expr::String(val) => val.to_string(),
+            Expr::TemplateString(val) => val.expand(ctx),
 
             Expr::Ident(ident) => unreachable!("Should not try to expand an ident: {ident}"),
 
             Expr::MappingApplication { name, args } => {
-                let mut matching_mappings = mappings
+                let mut matching_mappings = ctx
                     .get(name)
                     .expect(&format!("Mapping not found: {name}"))
                     .iter()
@@ -30,32 +30,10 @@ impl<'s> Expandable<'s> for Expr<'s> {
                     panic!("Found several matching mappings: {mapping:?} and {second_mapping:?} (and possibly more) match for {name}, {args:?}")
                 }
 
-                let Expr::String(output) = mapping.translation else {
+                let Expr::TemplateString(ref translation) = mapping.translation else {
                     panic!("Output needs to be a string currently");
                 };
-                let mut output = output.to_string();
-
-                let mut args = args.iter();
-                for param in &mapping.params.entries {
-                    output = match param {
-                        MappingParam::ParamExpr { name, rep } => match rep {
-                            None => {
-                                let next_arg = &args
-                                    .next()
-                                    .expect("Not enough args for the given parameters");
-                                let expanded_arg = next_arg.expand(mappings);
-
-                                output.replace(&format!("[{name}]"), &expanded_arg)
-                            }
-                            Some(_) => todo!(),
-                        },
-                        MappingParam::Ident(_) => {
-                            args.next();
-                            output
-                        }
-                    }
-                }
-                output
+                translation.expand(ctx)
             }
         }
     }
@@ -66,10 +44,16 @@ impl<'s> Parsable<'s> for Expr<'s> {
     where
         Self: Sized,
     {
-        assert_eq!(parser.unpack_token()?, Token::Symbol('['));
-        parser.advance();
         match parser.unpack_token()? {
-            Token::Ident(_) => {
+            Token::TemplateBoundary(n) => {
+                parser.advance();
+                Ok(Self::TemplateString(TemplateString::parse(parser, n)?))
+            }
+            Token::Symbol('[') => {
+                parser.advance();
+                let Token::Ident(_) = parser.unpack_token()? else {
+                    panic!("AHHHHHHHH");
+                };
                 let name = parser.slice();
                 parser.advance();
                 print!("Expr {name} >> ");
@@ -82,12 +66,8 @@ impl<'s> Parsable<'s> for Expr<'s> {
                             break;
                         }
                         Token::Define | Token::Map => break,
-                        Token::String(value) => {
-                            args.push(Expr::String(value));
-                            parser.advance();
-                        }
-                        Token::TemplateString(value) => {
-                            args.push(Expr::String(value));
+                        Token::TemplateBoundary(n) => {
+                            args.push(Expr::TemplateString(TemplateString::parse(parser, n)?));
                             parser.advance();
                         }
                         Token::Symbol('[') => args.push(Expr::parse(parser)?),
@@ -99,10 +79,6 @@ impl<'s> Parsable<'s> for Expr<'s> {
                     };
                 }
                 Ok(Self::MappingApplication { name, args })
-            }
-            Token::TemplateString(value) => {
-                parser.advance();
-                Ok(Self::String(value))
             }
             _ => todo!("handle error properly"),
         }

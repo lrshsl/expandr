@@ -24,34 +24,22 @@ pub enum Token<'s> {
     #[regex(r"(_|[[:alpha:]])[[:word:]]*")]
     Ident(&'s str),
 
-    #[regex(r#""([^"\\]|\\["\\bnfrt])*""#, |lex| {
-        let slice = lex.slice();
-        &slice[1..(slice.len() - 1)]
-    })]
-    String(&'s str),
-
-    #[regex(r#"'[^']*'"#, |lex| {
-        let slice = lex.slice();
-        &slice[1..(slice.len() - 1)]
-    })]
-    #[regex(r#"''''([^'{4}])*''''"#, |lex| {
-        let slice = lex.slice();
-        &slice[4..(slice.len() - 4)]
-    })]
-    TemplateString(&'s str),
+    // Template strings
+    #[regex(r#"'{8}|'{4}|'"#, |lex| lex.slice().len() as u8)]
+    TemplateBoundary(u8),
 
     // Misc
     #[regex(r"\n", |lex| {
         lex.extras.line += 1;
         Skip
-    })]
+    }, priority = 10)]
     Newline,
 
-    #[regex(r"\|\|[^\n]*(\|\||\n)", logos::skip, priority = 3)]
-    DocComment,
+    #[regex(r"\|\|[^\n]*(\|\||\n)", priority = 3)]
+    DocComment(&'s str),
 
-    #[regex(r"\|[^\n|]*(\||\n)", logos::skip, priority = 2)]
-    Comment,
+    #[regex(r"\|[^\n|]*(\||\n)", priority = 2)]
+    Comment(&'s str),
 
     #[regex(r".", |lex| lex.slice().chars().next().expect("Wrong: empty symbol"), priority = 1)]
     Symbol(char),
