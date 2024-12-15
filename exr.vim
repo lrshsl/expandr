@@ -10,14 +10,14 @@ endif
 syn keyword		exrDefine				map df
 syn match		exrBecomes				"=>"
 
-syn match		exrIdent					"[a-zA-Z][-a-zA-Z0-9]*"
+syn match		exrIdent					/[a-zA-Z][-a-zA-Z0-9]*/
 
-syn region		exrOutString			start="'"		end="'"		keepend contains=exrExpr,exrString
-syn region		exrOutMultiString		start="''''"	end="''''"	keepend contains=exrExpr,exrString
-syn region		exrString				start='"'		end='"'		keepend contains=exrExpr contained
-syn region		exrExpr					start=/\[[a-zA-Z][-a-zA-Z0-9]*/		end=/\]/		keepend contains=ALL
+syn region		exrOutString			start=/'/		end=/'/		keepend contains=exrExpr,exrString
+syn region		exrOutMultiString		start=/''''/	end=/''''/	keepend contains=exrExpr,exrString
+syn region		exrString				start=/"/		end=/"/		keepend contains=exrExpr contained
+syn region		exrExpr					start=/\(^\|[^\\]\)\zs\[/ end=/\]/ skip=/\\\]/ keepend extend contains=ALLBUT,exrBecomes,exrDefine
 
-syn match		exrComment				"||[^|]*\(\n\|||\)\||[^|]*\(\n\||\)"
+syn match		exrComment				/||[^|]*\(\n\|||\)\||[^|]*\(\n\||\)/
 
 
 hi def link		exrDefine				Keyword
