@@ -32,6 +32,10 @@ impl<'s> Parsable<'s> for Ast<'s> {
                     }
                 }
                 Token::Symbol('[') => exprs.push(Expr::parse(parser)?),
+                Token::String(strval) => {
+                    exprs.push(Expr::String(strval));
+                    parser.advance()
+                }
                 tok => todo!("{tok:?} in {ctx:?}", ctx = parser.context()),
             }
             println!();
