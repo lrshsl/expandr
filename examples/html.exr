@@ -47,6 +47,8 @@ map tag [tag] [child] =>
 [language 'en']
 [head 'Example exr-html']
 
+''''<!-- note: [language 'en'] -->''''
+
 [tag 'body'
 	[tag 'div' bg 'black'
 		[tag 'h1' 'Title is here']

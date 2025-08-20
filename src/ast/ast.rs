@@ -1,4 +1,4 @@
-use crate::lexer::Token;
+use crate::{lexer::ExprToken, parser::panic_nicely};
 
 use super::*;
 
@@ -16,9 +16,9 @@ impl<'s> Parsable<'s> for Ast<'s> {
         while let Some(token) = parser.current() {
             print!("Starting with {token:?} >> ");
             match token {
-                Token::Map => {
+                ExprToken::Map => {
                     parser.advance();
-                    let Some(Token::Ident(name)) = parser.current() else {
+                    let Some(ExprToken::Ident(name)) = parser.current() else {
                         panic!("Expecting ident after keyword 'map'");
                     };
                     parser.advance();
@@ -31,12 +31,12 @@ impl<'s> Parsable<'s> for Ast<'s> {
                         }
                     }
                 }
-                Token::Symbol('[') => exprs.push(Expr::parse(parser)?),
-                Token::String(strval) => {
+                ExprToken::Symbol('[') => exprs.push(Expr::parse(parser)?),
+                ExprToken::String(strval) => {
                     exprs.push(Expr::String(strval));
                     parser.advance()
                 }
-                tok => todo!("{tok:?} in {ctx:?}", ctx = parser.context()),
+                _ => panic_nicely(&parser.expr_lexer.extras),
             }
             println!();
         }

@@ -1,10 +1,13 @@
 use mapping::MappingParam;
 
+use crate::parser::panic_nicely;
+
 use super::*;
 
 #[derive(Debug)]
 pub enum Expr<'s> {
     String(&'s str),
+    TemplateString(TemplateString<'s>),
     MappingApplication { name: &'s str, args: Vec<Expr<'s>> },
     Ident(&'s str),
 }
@@ -13,6 +16,8 @@ impl<'s> Expandable<'s> for Expr<'s> {
     fn expand(&self, mappings: &'s ProgramContext) -> String {
         match self {
             Expr::String(val) => val.to_string(),
+
+            Expr::TemplateString(tmpl_string) => tmpl_string.expand(mappings),
 
             Expr::Ident(ident) => unreachable!("Should not try to expand an ident: {ident}"),
 
@@ -66,32 +71,32 @@ impl<'s> Parsable<'s> for Expr<'s> {
     where
         Self: Sized,
     {
-        assert_eq!(parser.unpack_token()?, Token::Symbol('['));
+        assert_eq!(parser.unpack_token(), ExprToken::Symbol('['));
         parser.advance();
-        match parser.unpack_token()? {
-            Token::Ident(_) => {
+        match parser.unpack_token() {
+            ExprToken::Ident(_) => {
                 let name = parser.slice();
                 parser.advance();
                 print!("Expr {name} >> ");
 
                 let mut args = Vec::new();
                 loop {
-                    match parser.unpack_token()? {
-                        Token::Symbol(']') => {
+                    match parser.unpack_token() {
+                        ExprToken::Symbol(']') => {
                             parser.advance();
                             break;
                         }
-                        Token::Define | Token::Map => break,
-                        Token::String(value) => {
+                        ExprToken::Define | ExprToken::Map => break,
+                        ExprToken::String(value) => {
                             args.push(Expr::String(value));
                             parser.advance();
                         }
-                        Token::TemplateString(value) => {
-                            args.push(Expr::String(value));
+                        ExprToken::TemplateStringDelimiter(n) => {
+                            args.push(Expr::TemplateString(TemplateString::parse(parser, n)?));
                             parser.advance();
                         }
-                        Token::Symbol('[') => args.push(Expr::parse(parser)?),
-                        Token::Ident(value) => {
+                        ExprToken::Symbol('[') => args.push(Expr::parse(parser)?),
+                        ExprToken::Ident(value) => {
                             args.push(Expr::Ident(value));
                             parser.advance()
                         }
@@ -100,7 +105,7 @@ impl<'s> Parsable<'s> for Expr<'s> {
                 }
                 Ok(Self::MappingApplication { name, args })
             }
-            Token::TemplateString(value) => {
+            ExprToken::String(value) => {
                 parser.advance();
                 Ok(Self::String(value))
             }
