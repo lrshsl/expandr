@@ -40,14 +40,14 @@ macro_rules! unexpected_eof {
 pub fn print_err_ctx(file_ctx: &FileContext) {
     let FileContext {
         filename,
+        content,
         line,
         column,
-        cur_line,
         cur_slice,
-        ..
     } = file_ctx;
     let token_len = cur_slice.len();
     let token_start = column - token_len;
+    let cur_line = content.lines().nth(*line - 1).expect("Line does not exist");
     ceprintln!(
         r#"<blue>{filename}:{line}:{token_start}</> Error at '{cur_slice}'
 {cur_line}

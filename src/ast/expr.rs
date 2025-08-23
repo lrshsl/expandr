@@ -71,7 +71,6 @@ impl<'s> Parsable<'s> for Expr<'s> {
     where
         Self: Sized,
     {
-        assert_eq!(parser.unpack_token(), ExprToken::Symbol('['));
         parser.advance();
         match parser.unpack_token() {
             ExprToken::Ident(_) => {

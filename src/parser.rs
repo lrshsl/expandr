@@ -28,6 +28,7 @@ impl<'s> Parser<'s> {
     pub fn new(src: &'s str, filename: Option<String>) -> Self {
         let ctx = FileContext {
             filename: filename.unwrap_or("unknown".to_string()),
+            content: src,
             ..Default::default()
         };
         let mut instance = Self {

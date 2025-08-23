@@ -33,14 +33,18 @@ impl<'s> Parsable<'s> for Mapping<'s> {
         while parser.unpack_token() != ExprToken::Becomes {
             params.push(MappingParam::parse(parser)?);
         }
+        print!("Params {params:?} >> ");
         parser.advance(); // Skip '=>'
         let translation = match parser.unpack_token() {
             ExprToken::String(value) => {
                 parser.advance();
+                print!("Output String({value:?})");
                 Expr::String(value)
             }
             ExprToken::TemplateStringDelimiter(n) => {
-                Expr::TemplateString(TemplateString::parse(parser, n)?)
+                let s = TemplateString::parse(parser, n)?;
+                print!("Output {s:?} >> ");
+                Expr::TemplateString(s)
             }
             ExprToken::Symbol('[') => Expr::parse(parser)?,
             tok => panic!("Unexpected token: {tok:?}"),

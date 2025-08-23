@@ -43,7 +43,7 @@ impl<'s> Parsable<'s> for Ast<'s> {
                         @ &parser.expr_lexer.extras);
                 }
             }
-            println!();
+            println!("Done\n");
         }
 
         Ok(Self { mappings, exprs })

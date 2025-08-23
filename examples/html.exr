@@ -4,6 +4,13 @@
 
 map doctype => '<!DOCTYPE html>'
 
+| cmt
+
+
+|| doc
+
+| more 
+
 map language [lang] => '<head lang="[lang]">'
 
 map head [title] =>
