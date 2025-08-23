@@ -4,4 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anstream = "0.6.20"
+color-print = "0.3.7"
 logos = "0.14.2"

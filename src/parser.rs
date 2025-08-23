@@ -1,35 +1,10 @@
 use logos::Logos;
 
-use crate::lexer::{ExprToken, FileContext, RawToken};
-
-#[derive(Debug)]
-pub enum ParsingError<'s> {
-    AbruptEof(FileContext<'s>),
-    UnexpectedToken(&'s str, FileContext<'s>, ExprToken<'s>, Vec<ExprToken<'s>>),
-    TokenError(String),
-}
-
-pub fn panic_nicely(file_ctx: &FileContext) -> ! {
-    let FileContext {
-        filename,
-        line,
-        column,
-        cur_line,
-        cur_slice,
-        ..
-    } = file_ctx;
-    let token_len = cur_slice.len();
-    let token_start = column - token_len;
-    eprintln!(
-        r#"{filename}:{line}:{column} Error at '{cur_slice}'
-{cur_line}
-{padding}{markers}
-"#,
-        padding = " ".repeat(token_start),
-        markers = "^".repeat(token_len),
-    );
-    std::process::exit(1);
-}
+use crate::{
+    errs::ParsingError,
+    lexer::{ExprToken, FileContext, RawToken},
+    unexpected_eof,
+};
 
 pub type LogosError<'s> = <ExprToken<'s> as Logos<'s>>::Error;
 pub type ExprLexer<'s> = logos::Lexer<'s, ExprToken<'s>>;
@@ -80,7 +55,7 @@ impl<'s> Parser<'s> {
 
     pub fn unpack_token(&self) -> ExprToken<'s> {
         self.current()
-            .unwrap_or_else(|| panic_nicely(&self.expr_lexer.extras))
+            .unwrap_or_else(|| unexpected_eof!(&self.expr_lexer.extras))
     }
 
     pub fn current(&self) -> Option<ExprToken<'s>> {
@@ -88,7 +63,7 @@ impl<'s> Parser<'s> {
             None => None,
             Some(Err(err)) => {
                 println!("Lexer error occurred: {err:?}");
-                panic_nicely(&self.expr_lexer.extras);
+                unexpected_eof!(&self.expr_lexer.extras);
             }
             Some(Ok(token)) => Some(token),
         }
@@ -114,7 +89,7 @@ impl<'s> Parser<'s> {
 
     pub fn unpack_raw_token(&self) -> RawToken<'s> {
         self.current_raw_token()
-            .unwrap_or_else(|| panic_nicely(&self.raw_lexer.extras.clone()))
+            .unwrap_or_else(|| unexpected_eof!(&self.raw_lexer.extras.clone()))
     }
 
     pub fn current_raw_token(&self) -> Option<RawToken<'s>> {

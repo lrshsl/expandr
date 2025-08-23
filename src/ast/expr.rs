@@ -1,6 +1,6 @@
 use mapping::MappingParam;
 
-use crate::parser::panic_nicely;
+use crate::errs::ParsingError;
 
 use super::*;
 

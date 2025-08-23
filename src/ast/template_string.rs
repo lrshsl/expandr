@@ -1,4 +1,4 @@
-use crate::lexer::RawToken;
+use crate::{errs::ParsingError, lexer::RawToken};
 
 use super::*;
 

@@ -1,4 +1,4 @@
-use crate::{lexer::ExprToken, parser::panic_nicely};
+use crate::{errs::ParsingError, lexer::ExprToken, unexpected_token};
 
 use super::*;
 
@@ -36,7 +36,12 @@ impl<'s> Parsable<'s> for Ast<'s> {
                     exprs.push(Expr::String(strval));
                     parser.advance()
                 }
-                _ => panic_nicely(&parser.expr_lexer.extras),
+                tok => {
+                    unexpected_token!(
+                        found   : tok,
+                        expected: [ExprToken::Map, ExprToken::Symbol('['), ExprToken::String(_)],
+                        @ &parser.expr_lexer.extras);
+                }
             }
             println!();
         }

@@ -5,6 +5,7 @@ use expand::Expandable as _;
 use parser::{Parsable as _, Parser};
 
 mod ast;
+mod errs;
 mod expand;
 mod lexer;
 mod parser;
