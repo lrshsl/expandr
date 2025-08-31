@@ -1,4 +1,4 @@
-use crate::errs::ParsingError;
+use crate::{errs::ParsingError, unexpected_eof, unexpected_token};
 
 use super::*;
 
@@ -30,12 +30,12 @@ impl<'s> Parsable<'s> for Mapping<'s> {
         Self: Sized,
     {
         let mut params = Vec::new();
-        while parser.unpack_token() != ExprToken::Becomes {
+        while parser.current_expr().expect("Unfinished map definition") != ExprToken::Becomes {
             params.push(MappingParam::parse(parser)?);
         }
         print!("Params {params:?} >> ");
         parser.advance(); // Skip '=>'
-        let translation = match parser.unpack_token() {
+        let translation = match parser.current_expr().expect("Unfinished map definition") {
             ExprToken::String(value) => {
                 parser.advance();
                 print!("Output String({value:?})");
@@ -46,7 +46,10 @@ impl<'s> Parsable<'s> for Mapping<'s> {
                 print!("Output {s:?} >> ");
                 Expr::TemplateString(s)
             }
-            ExprToken::Symbol('[') => Expr::parse(parser)?,
+            ExprToken::Symbol('[') => {
+                parser.advance();
+                Expr::parse(parser)?
+            }
             tok => panic!("Unexpected token: {tok:?}"),
         };
         Ok(Self {
@@ -80,36 +83,46 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
     where
         Self: Sized,
     {
-        match parser.unpack_token() {
+        match parser
+            .current_expr()
+            .expect("MappingParam::parse on no token")
+        {
             ExprToken::Ident(value) => {
                 parser.advance();
                 Ok(Self::Ident(value))
             }
             ExprToken::Symbol('[') => {
                 parser.advance();
-                let ExprToken::Ident(name) = parser.unpack_token() else {
+                let ExprToken::Ident(name) = parser.current_expr().expect("Expected ident") else {
                     panic!("Expecting ident");
                 };
                 parser.advance();
-                let rep = match parser.unpack_token() {
-                    ExprToken::Symbol('*') => {
+                let rep = match parser.current_expr() {
+                    Some(ExprToken::Symbol('*')) => {
                         parser.advance();
                         Some(Repetition::Any)
                     }
-                    ExprToken::Symbol('?') => {
+                    Some(ExprToken::Symbol('?')) => {
                         parser.advance();
                         Some(Repetition::Optional)
                     }
-                    ExprToken::Symbol('{') => {
+                    Some(ExprToken::Symbol('{')) => {
                         todo!();
                         //let Some(Token::Number)
                         //Some(Repetition::Exactly(1))
                     }
-                    ExprToken::Symbol(']') => None,
-                    tok => panic!("Unexpected token: {tok:?}"),
+                    Some(ExprToken::Symbol(']')) => None,
+                    None => unexpected_eof!(&parser.expr_lexer.extras),
+                    tok => {
+                        unexpected_token!(
+                                found: tok,
+                                expected: [ExprToken::Symbol('*' | '?' | '{' | ']')],
+                                @&parser.expr_lexer.extras
+                        );
+                    }
                 };
 
-                assert_eq!(parser.unpack_token(), ExprToken::Symbol(']'));
+                assert_eq!(parser.current_expr(), Some(ExprToken::Symbol(']')));
                 parser.advance();
 
                 Ok(Self::ParamExpr { name, rep })

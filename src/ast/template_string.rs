@@ -1,4 +1,4 @@
-use crate::{errs::ParsingError, lexer::RawToken};
+use crate::{errs::ParsingError, lexer::RawToken, log_lexer, parser::ParseMode};
 
 use super::*;
 
@@ -26,17 +26,31 @@ impl<'s> TemplateString<'s> {
     ) -> Result<Self, ParsingError<'s>> {
         let mut pieces = Vec::new();
 
+        parser.switch_mode(ParseMode::Raw);
         parser.advance();
-        parser.lex_raw_mode();
         loop {
-            match parser.unpack_raw_token() {
+            match parser
+                .current_raw()
+                .expect("TemplateString::parse on no token")
+            {
                 RawToken::RawPart(s) => {
                     pieces.push(TemplatePiece::StrVal(s));
-                    parser.advance_raw();
+                    parser.advance();
                 }
-                RawToken::ExprStart => pieces.push(TemplatePiece::Expr(Expr::parse(parser)?)),
+                RawToken::EscapedOpeningBracket => {
+                    pieces.push(TemplatePiece::StrVal("["));
+                    parser.advance();
+                }
+                RawToken::ExprStart => {
+                    log_lexer!("ExprStart 1: {:?}", parser.current_raw());
+                    parser.switch_mode(ParseMode::Expr);
+                    parser.advance();
+                    log_lexer!("ExprStart 2: {:?}", parser.current_expr());
+                    pieces.push(TemplatePiece::Expr(Expr::parse(parser)?));
+                    log_lexer!("ExprStart 3: {:?}", parser.current_expr());
+                    parser.switch_mode(ParseMode::Raw);
+                }
                 RawToken::TemplateStringDelimiter(n) if n == number_delimiters => {
-                    (0..n).for_each(|_| parser.advance_raw());
                     break;
                 }
                 RawToken::TemplateStringDelimiter(_) => {
@@ -44,9 +58,9 @@ impl<'s> TemplateString<'s> {
                 }
             }
         }
-        parser.lex_expr_mode();
-
+        parser.switch_mode(ParseMode::Expr);
         parser.advance();
+
         Ok(Self { pieces })
     }
 }

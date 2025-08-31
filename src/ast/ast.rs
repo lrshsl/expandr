@@ -1,4 +1,4 @@
-use crate::{errs::ParsingError, lexer::ExprToken, unexpected_token};
+use crate::{errs::ParsingError, lexer::ExprToken, log, parser::Token, unexpected_token};
 
 use super::*;
 
@@ -13,12 +13,13 @@ impl<'s> Parsable<'s> for Ast<'s> {
         let mut mappings = ProgramContext::new();
         let mut exprs = Vec::new();
 
-        while let Some(token) = parser.current() {
+        while let Some(Token::Expr(token)) = parser.current() {
+            log!("Ast::parse starting on {token:?}");
             print!("Starting with {token:?} >> ");
             match token {
                 ExprToken::Map => {
                     parser.advance();
-                    let Some(ExprToken::Ident(name)) = parser.current() else {
+                    let Some(Token::Expr(ExprToken::Ident(name))) = parser.current() else {
                         panic!("Expecting ident after keyword 'map'");
                     };
                     parser.advance();
@@ -31,7 +32,10 @@ impl<'s> Parsable<'s> for Ast<'s> {
                         }
                     }
                 }
-                ExprToken::Symbol('[') => exprs.push(Expr::parse(parser)?),
+                ExprToken::Symbol('[') => {
+                    parser.advance();
+                    exprs.push(Expr::parse(parser)?);
+                }
                 ExprToken::String(strval) => {
                     exprs.push(Expr::String(strval));
                     parser.advance()

@@ -1,4 +1,7 @@
-use std::{fs, io::Write as _};
+use std::{
+    fs::{self, remove_file},
+    io::Write,
+};
 
 use ast::Ast;
 use expand::Expandable as _;
@@ -13,6 +16,9 @@ mod parser;
 fn main() {
     let filename = "examples/html.exr";
     let source = fs::read_to_string(filename).expect("Could not read file");
+
+    let _ = remove_file("output/tokens");
+    let _ = remove_file("output/logs");
 
     // AST
     let mut parser = Parser::new(source.as_str(), Some(filename.to_string()));

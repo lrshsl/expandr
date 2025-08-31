@@ -2,6 +2,36 @@ use color_print::ceprintln;
 
 use crate::lexer::{ExprToken, FileContext};
 
+#[macro_export]
+macro_rules! log {
+    ( $($e:expr),* ) => {{
+        use std::io::Write;
+        let mut f =
+            std::fs::OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open("output/logs")
+                .unwrap();
+        writeln!(f, $($e),*).unwrap();
+        f.flush().unwrap();
+    }};
+}
+
+#[macro_export]
+macro_rules! log_lexer {
+    ( $($e:expr),* ) => {{
+        use std::io::Write;
+        let mut f =
+            std::fs::OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open("output/tokens")
+                .unwrap();
+        writeln!(f, $($e),*).unwrap();
+        f.flush().unwrap();
+    }};
+}
+
 #[derive(Debug)]
 pub enum ParsingError<'s> {
     AbruptEof(FileContext<'s>),
@@ -42,12 +72,14 @@ pub fn print_err_ctx(file_ctx: &FileContext) {
         filename,
         content,
         line,
-        column,
         cur_slice,
+        ..
     } = file_ctx;
     let token_len = cur_slice.len();
-    let token_start = column - token_len;
+    let token_start = file_ctx.token_start();
+
     let cur_line = content.lines().nth(*line - 1).expect("Line does not exist");
+
     ceprintln!(
         r#"<blue>{filename}:{line}:{token_start}</> Error at '{cur_slice}'
 {cur_line}

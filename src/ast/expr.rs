@@ -1,6 +1,6 @@
 use mapping::MappingParam;
 
-use crate::errs::ParsingError;
+use crate::{errs::ParsingError, log, unexpected_token};
 
 use super::*;
 
@@ -71,8 +71,8 @@ impl<'s> Parsable<'s> for Expr<'s> {
     where
         Self: Sized,
     {
-        parser.advance();
-        match parser.unpack_token() {
+        log!("Expr::parse: Starting on {:?}", parser.current_expr());
+        match parser.current_expr().expect("Expr::parse on no token") {
             ExprToken::Ident(_) => {
                 let name = parser.slice();
                 parser.advance();
@@ -80,7 +80,7 @@ impl<'s> Parsable<'s> for Expr<'s> {
 
                 let mut args = Vec::new();
                 loop {
-                    match parser.unpack_token() {
+                    match parser.current_expr().expect("Expr::parse on no token") {
                         ExprToken::Symbol(']') => {
                             parser.advance();
                             break;
@@ -94,7 +94,10 @@ impl<'s> Parsable<'s> for Expr<'s> {
                             args.push(Expr::TemplateString(TemplateString::parse(parser, n)?));
                             parser.advance();
                         }
-                        ExprToken::Symbol('[') => args.push(Expr::parse(parser)?),
+                        ExprToken::Symbol('[') => {
+                            parser.advance();
+                            args.push(Expr::parse(parser)?)
+                        }
                         ExprToken::Ident(value) => {
                             args.push(Expr::Ident(value));
                             parser.advance()
@@ -108,7 +111,13 @@ impl<'s> Parsable<'s> for Expr<'s> {
                 parser.advance();
                 Ok(Self::String(value))
             }
-            _ => todo!("handle error properly"),
+            tok => {
+                unexpected_token!(
+                        found: tok,
+                        expected: [ExprToken::String(_), ExprToken::Ident(_)],
+                        @&parser.expr_lexer.extras
+                );
+            }
         }
     }
 }

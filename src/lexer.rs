@@ -21,26 +21,37 @@ impl Default for FileContext<'_> {
     }
 }
 
+impl FileContext<'_> {
+    pub fn token_start(&self) -> usize {
+        self.column - self.cur_slice.len()
+    }
+}
+
 #[derive(Logos, Debug, PartialEq, Clone, Copy)]
 #[logos(extras = FileContext<'s>)]
 pub enum RawToken<'s> {
-    #[regex(r#"[^\[']+"#, |lex| {
+    #[regex(r#"[^\['\\]+"#, |lex| {
         let skipped_lines = lex.slice().chars().filter(|&c| c == '\n').count();
         lex.extras.line += skipped_lines;
         if skipped_lines == 0 {
             lex.extras.column += lex.slice().len();
         } else {
-            lex.extras.column = lex.slice().chars().rev().position(|c| c == '\n').unwrap();
+            lex.extras.column = 1 + lex.slice().chars().rev().position(|c| c == '\n').unwrap();
         }
         lex.slice()
     })]
     RawPart(&'s str),
 
-    #[regex(r#"\[[^\[]"#)]
+    #[regex(r#"\\\["#, |lex| { lex.extras.column += 1; })]
+    EscapedOpeningBracket,
+
+    #[token("[", |lex| { lex.extras.column += 1; })]
     ExprStart,
 
     #[regex(r#"(')+"#, |lex| {
-        lex.slice().chars().take_while(|&c| c == '\'').count()
+        let n =lex.slice().len();
+        lex.extras.column += n;
+        n
     })]
     TemplateStringDelimiter(usize),
 }
@@ -69,13 +80,13 @@ pub enum ExprToken<'s> {
     String(&'s str),
 
     #[regex(r#"(')+"#, |lex| {
-        lex.slice().chars().take_while(|&c| c == '\'').count()
+        lex.slice().len()
     })]
     TemplateStringDelimiter(usize),
 
     // Misc
-    #[regex(r#"[ \t\r\f]"#, |lex| {
-        lex.extras.column += 1;
+    #[regex(r#"[ \t\r\f]+"#, |lex| {
+        lex.extras.column += lex.slice().len();
         Skip
     })]
     Whitespace,
