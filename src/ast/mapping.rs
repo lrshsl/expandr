@@ -29,21 +29,21 @@ impl<'s> Parsable<'s> for Mapping<'s> {
     where
         Self: Sized,
     {
+        eprint!("Params >> ");
         let mut params = Vec::new();
         while parser.current_expr().expect("Unfinished map definition") != ExprToken::Becomes {
             params.push(MappingParam::parse(parser)?);
         }
-        print!("Params {params:?} >> ");
         parser.advance(); // Skip '=>'
         let translation = match parser.current_expr().expect("Unfinished map definition") {
             ExprToken::String(value) => {
                 parser.advance();
-                print!("Output String({value:?})");
-                Expr::String(value)
+                eprint!("Output String({value:?})");
+                Expr::StrRef(value)
             }
             ExprToken::TemplateStringDelimiter(n) => {
+                eprint!("Output Template String >> ");
                 let s = TemplateString::parse(parser, n)?;
-                print!("Output {s:?} >> ");
                 Expr::TemplateString(s)
             }
             ExprToken::Symbol('[') => {
@@ -71,7 +71,10 @@ pub enum MappingParam<'s> {
 impl MappingParam<'_> {
     fn matches_arg(&self, arg: &Expr<'_>) -> bool {
         match (self, arg) {
-            (Self::ParamExpr { .. }, Expr::String(_) | Expr::MappingApplication { .. }) => true,
+            (
+                Self::ParamExpr { .. },
+                Expr::String(_) | Expr::TemplateString(_) | Expr::MappingApplication { .. },
+            ) => true,
             (Self::Ident(self_value), Expr::Ident(other_value)) => self_value == other_value,
             _ => false,
         }
@@ -79,15 +82,13 @@ impl MappingParam<'_> {
 }
 
 impl<'s> Parsable<'s> for MappingParam<'s> {
-    fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>>
-    where
-        Self: Sized,
-    {
+    fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>> {
         match parser
             .current_expr()
             .expect("MappingParam::parse on no token")
         {
             ExprToken::Ident(value) => {
+                eprint!("Ident({:?}) >> ", value);
                 parser.advance();
                 Ok(Self::Ident(value))
             }
@@ -96,6 +97,7 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
                 let ExprToken::Ident(name) = parser.current_expr().expect("Expected ident") else {
                     panic!("Expecting ident");
                 };
+                eprint!("ParamExpr({:?}) >> ", name);
                 parser.advance();
                 let rep = match parser.current_expr() {
                     Some(ExprToken::Symbol('*')) => {

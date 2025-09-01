@@ -9,13 +9,7 @@ pub struct TemplateString<'s> {
 
 impl<'s> Expandable<'s> for TemplateString<'s> {
     fn expand(&self, ctx: &'s ProgramContext) -> String {
-        self.pieces
-            .iter()
-            .map(|piece| match piece {
-                TemplatePiece::Expr(expr) => expr.expand(ctx),
-                TemplatePiece::StrVal(s) => s.to_string(),
-            })
-            .collect()
+        self.pieces.iter().map(|piece| piece.expand(ctx)).collect()
     }
 }
 
@@ -34,23 +28,28 @@ impl<'s> TemplateString<'s> {
                 .expect("TemplateString::parse on no token")
             {
                 RawToken::RawPart(s) => {
+                    eprint!("'{s}' ");
                     pieces.push(TemplatePiece::StrVal(s));
                     parser.advance();
                 }
                 RawToken::EscapedOpeningBracket => {
+                    eprint!("[");
                     pieces.push(TemplatePiece::StrVal("["));
                     parser.advance();
                 }
                 RawToken::ExprStart => {
+                    eprint!(">> ");
                     parser.switch_mode(ParseMode::Expr);
                     parser.advance();
                     pieces.push(TemplatePiece::Expr(Expr::parse(parser, ParseMode::Raw)?));
                     parser.switch_mode(ParseMode::Raw);
                 }
                 RawToken::TemplateStringDelimiter(n) if n == number_delimiters => {
+                    eprint!("TS_End >> ");
                     break;
                 }
                 RawToken::TemplateStringDelimiter(_) => {
+                    eprint!("'{}' ", parser.raw_lexer.slice());
                     pieces.push(TemplatePiece::StrVal(parser.raw_lexer.slice()));
                 }
             }
@@ -69,10 +68,10 @@ pub enum TemplatePiece<'s> {
 }
 
 impl<'s> Expandable<'s> for TemplatePiece<'s> {
-    fn expand(&self, mappings: &'s ProgramContext) -> String {
+    fn expand(&self, ctx: &'s ProgramContext) -> String {
         match self {
             TemplatePiece::StrVal(s) => s.to_string(),
-            TemplatePiece::Expr(e) => e.expand(mappings),
+            TemplatePiece::Expr(e) => e.expand(ctx),
         }
     }
 }

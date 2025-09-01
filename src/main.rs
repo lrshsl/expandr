@@ -29,7 +29,7 @@ fn main() {
     // Expand
     let mut output = String::new();
     for expr in ast.exprs {
-        output.push_str(&expr.expand(&ast.mappings));
+        output.push_str(&expr.expand(&ast.ctx));
     }
     let output_file = fs::File::create("output/out.html").expect("Could not open file output/out");
     write!(&output_file, "{output}").expect("Could not write to file");

@@ -42,12 +42,18 @@ map tag [tag] [child] =>
 |      Application Section       |
 |--------------------------------|
 
-
+''''
 [doctype]
 [language 'en']
 [head 'Example exr-html']
 
-''''<!-- note: [language 'en'] -->''''
+<!-- note: [language 'en'] -->
+
+[tag 'body'
+   [tag 'div'
+      [tag 'h1' 'Title']]]
+
+''''
 
 |[tag 'body'
 |	[tag 'div' bg 'black'

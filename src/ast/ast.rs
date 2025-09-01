@@ -10,7 +10,7 @@ use super::*;
 
 #[derive(Debug)]
 pub struct Ast<'s> {
-    pub mappings: ProgramContext<'s>,
+    pub ctx: ProgramContext<'s>,
     pub exprs: Vec<Expr<'s>>,
 }
 
@@ -21,7 +21,7 @@ impl<'s> Parsable<'s> for Ast<'s> {
 
         while let Some(Token::Expr(token)) = parser.current() {
             log!("Ast::parse starting on {token:?}");
-            print!("Starting with {token:?} >> ");
+            eprint!("Starting with {token:?} >> ");
             match token {
                 ExprToken::Map => {
                     parser.advance();
@@ -29,7 +29,7 @@ impl<'s> Parsable<'s> for Ast<'s> {
                         panic!("Expecting ident after keyword 'map'");
                     };
                     parser.advance();
-                    print!("Mapping '{name}' >> ");
+                    eprint!("Mapping '{name}' >> ");
                     let mapping = Mapping::parse(parser)?;
                     match mappings.get_mut(name) {
                         Some(slot) => slot.push(mapping),
@@ -43,7 +43,7 @@ impl<'s> Parsable<'s> for Ast<'s> {
                     exprs.push(Expr::parse(parser, ParseMode::Expr)?);
                 }
                 ExprToken::String(strval) => {
-                    exprs.push(Expr::String(strval));
+                    exprs.push(Expr::StrRef(strval));
                     parser.advance()
                 }
                 ExprToken::TemplateStringDelimiter(n) => {
@@ -57,9 +57,12 @@ impl<'s> Parsable<'s> for Ast<'s> {
                         @ &parser.expr_lexer.extras);
                 }
             }
-            println!("Done\n");
+            eprintln!("Done\n");
         }
 
-        Ok(Self { mappings, exprs })
+        Ok(Self {
+            ctx: mappings,
+            exprs,
+        })
     }
 }
