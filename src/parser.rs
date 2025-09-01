@@ -40,13 +40,15 @@ impl<'s> Parser<'s> {
         };
         let expr_lexer = ExprToken::lexer_with_extras(src, ctx.clone());
         let raw_lexer = RawToken::lexer_with_extras(src, ctx);
-        Self {
+        let mut s = Self {
             mode: ParseMode::Expr,
             expr_lexer,
             raw_lexer,
             current_expr: None,
             current_raw: None,
-        }
+        };
+        s.advance();
+        s
     }
 
     pub fn switch_mode(&mut self, mode: ParseMode) {

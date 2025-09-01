@@ -2,7 +2,7 @@ use crate::{errs::ParsingError, lexer::RawToken, log_lexer, parser::ParseMode};
 
 use super::*;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TemplateString<'s> {
     pieces: Vec<TemplatePiece<'s>>,
 }
@@ -42,12 +42,9 @@ impl<'s> TemplateString<'s> {
                     parser.advance();
                 }
                 RawToken::ExprStart => {
-                    log_lexer!("ExprStart 1: {:?}", parser.current_raw());
                     parser.switch_mode(ParseMode::Expr);
                     parser.advance();
-                    log_lexer!("ExprStart 2: {:?}", parser.current_expr());
-                    pieces.push(TemplatePiece::Expr(Expr::parse(parser)?));
-                    log_lexer!("ExprStart 3: {:?}", parser.current_expr());
+                    pieces.push(TemplatePiece::Expr(Expr::parse(parser, ParseMode::Raw)?));
                     parser.switch_mode(ParseMode::Raw);
                 }
                 RawToken::TemplateStringDelimiter(n) if n == number_delimiters => {
@@ -65,8 +62,17 @@ impl<'s> TemplateString<'s> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum TemplatePiece<'s> {
     StrVal(&'s str),
     Expr(Expr<'s>),
+}
+
+impl<'s> Expandable<'s> for TemplatePiece<'s> {
+    fn expand(&self, mappings: &'s ProgramContext) -> String {
+        match self {
+            TemplatePiece::StrVal(s) => s.to_string(),
+            TemplatePiece::Expr(e) => e.expand(mappings),
+        }
+    }
 }

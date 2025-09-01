@@ -49,10 +49,10 @@ map tag [tag] [child] =>
 
 ''''<!-- note: [language 'en'] -->''''
 
-[tag 'body'
-	[tag 'div' bg 'black'
-		[tag 'h1' 'Title is here']
-	]
-]
+|[tag 'body'
+|	[tag 'div' bg 'black'
+|		[tag 'h1' 'Title is here']
+|	]
+|]
 
 | vim: ft=exr

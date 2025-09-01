@@ -1,8 +1,8 @@
-use crate::{errs::ParsingError, unexpected_eof, unexpected_token};
+use crate::{errs::ParsingError, parser::ParseMode, unexpected_eof, unexpected_token};
 
 use super::*;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Params<'s> {
     pub entries: Vec<MappingParam<'s>>,
 }
@@ -18,7 +18,7 @@ impl<'s> Params<'s> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Mapping<'s> {
     pub params: Params<'s>,
     pub translation: Expr<'s>,
@@ -48,7 +48,7 @@ impl<'s> Parsable<'s> for Mapping<'s> {
             }
             ExprToken::Symbol('[') => {
                 parser.advance();
-                Expr::parse(parser)?
+                Expr::parse(parser, ParseMode::Expr)?
             }
             tok => panic!("Unexpected token: {tok:?}"),
         };
@@ -59,7 +59,7 @@ impl<'s> Parsable<'s> for Mapping<'s> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum MappingParam<'s> {
     Ident(&'s str),
     ParamExpr {
@@ -132,7 +132,7 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Repetition {
     Exactly(usize),
     Optional,

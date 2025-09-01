@@ -1,4 +1,10 @@
-use crate::{errs::ParsingError, lexer::ExprToken, log, parser::Token, unexpected_token};
+use crate::{
+    errs::ParsingError,
+    lexer::ExprToken,
+    log,
+    parser::{ParseMode, Token},
+    unexpected_token,
+};
 
 use super::*;
 
@@ -34,11 +40,15 @@ impl<'s> Parsable<'s> for Ast<'s> {
                 }
                 ExprToken::Symbol('[') => {
                     parser.advance();
-                    exprs.push(Expr::parse(parser)?);
+                    exprs.push(Expr::parse(parser, ParseMode::Expr)?);
                 }
                 ExprToken::String(strval) => {
                     exprs.push(Expr::String(strval));
                     parser.advance()
+                }
+                ExprToken::TemplateStringDelimiter(n) => {
+                    exprs.push(Expr::TemplateString(TemplateString::parse(parser, n)?));
+                    parser.advance();
                 }
                 tok => {
                     unexpected_token!(

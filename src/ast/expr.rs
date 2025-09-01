@@ -1,10 +1,10 @@
 use mapping::MappingParam;
 
-use crate::{errs::ParsingError, log, unexpected_token};
+use crate::{errs::ParsingError, log, parser::ParseMode, unexpected_token};
 
 use super::*;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Expr<'s> {
     String(&'s str),
     TemplateString(TemplateString<'s>),
@@ -35,10 +35,10 @@ impl<'s> Expandable<'s> for Expr<'s> {
                     panic!("Found several matching mappings: {mapping:?} and {second_mapping:?} (and possibly more) match for {name}, {args:?}")
                 }
 
-                let Expr::String(output) = mapping.translation else {
-                    panic!("Output needs to be a string currently");
+                let Expr::TemplateString(output) = mapping.translation.clone() else {
+                    panic!("Output needs to be a template string currently");
                 };
-                let mut output = output.to_string();
+                let mut output = output.expand(mappings);
 
                 let mut args = args.iter();
                 for param in &mapping.params.entries {
@@ -66,11 +66,8 @@ impl<'s> Expandable<'s> for Expr<'s> {
     }
 }
 
-impl<'s> Parsable<'s> for Expr<'s> {
-    fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>>
-    where
-        Self: Sized,
-    {
+impl<'s> Expr<'s> {
+    pub fn parse(parser: &mut Parser<'s>, end_mode: ParseMode) -> Result<Self, ParsingError<'s>> {
         log!("Expr::parse: Starting on {:?}", parser.current_expr());
         match parser.current_expr().expect("Expr::parse on no token") {
             ExprToken::Ident(_) => {
@@ -82,32 +79,31 @@ impl<'s> Parsable<'s> for Expr<'s> {
                 loop {
                     match parser.current_expr().expect("Expr::parse on no token") {
                         ExprToken::Symbol(']') => {
-                            parser.advance();
                             break;
                         }
                         ExprToken::Define | ExprToken::Map => break,
                         ExprToken::String(value) => {
                             args.push(Expr::String(value));
-                            parser.advance();
                         }
                         ExprToken::TemplateStringDelimiter(n) => {
                             args.push(Expr::TemplateString(TemplateString::parse(parser, n)?));
-                            parser.advance();
                         }
                         ExprToken::Symbol('[') => {
                             parser.advance();
-                            args.push(Expr::parse(parser)?)
+                            args.push(Expr::parse(parser, ParseMode::Expr)?)
                         }
                         ExprToken::Ident(value) => {
                             args.push(Expr::Ident(value));
-                            parser.advance()
                         }
                         _ => todo!(),
                     };
                 }
+                parser.switch_mode(end_mode);
+                parser.advance();
                 Ok(Self::MappingApplication { name, args })
             }
             ExprToken::String(value) => {
+                parser.switch_mode(end_mode);
                 parser.advance();
                 Ok(Self::String(value))
             }
