@@ -1,87 +1,77 @@
-use logos::Source;
+use crate::{errs::ParsingError, lexer::RawToken, log_lexer, parser::ParseMode};
 
 use super::*;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TemplateString<'s> {
     pieces: Vec<TemplatePiece<'s>>,
 }
 
 impl<'s> Expandable<'s> for TemplateString<'s> {
     fn expand(&self, ctx: &'s ProgramContext) -> String {
-        let mut result = String::new();
-        for piece in &self.pieces {
-            match piece {
-                TemplatePiece::Expr(expr) => result.push_str(&expr.expand(ctx)),
-                TemplatePiece::StrVal(s) => result.push_str(s),
-            }
-        }
-        result
+        self.pieces.iter().map(|piece| piece.expand(ctx)).collect()
     }
 }
 
 impl<'s> TemplateString<'s> {
-    pub fn parse(parser: &mut Parser<'s>, number_delimiters: u8) -> Result<Self, ParsingError<'s>> {
+    pub fn parse(
+        parser: &mut Parser<'s>,
+        number_delimiters: usize,
+    ) -> Result<Self, ParsingError<'s>> {
         let mut pieces = Vec::new();
-        'outer: loop {
-            parser.advance();
-            match parser.unpack_token()? {
-                Token::TemplateBoundary(n) if n == number_delimiters => break,
 
-                Token::Symbol('[') => {
-                    pieces.push(TemplatePiece::Expr(Expr::parse(parser)?));
+        parser.switch_mode(ParseMode::Raw);
+        parser.advance();
+        loop {
+            match parser
+                .current_raw()
+                .expect("TemplateString::parse on no token")
+            {
+                RawToken::RawPart(s) => {
+                    eprint!("'{s}' ");
+                    pieces.push(TemplatePiece::StrVal(s));
+                    parser.advance();
                 }
-
-                token => pieces.push(TemplatePiece::StrVal(match token {
-                    Token::Map => "map",
-                    Token::Define => "df",
-                    Token::Becomes => "=>",
-                    Token::Ident(s) => s,
-                    Token::Comment(strval) => strval,
-                    Token::DocComment(strval) => strval,
-                    Token::TemplateBoundary(n) => match n {
-                        1 => "'",
-                        4 => "''''",
-                        8 => "''''''''",
-                        _ => unreachable!(),
-                    },
-                    Token::Symbol(_) | Token::Newline => {
-                        let start = parser.lexer.span().start;
-
-                        // Advance to the next non-string-literal value
-                        loop {
-                            parser.advance();
-                            match parser.unpack_token()? {
-                                Token::Symbol('[') => break,
-                                Token::TemplateBoundary(n) if n == number_delimiters => {
-                                    break 'outer
-                                }
-
-                                _ => {}
-                            }
-                        }
-                        let end = parser.lexer.span().end;
-                        let slice = parser
-                            .lexer
-                            .source()
-                            .slice(start..end)
-                            .expect("Template slice invalid??");
-                        slice
-                    }
-                })),
+                RawToken::EscapedOpeningBracket => {
+                    eprint!("[");
+                    pieces.push(TemplatePiece::StrVal("["));
+                    parser.advance();
+                }
+                RawToken::ExprStart => {
+                    eprint!(">> ");
+                    parser.switch_mode(ParseMode::Expr);
+                    parser.advance();
+                    pieces.push(TemplatePiece::Expr(Expr::parse(parser, ParseMode::Raw)?));
+                    parser.switch_mode(ParseMode::Raw);
+                }
+                RawToken::TemplateStringDelimiter(n) if n == number_delimiters => {
+                    eprint!("TS_End >> ");
+                    break;
+                }
+                RawToken::TemplateStringDelimiter(_) => {
+                    eprint!("'{}' ", parser.raw_lexer.slice());
+                    pieces.push(TemplatePiece::StrVal(parser.raw_lexer.slice()));
+                }
             }
         }
-        assert_eq!(
-            parser.current(),
-            Some(Token::TemplateBoundary(number_delimiters))
-        );
+        parser.switch_mode(ParseMode::Expr);
         parser.advance();
+
         Ok(Self { pieces })
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum TemplatePiece<'s> {
     StrVal(&'s str),
     Expr(Expr<'s>),
+}
+
+impl<'s> Expandable<'s> for TemplatePiece<'s> {
+    fn expand(&self, ctx: &'s ProgramContext) -> String {
+        match self {
+            TemplatePiece::StrVal(s) => s.to_string(),
+            TemplatePiece::Expr(e) => e.expand(ctx),
+        }
+    }
 }

@@ -1,6 +1,8 @@
+use crate::{errs::ParsingError, parser::ParseMode, unexpected_eof, unexpected_token};
+
 use super::*;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Params<'s> {
     pub entries: Vec<MappingParam<'s>>,
 }
@@ -16,23 +18,37 @@ impl<'s> Params<'s> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Mapping<'s> {
     pub params: Params<'s>,
     pub translation: Expr<'s>,
 }
 
 impl<'s> Parsable<'s> for Mapping<'s> {
-    fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>>
-    where
-        Self: Sized,
-    {
+    fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>> {
+        eprint!("Params >> ");
         let mut params = Vec::new();
-        while parser.unpack_token()? != Token::Becomes {
+        while parser.current_expr().expect("Unfinished map definition") != ExprToken::Becomes {
             params.push(MappingParam::parse(parser)?);
         }
         parser.advance(); // Skip '=>'
-        let translation = Expr::parse(parser)?;
+        let translation = match parser.current_expr().expect("Unfinished map definition") {
+            ExprToken::String(value) => {
+                parser.advance();
+                eprint!("Output String({value:?})");
+                Expr::StrRef(value)
+            }
+            ExprToken::TemplateStringDelimiter(n) => {
+                eprint!("Output Template String >> ");
+                let s = TemplateString::parse(parser, n)?;
+                Expr::TemplateString(s)
+            }
+            ExprToken::Symbol('[') => {
+                parser.advance();
+                Expr::parse(parser, ParseMode::Expr)?
+            }
+            tok => panic!("Unexpected token: {tok:?}"),
+        };
         Ok(Self {
             params: Params { entries: params },
             translation,
@@ -40,7 +56,7 @@ impl<'s> Parsable<'s> for Mapping<'s> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum MappingParam<'s> {
     Ident(&'s str),
     ParamExpr {
@@ -52,9 +68,10 @@ pub enum MappingParam<'s> {
 impl MappingParam<'_> {
     fn matches_arg(&self, arg: &Expr<'_>) -> bool {
         match (self, arg) {
-            (Self::ParamExpr { .. }, Expr::TemplateString(_) | Expr::MappingApplication { .. }) => {
-                true
-            }
+            (
+                Self::ParamExpr { .. },
+                Expr::String(_) | Expr::TemplateString(_) | Expr::MappingApplication { .. },
+            ) => true,
             (Self::Ident(self_value), Expr::Ident(other_value)) => self_value == other_value,
             _ => false,
         }
@@ -62,40 +79,49 @@ impl MappingParam<'_> {
 }
 
 impl<'s> Parsable<'s> for MappingParam<'s> {
-    fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>>
-    where
-        Self: Sized,
-    {
-        match parser.unpack_token()? {
-            Token::Ident(value) => {
+    fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>> {
+        match parser
+            .current_expr()
+            .expect("MappingParam::parse on no token")
+        {
+            ExprToken::Ident(value) => {
+                eprint!("Ident({:?}) >> ", value);
                 parser.advance();
                 Ok(Self::Ident(value))
             }
-            Token::Symbol('[') => {
+            ExprToken::Symbol('[') => {
                 parser.advance();
-                let Token::Ident(name) = parser.unpack_token()? else {
+                let ExprToken::Ident(name) = parser.current_expr().expect("Expected ident") else {
                     panic!("Expecting ident");
                 };
+                eprint!("ParamExpr({:?}) >> ", name);
                 parser.advance();
-                let rep = match parser.unpack_token()? {
-                    Token::Symbol('*') => {
+                let rep = match parser.current_expr() {
+                    Some(ExprToken::Symbol('*')) => {
                         parser.advance();
                         Some(Repetition::Any)
                     }
-                    Token::Symbol('?') => {
+                    Some(ExprToken::Symbol('?')) => {
                         parser.advance();
                         Some(Repetition::Optional)
                     }
-                    Token::Symbol('{') => {
+                    Some(ExprToken::Symbol('{')) => {
                         todo!();
                         //let Some(Token::Number)
                         //Some(Repetition::Exactly(1))
                     }
-                    Token::Symbol(']') => None,
-                    tok => panic!("Unexpected token: {tok:?}"),
+                    Some(ExprToken::Symbol(']')) => None,
+                    None => unexpected_eof!(&parser.expr_lexer.extras),
+                    tok => {
+                        unexpected_token!(
+                                found: tok,
+                                expected: [ExprToken::Symbol('*' | '?' | '{' | ']')],
+                                @&parser.expr_lexer.extras
+                        );
+                    }
                 };
 
-                assert_eq!(parser.unpack_token()?, Token::Symbol(']'));
+                assert_eq!(parser.current_expr(), Some(ExprToken::Symbol(']')));
                 parser.advance();
 
                 Ok(Self::ParamExpr { name, rep })
@@ -105,7 +131,7 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Repetition {
     Exactly(usize),
     Optional,

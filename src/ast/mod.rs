@@ -1,7 +1,7 @@
 pub(self) use crate::{
     expand::{Expandable, ProgramContext},
-    lexer::Token,
-    parser::{Parsable, Parser, ParsingError},
+    lexer::ExprToken,
+    parser::{Parsable, Parser},
 };
 
 mod ast;

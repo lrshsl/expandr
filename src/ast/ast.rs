@@ -1,10 +1,16 @@
-use crate::lexer::Token;
+use crate::{
+    errs::ParsingError,
+    lexer::ExprToken,
+    log,
+    parser::{ParseMode, Token},
+    unexpected_token,
+};
 
 use super::*;
 
 #[derive(Debug)]
 pub struct Ast<'s> {
-    pub mappings: ProgramContext<'s>,
+    pub ctx: ProgramContext<'s>,
     pub exprs: Vec<Expr<'s>>,
 }
 
@@ -13,16 +19,17 @@ impl<'s> Parsable<'s> for Ast<'s> {
         let mut mappings = ProgramContext::new();
         let mut exprs = Vec::new();
 
-        while let Some(token) = parser.current() {
-            print!("Starting with {token:?} >> ");
+        while let Some(Token::Expr(token)) = parser.current() {
+            log!("Ast::parse starting on {token:?}");
+            eprint!("Starting with {token:?} >> ");
             match token {
-                Token::Map => {
+                ExprToken::Map => {
                     parser.advance();
-                    let Some(Token::Ident(name)) = parser.current() else {
+                    let Some(Token::Expr(ExprToken::Ident(name))) = parser.current() else {
                         panic!("Expecting ident after keyword 'map'");
                     };
                     parser.advance();
-                    print!("Mapping '{name}' >> ");
+                    eprint!("Mapping '{name}' >> ");
                     let mapping = Mapping::parse(parser)?;
                     match mappings.get_mut(name) {
                         Some(slot) => slot.push(mapping),
@@ -31,13 +38,31 @@ impl<'s> Parsable<'s> for Ast<'s> {
                         }
                     }
                 }
-                Token::Symbol('[') => exprs.push(Expr::parse(parser)?),
-                Token::Comment(_) | Token::DocComment(_) => parser.advance(),
-                tok => todo!("{tok:?} in {ctx:?}", ctx = parser.context()),
+                ExprToken::Symbol('[') => {
+                    parser.advance();
+                    exprs.push(Expr::parse(parser, ParseMode::Expr)?);
+                }
+                ExprToken::String(strval) => {
+                    exprs.push(Expr::StrRef(strval));
+                    parser.advance()
+                }
+                ExprToken::TemplateStringDelimiter(n) => {
+                    exprs.push(Expr::TemplateString(TemplateString::parse(parser, n)?));
+                    parser.advance();
+                }
+                tok => {
+                    unexpected_token!(
+                        found   : tok,
+                        expected: [ExprToken::Map, ExprToken::Symbol('['), ExprToken::String(_)],
+                        @ &parser.expr_lexer.extras);
+                }
             }
-            println!();
+            eprintln!("Done\n");
         }
 
-        Ok(Self { mappings, exprs })
+        Ok(Self {
+            ctx: mappings,
+            exprs,
+        })
     }
 }
