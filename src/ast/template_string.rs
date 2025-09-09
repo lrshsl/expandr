@@ -1,4 +1,4 @@
-use crate::{errs::ParsingError, lexer::RawToken, log_lexer, parser::ParseMode};
+use crate::{errs::ParsingError, lexer::RawToken, parser::ParseMode};
 
 use super::*;
 

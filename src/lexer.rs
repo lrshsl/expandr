@@ -63,8 +63,8 @@ pub enum ExprToken<'s> {
     #[token(r"map")]
     Map,
 
-    #[token(r"df")]
-    Define,
+    #[token(r"is")]
+    Is,
 
     #[token(r"=>")]
     Becomes,

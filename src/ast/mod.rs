@@ -15,3 +15,7 @@ pub use template_string::TemplateString;
 
 mod mapping;
 pub use mapping::Mapping;
+
+mod mapping_param;
+pub use mapping_param::MappingParam;
+

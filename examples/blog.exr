@@ -1,0 +1,28 @@
+
+map mode => 'dark'
+
+map bg_color => is mode {
+.. 'dark' => 'stone-800'
+.. 'light' => 'stone-400'
+}
+
+map fg_color => is mode {
+.. 'dark' => 'stone-200'
+.. 'light' => 'stone-800'
+}
+
+'''
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="bg-[bg-color] text-[fg-color]">
+    <h1>Hello world!</h1>
+  </body>
+</html>
+'''
+
+| vim: ft=exr

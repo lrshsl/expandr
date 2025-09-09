@@ -1,6 +1,4 @@
-use std::{collections::HashMap, io::Write as _};
-
-use mapping::MappingParam;
+use mapping_param::MappingParam;
 
 use crate::{errs::ParsingError, log, parser::ParseMode, unexpected_token};
 
@@ -102,7 +100,7 @@ impl<'s> Expr<'s> {
                         ExprToken::Symbol(']') => {
                             break;
                         }
-                        ExprToken::Define | ExprToken::Map => break,
+                        ExprToken::Is | ExprToken::Map => break,
                         ExprToken::String(value) => {
                             args.push(Expr::StrRef(value));
                         }
