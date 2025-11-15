@@ -42,7 +42,6 @@ impl<'s> TemplateString<'s> {
                     parser.switch_mode(ParseMode::Expr);
                     parser.advance();
                     pieces.push(TemplatePiece::Expr(Expr::parse(parser, ParseMode::Raw)?));
-                    parser.switch_mode(ParseMode::Raw);
                 }
                 RawToken::TemplateStringDelimiter(n) if n == number_delimiters => {
                     eprint!("TS_End >> ");

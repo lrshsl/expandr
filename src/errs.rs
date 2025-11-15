@@ -85,7 +85,7 @@ pub fn print_err_ctx(file_ctx: &FileContext) {
 {cur_line}
 {padding}<red>{markers}</>
 "#,
-        padding = " ".repeat(token_start),
+        padding = " ".repeat(token_start - 1),
         markers = "^".repeat(token_len),
     );
 }

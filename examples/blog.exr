@@ -2,8 +2,8 @@
 map mode => 'dark'
 
 map bg_color => is mode {
-.. 'dark' => 'stone-800'
-.. 'light' => 'stone-400'
+   .. 'dark' => 'stone-800'
+   .. 'light' => 'stone-400'
 }
 
 map fg_color => is mode {

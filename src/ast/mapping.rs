@@ -1,4 +1,8 @@
-use crate::{errs::ParsingError, parser::ParseMode};
+use crate::{
+    errs::ParsingError,
+    parser::{ParseMode, Token},
+    unexpected_token,
+};
 
 use super::*;
 
@@ -31,24 +35,31 @@ impl<'s> Parsable<'s> for Mapping<'s> {
         while parser.current_expr().expect("Unfinished map definition") != ExprToken::Becomes {
             params.push(MappingParam::parse(parser)?);
         }
-        parser.advance(); // Skip '=>'
+        parser.skip(Token::Expr(ExprToken::Becomes));
         let translation = match parser.current_expr().expect("Unfinished map definition") {
             ExprToken::String(value) => {
                 parser.advance();
                 eprint!("Output String({value:?})");
-                Expr::StrRef(value)
+                Ok(Expr::StrRef(value))
             }
             ExprToken::TemplateStringDelimiter(n) => {
                 eprint!("Output Template String >> ");
                 let s = TemplateString::parse(parser, n)?;
-                Expr::TemplateString(s)
+                Ok(Expr::TemplateString(s))
             }
             ExprToken::Symbol('[') => {
                 parser.advance();
-                Expr::parse(parser, ParseMode::Expr)?
+                Expr::parse(parser, ParseMode::Expr)
             }
-            tok => panic!("Unexpected token: {tok:?}"),
-        };
+            tok => {
+                unexpected_token!(
+                    found: tok,
+                    expected: [
+                        ExprToken::String(_), ExprToken::TemplateStringDelimiter(_),
+                        ExprToken::Symbol('(')],
+                    @ &parser.expr_lexer.extras);
+            }
+        }?;
         Ok(Self {
             params: Params { entries: params },
             translation,
