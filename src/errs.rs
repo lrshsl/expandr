@@ -1,4 +1,4 @@
-use color_print::{ceprint, ceprintln};
+use color_print::ceprint;
 
 use crate::lexer::{ExprToken, FileContext};
 

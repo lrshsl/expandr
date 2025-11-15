@@ -48,7 +48,7 @@ impl<'s> MappingApplication<'s> {
                         parser.advance();
                     }
                     ExprToken::TemplateStringDelimiter(n) => {
-                        args.push(Expr::TemplateString(TemplateString::parse(parser, n)?));
+                        args.push(TemplateString::parse(parser, n)?.into());
                     }
                     ExprToken::Ident(value) => {
                         args.push(Expr::Ident(value));

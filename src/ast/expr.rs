@@ -1,11 +1,4 @@
-use mapping_param::MappingParam;
-
-use crate::{
-    errs::ParsingError,
-    log,
-    parser::{ParseMode, Token},
-    unexpected_token,
-};
+use crate::{errs::ParsingError, log, parser::ParseMode, unexpected_token};
 
 use super::*;
 
@@ -19,6 +12,10 @@ pub enum Expr<'s> {
     Ident(&'s str),
     LiteralSymbol(char),
 }
+
+derive_from!(TemplateString for Expr<'s>, lt<'s>);
+derive_from!(MappingApplication for Expr<'s>, lt<'s>);
+derive_from!(IsExpr for Expr<'s>, lt<'s>);
 
 impl<'s> std::fmt::Debug for Expr<'s> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -59,12 +56,12 @@ impl<'s> Expr<'s> {
     pub fn parse(parser: &mut Parser<'s>, end_mode: ParseMode) -> Result<Self, ParsingError<'s>> {
         log!("Expr::parse: Starting on {:?}", parser.current_expr());
         let expr = match parser.current_expr().expect("Expr::parse on no token") {
-            ExprToken::Ident(_) => MappingApplication::parse(parser).map(Expr::MappingApplication),
+            ExprToken::Ident(_) => MappingApplication::parse(parser).map(Into::into),
             ExprToken::TemplateStringDelimiter(n) => {
-                TemplateString::parse(parser, n).map(Expr::TemplateString)
+                TemplateString::parse(parser, n).map(Into::into)
             }
             ExprToken::String(value) => Ok(Self::StrRef(value)),
-            ExprToken::Is => IsExpr::parse(parser).map(Expr::IsExpr),
+            ExprToken::Is => IsExpr::parse(parser).map(Into::into),
             tok => {
                 unexpected_token!(
                         found: tok,

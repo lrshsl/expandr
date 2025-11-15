@@ -48,7 +48,7 @@ impl<'s> Parsable<'s> for Ast<'s> {
                     parser.advance()
                 }
                 ExprToken::TemplateStringDelimiter(n) => {
-                    exprs.push(Expr::TemplateString(TemplateString::parse(parser, n)?));
+                    exprs.push(TemplateString::parse(parser, n)?.into());
                     parser.advance();
                 }
                 tok => {

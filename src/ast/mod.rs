@@ -4,6 +4,17 @@ pub(self) use crate::{
     parser::{Parsable, Parser},
 };
 
+#[macro_export]
+macro_rules! derive_from {
+    ($src:ident for $dst:ty, lt<$lt:lifetime>) => {
+        impl<$lt> From<$src<$lt>> for $dst {
+            fn from(s: $src<$lt>) -> Self {
+                <$dst>::$src(s)
+            }
+        }
+    };
+}
+
 mod ast;
 pub use ast::Ast;
 

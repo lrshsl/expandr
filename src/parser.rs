@@ -3,7 +3,7 @@ use logos::Logos;
 use crate::{
     errs::ParsingError,
     lexer::{ExprToken, FileContext, RawToken},
-    log, log_lexer, unexpected_eof, unexpected_token,
+    log_lexer, unexpected_eof, unexpected_token,
 };
 
 pub type LogosError<'s> = <ExprToken<'s> as Logos<'s>>::Error;
