@@ -29,7 +29,7 @@ impl<'s> std::fmt::Debug for Expr<'s> {
                 write!(f, "MappingApplication({name}, {args:?})")
             }
             Self::Ident(s) => write!(f, "Ident({s})"),
-            Self::IsExpr(s) => write!(f, "IsExpr({s:?})"),
+            Self::IsExpr(s) => write!(f, "IsExpr({s:#?})"),
         }
     }
 }
@@ -150,6 +150,9 @@ impl<'s> Expr<'s> {
                     parser.advance();
                 }
                 Ok(Self::MappingApplication { name, args })
+            }
+            ExprToken::TemplateStringDelimiter(n) => {
+                TemplateString::parse(parser, n).map(Expr::TemplateString)
             }
             ExprToken::String(value) => {
                 parser.switch_mode(end_mode);
