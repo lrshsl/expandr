@@ -3,7 +3,7 @@ use logos::Logos;
 use crate::{
     errs::ParsingError,
     lexer::{ExprToken, FileContext, RawToken},
-    log, log_lexer, unexpected_eof,
+    log, log_lexer, unexpected_eof, unexpected_token,
 };
 
 pub type LogosError<'s> = <ExprToken<'s> as Logos<'s>>::Error;
@@ -127,11 +127,11 @@ impl<'s> Parser<'s> {
 
     pub fn skip(&mut self, token: Token<'s>) {
         if self.current() != Some(token) {
-            log!(
-                "Parser::skip: Expected {:?}, got {:?}",
-                token,
-                self.current()
-            )
+            unexpected_token!(
+                found: Some(token),
+                expected: self.current(),
+                @ &self.expr_lexer.extras
+            );
         }
         self.advance();
     }

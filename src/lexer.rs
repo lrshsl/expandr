@@ -66,6 +66,9 @@ pub enum ExprToken<'s> {
     #[token(r"is")]
     Is,
 
+    #[token(r"..")]
+    DDot,
+
     #[token(r"=>")]
     Becomes,
 

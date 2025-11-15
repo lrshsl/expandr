@@ -51,11 +51,29 @@ macro_rules! unexpected_token {
         color_print::ceprint!(
             "\
 |  <bold>Unexpected token</>: \"<italic>{tok:?}</>\"
-|  Expecting one of <italic>{exp:#?}</italic>
+|  Expecting one of <italic>{exp:#?}</>
 
 ",
             tok = $tok,
             exp = [ $(stringify!($expected)),* ]
+        );
+        std::process::exit(1);
+    };
+    (
+        found    : $tok:expr,
+        expected : $expected:expr,
+        @ $ctx:expr
+) => {
+        crate::errs::print_raise_ctx(file!(), line!());
+        crate::errs::print_err_ctx($ctx);
+        color_print::ceprint!(
+            "\
+|  <bold>Unexpected token</>: \"<italic>{tok:?}</>\"
+|  Expecting <italic>{exp:?}</>
+
+",
+            tok = $tok,
+            exp = $expected
         );
         std::process::exit(1);
     };
@@ -74,7 +92,7 @@ macro_rules! unexpected_eof {
 pub fn print_raise_ctx(file: &str, line: u32) {
     color_print::ceprint!(
         "\n
-| <bold><red>Syntax error</red></bold> raised from <blue>{file}:{line}</blue>
+| <bold,red>Syntax error</> raised from <blue>{file}:{line}</>
 |
 "
     );

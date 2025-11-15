@@ -1,6 +1,11 @@
 use mapping_param::MappingParam;
 
-use crate::{errs::ParsingError, log, parser::ParseMode, unexpected_token};
+use crate::{
+    errs::ParsingError,
+    log,
+    parser::{ParseMode, Token},
+    unexpected_token,
+};
 
 use super::*;
 
@@ -11,18 +16,20 @@ pub enum Expr<'s> {
     TemplateString(TemplateString<'s>),
     MappingApplication { name: &'s str, args: Vec<Expr<'s>> },
     Ident(&'s str),
+    IsExpr(IsExpr<'s>),
 }
 
 impl<'s> std::fmt::Debug for Expr<'s> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::TemplateString(s) => s.fmt(f),
             Self::String(s) => write!(f, "String({s})"),
             Self::StrRef(s) => write!(f, "StrRef({s})"),
-            Self::Ident(s) => write!(f, "Ident({s})"),
+            Self::TemplateString(s) => s.fmt(f),
             Self::MappingApplication { name, args } => {
                 write!(f, "MappingApplication({name}, {args:?})")
             }
+            Self::Ident(s) => write!(f, "Ident({s})"),
+            Self::IsExpr(s) => write!(f, "IsExpr({s:?})"),
         }
     }
 }
@@ -36,6 +43,8 @@ impl<'s> Expandable<'s> for Expr<'s> {
             Expr::TemplateString(tmpl_string) => tmpl_string.expand(ctx),
 
             Expr::Ident(ident) => unreachable!("Should not try to expand an ident: {ident}"),
+
+            Expr::IsExpr(is_expr) => is_expr.expand(ctx),
 
             Expr::MappingApplication { name, args } => {
                 let mut matching_mappings = ctx
@@ -98,9 +107,14 @@ impl<'s> Expr<'s> {
                 loop {
                     match parser.current_expr().expect("Expr::parse on no token") {
                         ExprToken::Symbol(']') => {
+                            // Caller needs to advance
                             break;
                         }
-                        ExprToken::Is | ExprToken::Map => break,
+                        ExprToken::Is | ExprToken::Map | ExprToken::Symbol('{' | ',') => {
+                            // Start of new expr
+                            // Do not advance any more
+                            break;
+                        }
                         ExprToken::String(value) => {
                             args.push(Expr::StrRef(value));
                         }
@@ -109,16 +123,32 @@ impl<'s> Expr<'s> {
                         }
                         ExprToken::Symbol('[') => {
                             parser.advance();
-                            args.push(Expr::parse(parser, ParseMode::Expr)?)
+                            args.push(Expr::parse(parser, ParseMode::Expr)?);
+                            parser.skip(Token::Expr(ExprToken::Symbol(']'))); // ']'
                         }
                         ExprToken::Ident(value) => {
                             args.push(Expr::Ident(value));
                         }
-                        _ => todo!(),
+                        tok => {
+                            unexpected_token!(
+                                found: tok,
+                                expected: [
+                                    Symbol(']'),
+                                    String(_),
+                                    TemplateStringDelimiter(_),
+                                    Symbol('['),
+                                    Symbol('{'),
+                                    Ident(_)
+                                ],
+                                @&parser.expr_lexer.extras
+                            );
+                        }
                     };
                 }
-                parser.switch_mode(end_mode);
-                parser.advance();
+                if end_mode != parser.mode {
+                    parser.switch_mode(end_mode);
+                    parser.advance();
+                }
                 Ok(Self::MappingApplication { name, args })
             }
             ExprToken::String(value) => {
@@ -126,10 +156,14 @@ impl<'s> Expr<'s> {
                 parser.advance();
                 Ok(Self::StrRef(value))
             }
+            ExprToken::Is => {
+                parser.advance();
+                Ok(Expr::IsExpr(IsExpr::parse(parser)?))
+            }
             tok => {
                 unexpected_token!(
                         found: tok,
-                        expected: [ExprToken::String(_), ExprToken::Ident(_)],
+                        expected: [String, Ident, Is],
                         @&parser.expr_lexer.extras
                 );
             }

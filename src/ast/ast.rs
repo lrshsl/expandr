@@ -41,6 +41,7 @@ impl<'s> Parsable<'s> for Ast<'s> {
                 ExprToken::Symbol('[') => {
                     parser.advance();
                     exprs.push(Expr::parse(parser, ParseMode::Expr)?);
+                    parser.skip(Token::Expr(ExprToken::Symbol(']'))); // ']'
                 }
                 ExprToken::String(strval) => {
                     exprs.push(Expr::StrRef(strval));

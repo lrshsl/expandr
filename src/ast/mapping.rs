@@ -49,14 +49,16 @@ impl<'s> Parsable<'s> for Mapping<'s> {
             }
             ExprToken::Symbol('[') => {
                 parser.advance();
-                Expr::parse(parser, ParseMode::Expr)
+                let expr = Expr::parse(parser, ParseMode::Expr);
+                parser.skip(Token::Expr(ExprToken::Symbol(']'))); // ']'
+                expr
             }
             tok => {
                 unexpected_token!(
                     found: tok,
                     expected: [
-                        ExprToken::String(_), ExprToken::TemplateStringDelimiter(_),
-                        ExprToken::Symbol('(')],
+                        String(_), TemplateStringDelimiter(_),
+                        Symbol('(' | '[')],
                     @ &parser.expr_lexer.extras);
             }
         }?;

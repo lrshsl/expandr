@@ -1,15 +1,17 @@
 
 map mode => 'dark'
 
-map bg_color => is mode {
+map color => [is mode {}]
+
+map bg_color => [is mode {
    .. 'dark' => 'stone-800'
    .. 'light' => 'stone-400'
-}
+}]
 
-map fg_color => is mode {
+map fg_color => [is mode {
 .. 'dark' => 'stone-200'
 .. 'light' => 'stone-800'
-}
+}]
 
 '''
 <!doctype html>
