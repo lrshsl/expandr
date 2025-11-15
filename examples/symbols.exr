@@ -1,0 +1,6 @@
+
+map calc [a] + [b] => 'Addition([a], [b])'
+
+[calc '40' + '2']
+
+| vim: ft=exr

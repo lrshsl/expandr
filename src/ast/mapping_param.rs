@@ -1,6 +1,7 @@
 use crate::{
     ast::{Expr, ExprToken, Parsable, Parser},
     errs::ParsingError,
+    parser::Token,
     unexpected_eof, unexpected_token,
 };
 
@@ -11,6 +12,7 @@ pub enum MappingParam<'s> {
         name: &'s str,
         rep: Option<Repetition>,
     },
+    Symbol(char),
 }
 
 impl MappingParam<'_> {
@@ -21,6 +23,9 @@ impl MappingParam<'_> {
                 Expr::String(_) | Expr::TemplateString(_) | Expr::MappingApplication { .. },
             ) => true,
             (Self::Ident(self_value), Expr::Ident(other_value)) => self_value == other_value,
+            (Self::Symbol(self_value), Expr::LiteralSymbol(other_value)) => {
+                self_value == other_value
+            }
             _ => false,
         }
     }
@@ -64,17 +69,26 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
                         unexpected_token!(
                                 found: tok,
                                 expected: [ExprToken::Symbol('*' | '?' | '{' | ']')],
-                                @&parser.expr_lexer.extras
+                                @ &parser.expr_lexer.extras
                         );
                     }
                 };
 
-                assert_eq!(parser.current_expr(), Some(ExprToken::Symbol(']')));
-                parser.advance();
+                parser.skip(Token::Expr(ExprToken::Symbol(']')));
 
                 Ok(Self::ParamExpr { name, rep })
             }
-            tok => todo!("{tok:?}"),
+            ExprToken::Symbol(s) if s != '[' => {
+                parser.advance();
+                Ok(Self::Symbol(s))
+            }
+            tok => {
+                unexpected_token!(
+                    found: tok,
+                    expected: [Ident, Expr, Symbol],
+                    @ &parser.expr_lexer.extras
+                );
+            }
         }
     }
 }

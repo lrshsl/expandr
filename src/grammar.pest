@@ -1,3 +1,5 @@
+// Note: This is probably outdated
+
 prog = {
     SOI ~ ( mapping | varexpr )* ~ EOI
 }

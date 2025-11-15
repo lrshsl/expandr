@@ -21,3 +21,6 @@ pub use mapping::Mapping;
 
 mod mapping_param;
 pub use mapping_param::MappingParam;
+
+mod mapping_application;
+pub use mapping_application::MappingApplication;

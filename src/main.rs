@@ -14,7 +14,7 @@ mod lexer;
 mod parser;
 
 fn main() {
-    let filename = "examples/blog.exr";
+    let filename = "examples/symbols.exr";
     let source = fs::read_to_string(filename).expect("Could not read file");
 
     let _ = remove_file("output/tokens");
