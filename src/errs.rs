@@ -1,4 +1,4 @@
-use color_print::ceprintln;
+use color_print::{ceprint, ceprintln};
 
 use crate::lexer::{ExprToken, FileContext};
 
@@ -46,13 +46,17 @@ macro_rules! unexpected_token {
         expected : [ $($expected:pat_param ),* $(,)? ],
         @ $ctx:expr
 ) => {
-        color_print::ceprintln!("> <red>Error</> occurred in <blue>{}:{}</>", file!(), line!());
-        color_print::ceprintln!(
-            "\t<bold>Unexpected token: {tok:?}\n\tExpected one of {exp:?}</bold>\n",
+        crate::errs::print_raise_ctx(file!(), line!());
+        crate::errs::print_err_ctx($ctx);
+        color_print::ceprint!(
+            "\
+|  <bold>Unexpected token</>: \"<italic>{tok:?}</>\"
+|  Expecting one of <italic>{exp:#?}</italic>
+
+",
             tok = $tok,
             exp = [ $(stringify!($expected)),* ]
         );
-        crate::errs::print_err_ctx($ctx);
         std::process::exit(1);
     };
 }
@@ -60,11 +64,20 @@ macro_rules! unexpected_token {
 #[macro_export]
 macro_rules! unexpected_eof {
     ( $ctx:expr ) => {{
-        color_print::ceprintln!("> <red>Error</> occurred in {}:{}\n", file!(), line!());
-        color_print::ceprintln!("Unexpected end of file\n");
+        crate::errs::print_raise_ctx(file!(), line!());
         crate::errs::print_err_ctx($ctx);
+        color_print::ceprint!("|  <bold>Unexpected end of file</>\n");
         std::process::exit(1);
     }};
+}
+
+pub fn print_raise_ctx(file: &str, line: u32) {
+    color_print::ceprint!(
+        "\n
+| <bold><red>Syntax error</red></bold> raised from <blue>{file}:{line}</blue>
+|
+"
+    );
 }
 
 pub fn print_err_ctx(file_ctx: &FileContext) {
@@ -80,11 +93,12 @@ pub fn print_err_ctx(file_ctx: &FileContext) {
 
     let cur_line = content.lines().nth(*line - 1).expect("Line does not exist");
 
-    ceprintln!(
-        r#"<blue>{filename}:{line}:{token_start}</> Error at '{cur_slice}'
-{cur_line}
-{padding}<red>{markers}</>
-"#,
+    ceprint!(
+        "\
+|  <blue>{filename}:{line}:{token_start}</> at '{cur_slice}'
+|  <italic>{cur_line}</>
+|  {padding}<red>{markers}</>
+",
         padding = " ".repeat(token_start - 1),
         markers = "^".repeat(token_len),
     );
