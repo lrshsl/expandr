@@ -68,6 +68,7 @@ impl<'s> TemplateString<'s> {
                     eprint!("'{}' ", parser.raw_lexer.slice());
                     pieces.push(TemplatePiece::StrVal(parser.raw_lexer.slice()));
                 }
+                RawToken::IgnoredLineContinuation => unreachable!(),
             }
         }
         parser.switch_mode(ParseMode::Expr);

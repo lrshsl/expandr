@@ -1,32 +1,19 @@
-use logos::{Lexer, Logos};
+use logos::{Lexer, Logos, Skip};
 
 use crate::lexer::FileContext;
-
-/// Helper function to update column for simple, non-multiline tokens
-
-fn parse_escaped<'s>(lex: &mut Lexer<'s, RawToken<'s>>) -> Result<char, ()> {
-    let slice = lex.slice();
-
-    // Move past the leading '\'
-    let escaped_char = slice.chars().nth(1).unwrap();
-    lex.extras.column += slice.len();
-
-    Ok(match escaped_char {
-        'n' => '\n',
-        'r' => '\r',
-        't' => '\t',
-        '\\' => '\\',
-        '[' => '[',   // Escaped opening bracket
-        '\'' => '\'', // Escaped single quote
-        c => c,
-    })
-}
 
 #[derive(Logos, Debug, PartialEq, Clone, Copy)]
 #[logos(extras = FileContext<'s>)]
 pub enum RawToken<'s> {
-    // 1. RawPart: Any sequence that can be used directly. It must not contain '[', '\'', '\', or
-    //    newline characters.
+    #[regex(r"\\(\n|\r\n)", |lex| {
+        lex.extras.line += 1;
+        lex.extras.column = 1;
+        Skip
+    }, priority = 4)]
+    IgnoredLineContinuation,
+
+    // RawPart: Any sequence that can be used directly. It must not contain escape codes or
+    // newline characters.
     #[regex(r#"[^\[\\'\n\r]+"#, |lex| {
         lex.extras.column += lex.slice().len();
         lex.slice()
@@ -51,4 +38,22 @@ pub enum RawToken<'s> {
         n
     })]
     TemplateStringDelimiter(usize),
+}
+
+fn parse_escaped<'s>(lex: &mut Lexer<'s, RawToken<'s>>) -> char {
+    let slice = lex.slice();
+
+    // Move past the leading '\'
+    let escaped_char = slice.chars().nth(1).unwrap();
+    lex.extras.column += slice.len();
+
+    match escaped_char {
+        'n' => '\n',
+        'r' => '\r',
+        't' => '\t',
+        '\\' => '\\',
+        '[' => '[',   // Escaped opening bracket
+        '\'' => '\'', // Escaped single quote
+        c => c,
+    }
 }

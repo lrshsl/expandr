@@ -1,6 +1,8 @@
 
 map calc [a] + [b] => 'Addition([a], [b])\n'
-map calc [a] * [b] => 'Multiplication([a], [b])\n'
+map calc [a] * [b] => '\
+\
+Multiplication([a], [b])\n'
 
 map tab [x] => '\t[x]'
 
