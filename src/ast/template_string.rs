@@ -42,6 +42,7 @@ impl<'s> TemplateString<'s> {
                 }
                 RawToken::Newline => {
                     pieces.push(TemplatePiece::Char('\n'));
+                    parser.advance();
                 }
                 RawToken::Escaped(ch) => {
                     match ch {

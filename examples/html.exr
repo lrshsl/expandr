@@ -7,36 +7,36 @@ map doctype => '<!DOCTYPE html>'
 map language [lang] => '<head lang="[lang]">'
 
 map head [title] =>
-	''''
+	''''\
 <head>
 	 <meta charset="UTF-8">
 	 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	 <title>[title]</title>
-</head>
+</head>\
 	''''
 
 map tag [tag] style [style] contains [child] =>
-	''''
+	''''\
 <[tag] style="[style]">
 	[child]
-</[tag]>
-	''''
+</[tag]>\
+''''
 
 |map tag [tag] bg [bg] [child] => [tag [tag] style "background: [bg]" contains [child]]
 
 map tag [tag] bg [bg] [child] =>
-	''''
+	''''\
 <[tag] style="background=[bg]">
 	[child]
-</[tag]>
-	''''
+</[tag]>\
+''''
 
 map tag [tag] [child] =>
-	''''
+	''''\
 <[tag]>
 	[child]
-</[tag]>
-	''''
+</[tag]>\
+''''
 
 |--------------------------------|
 |      Application Section       |
