@@ -9,7 +9,15 @@ pub struct TemplateString<'s> {
 
 impl<'s> Expandable<'s> for TemplateString<'s> {
     fn expand(&self, ctx: &'s ProgramContext) -> String {
-        self.pieces.iter().map(|piece| piece.expand(ctx)).collect()
+        let mut result = String::new();
+        for piece in self.pieces.iter() {
+            match piece {
+                &TemplatePiece::Char(ch) => result.push(ch),
+                TemplatePiece::StrVal(s) => result.push_str(s),
+                TemplatePiece::Expr(expr) => result.push_str(&expr.expand(ctx)),
+            }
+        }
+        result
     }
 }
 
@@ -32,9 +40,18 @@ impl<'s> TemplateString<'s> {
                     pieces.push(TemplatePiece::StrVal(s));
                     parser.advance();
                 }
-                RawToken::EscapedOpeningBracket => {
-                    eprint!("[");
-                    pieces.push(TemplatePiece::StrVal("["));
+                RawToken::Newline => {
+                    pieces.push(TemplatePiece::Char('\n'));
+                }
+                RawToken::Escaped(ch) => {
+                    match ch {
+                        ch @ ('\n' | '\t' | '\\' | '\'' | '[') => {
+                            pieces.push(TemplatePiece::Char(ch))
+                        }
+                        '\r' => {}
+                        c => panic!("Unknown escape sequence: {c:?}"),
+                    }
+                    eprint!("{ch}");
                     parser.advance();
                 }
                 RawToken::ExprStart => {
@@ -44,7 +61,7 @@ impl<'s> TemplateString<'s> {
                     pieces.push(TemplatePiece::Expr(Expr::parse(parser, ParseMode::Raw)?));
                 }
                 RawToken::TemplateStringDelimiter(n) if n == number_delimiters => {
-                    eprint!("TS_End >> ");
+                    eprint!("''' >> ");
                     break;
                 }
                 RawToken::TemplateStringDelimiter(_) => {
@@ -63,14 +80,6 @@ impl<'s> TemplateString<'s> {
 #[derive(Clone, Debug)]
 pub enum TemplatePiece<'s> {
     StrVal(&'s str),
+    Char(char),
     Expr(Expr<'s>),
-}
-
-impl<'s> Expandable<'s> for TemplatePiece<'s> {
-    fn expand(&self, ctx: &'s ProgramContext) -> String {
-        match self {
-            TemplatePiece::StrVal(s) => s.to_string(),
-            TemplatePiece::Expr(e) => e.expand(ctx),
-        }
-    }
 }
