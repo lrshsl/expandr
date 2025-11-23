@@ -14,7 +14,7 @@ mod lexer;
 mod parser;
 
 fn main() {
-    let filename = "examples/blog.exr";
+    let filename = "examples/asm.exr";
     let source = fs::read_to_string(filename).expect("Could not read file");
 
     let _ = remove_file("output/tokens");
@@ -31,7 +31,7 @@ fn main() {
     for expr in ast.exprs {
         output.push_str(&expr.expand(&ast.ctx));
     }
-    let output_file = fs::File::create("output/out.html").expect("Could not open file output/out");
+    let output_file = fs::File::create("output/out").expect("Could not open file output/out");
     write!(&output_file, "{output}").expect("Could not write to file");
     println!("{output}")
 }

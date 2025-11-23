@@ -1,0 +1,79 @@
+map msg => 'Hi there'
+map msglen => '9'
+map arch => '64bit'
+
+map reg [x] => [is arch {
+   .. '16bit' => '[x]'
+   .. '32bit' => 'e[x]'
+   .. '64bit' => 'r[x]'
+}]
+
+map var [name] [value] => '''
+[name] db [value]
+'''
+
+map fn [name] [children] => '''
+[name]: [children]
+'''
+
+map print [m] [len] => '''
+   ; print [m]
+   mov [reg 'ax'], 1
+   mov [reg 'di'], 1
+   mov [reg 'si'], [m]
+   mov [reg 'dx'], [len]
+   syscall
+'''
+
+'''
+section .data
+   [var 'msg' '"[msg]",0xa']
+
+section .text
+   global _start
+
+[fn 'exit' ''
+   mov [reg 'ax'], 60
+   xor [reg 'di'], [reg 'di'] ; status=0
+   syscall
+'']
+
+[fn '_start'
+   ''[print 'msg' [msglen]]
+   call exit
+   ''
+]
+'''
+
+
+
+|| Produces:
+|| section .data
+||    msg db "Hi there",0xa
+||
+|| section .text
+||    global _start
+||
+|| exit:
+||    mov rax, 60
+||    xor rdi, rdi       ; status=0
+||    syscall
+||
+|| _start:
+||    ; print msg
+||    mov rax, 1
+||    mov rdi, 1
+||    mov rsi, msg
+||    mov rdx, 9
+||    syscall
+||
+||    call exit
+
+|| Compile with:
+|| ```
+|| nasm -felf64 output/out -o output/out.o
+|| ld output/out.o -o output/bin
+|| ./output/bin
+|| ```
+
+| vim: ft=exr
