@@ -21,6 +21,7 @@ impl<'s> Parsable<'s> for IsExpr<'s> {
     /// }]
     /// ```
     fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>> {
+        parser.skip(Token::Expr(ExprToken::Is));
         let cond_expr = Expr::parse(parser, ParseMode::Expr)?;
         parser.skip(Token::Expr(ExprToken::Symbol('{')));
         let mut branches = Vec::new();
