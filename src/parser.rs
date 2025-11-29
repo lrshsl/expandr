@@ -158,7 +158,6 @@ mod parser_tests {
         let mut p = Parser::new(SRC, None);
 
         // Expr: map
-        p.advance();
         assert_eq!(p.slice(), "map");
         assert_eq!(p.current(), Some(Token::Expr(ExprToken::Map)));
 
@@ -231,7 +230,7 @@ mod parser_tests {
     }
 
     #[test]
-    fn parser_lexer_intgration_test() {
+    fn parser_lexer_integration_test() {
         let src = r#"
 map foo => 'bar'
 
@@ -249,7 +248,6 @@ map bar [param] => '''nested [tmplstr 'str']'''
         p.switch_mode(ParseMode::Expr);
 
         // ---- First line: map foo => 'bar' ----
-        p.advance();
         assert_eq!(p.current_expr(), Some(ExprToken::Map));
         assert_eq!(p.slice(), "map");
         assert_eq!(p.expr_lexer.extras.cur_slice, "map");
