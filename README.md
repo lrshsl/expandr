@@ -4,9 +4,36 @@
 
  > A language that compiles itself when you run it.
 
-Standalone macro system, where each file 'expands' into a string.
-Can be use to programmatically produce strings of any kind, e.g. you can expand to HTML or an elf executable or whatever else you can think of.
+
+The idea of this project is to create .. something? .. that can be thought of as:
+- a templating engine
+- a macro system
+- a programming language
+
+Where each source code file produces a string when _expanded_. Possible use cases include:
+
+- Adding variables / functions to config files
+- Generate verbose / repeating code
+- Generate C code / assembly / directly an executable
+
+You can find examples in the [examples](examples/) directory.
 
 
-The idea is to create some kind of programming language that compiles itself when you run it.
+## Progress
+
+- [ ] Finish implementing repetition operators (`*`, `+`, `?`)
+- [ ] Implement scopes
+    - [ ] function scope `>` global scope
+
+
+Extend core language:
+
+- [ ] Add number type(s) and arithmetic functions (WIP)
+- [ ] Namespaces / modules
+    - [ ] Importing
+    - [ ] `pub` / `priv`
+    - [ ] Explicit interfaces?
+- [ ] Closures
+- [ ] Pattern matching
+- Optimizations (later)
 

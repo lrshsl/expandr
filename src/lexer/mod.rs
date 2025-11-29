@@ -38,7 +38,7 @@ mod tests {
 
     #[test]
     fn idents() {
-        const INPUT: &'static str = " ident i_d3n_t _1D";
+        const INPUT: &'static str = " ident i_d3n_t _D _ _1 42-1 a-a _a-8--D";
         let mut lexer = ExprToken::lexer_with_extras(
             INPUT,
             FileContext {
@@ -48,7 +48,14 @@ mod tests {
         );
         assert_eq!(lexer.next(), Some(Ok(ExprToken::Ident("ident"))));
         assert_eq!(lexer.next(), Some(Ok(ExprToken::Ident("i_d3n_t"))));
-        assert_eq!(lexer.next(), Some(Ok(ExprToken::Ident("_1D"))));
+        assert_eq!(lexer.next(), Some(Ok(ExprToken::Ident("_D"))));
+        assert_eq!(lexer.next(), Some(Ok(ExprToken::Ident("_"))));
+        assert_eq!(lexer.next(), Some(Ok(ExprToken::Ident("_1"))));
+        assert_eq!(lexer.next(), Some(Ok(ExprToken::Integer(42))));
+        assert_eq!(lexer.next(), Some(Ok(ExprToken::Symbol('-'))));
+        assert_eq!(lexer.next(), Some(Ok(ExprToken::Integer(1))));
+        assert_eq!(lexer.next(), Some(Ok(ExprToken::Ident("a-a"))));
+        assert_eq!(lexer.next(), Some(Ok(ExprToken::Ident("_a-8--D"))));
         assert_eq!(lexer.next(), None);
     }
 }

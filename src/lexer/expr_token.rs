@@ -6,38 +6,48 @@ use crate::lexer::FileContext;
 #[logos(extras = FileContext<'s>)]
 pub enum ExprToken<'s> {
     // Keywords
-    #[token(r"map")]
+    #[token(r"map", priority = 5)]
     Map,
 
-    #[token(r"is")]
+    #[token(r"is", priority = 5)]
     Is,
 
-    #[token(r"..")]
+    #[token(r"..", priority = 5)]
     DDot,
 
-    #[token(r"=>")]
+    #[token(r"=>", priority = 5)]
     Becomes,
 
-    // Primitives
-    #[regex(r"(_|[[:alpha:]])[[:word:]]*")]
+    #[regex(r"[0-9]+", |lex| lex.slice().parse::<i64>().expect("Invalid integer?"), priority = 4)]
+    Integer(i64),
+
+    // Identifiers:
+    // 1. Start with [A-Za-z_]
+    // 2. Followed by zero or more groups of:
+    //    a. A safe char [A-Za-z0-9_]
+    //    OR
+    //    b. A hyphen (or hyphens) -+, which MUST be followed by a safe char [A-Za-z0-9_]
+    //
+    // Note: '_' yields a Ident("_"), not a Symbol('_')
+    #[regex(r"[A-Za-z_]([A-Za-z0-9_]|(-+[A-Za-z0-9_]))*", priority = 3)]
     Ident(&'s str),
 
     #[regex(r#""([^"\\]|\\["\\bnfrt])*""#, |lex| {
         let slice = lex.slice();
         &slice[1..(slice.len() - 1)]
-    })]
+    }, priority = 4)]
     String(&'s str),
 
     #[regex(r#"(')+"#, |lex| {
         lex.slice().len()
-    })]
+    }, priority = 4)]
     TemplateStringDelimiter(usize),
 
     // Misc
     #[regex(r#"[ \t\r\f]+"#, |lex| {
         lex.extras.column += lex.slice().len();
         Skip
-    })]
+    }, priority = 2)]
     Whitespace,
 
     #[regex(r"\n+", |lex| {
@@ -48,22 +58,22 @@ pub enum ExprToken<'s> {
     }, priority = 10)]
     Newline,
 
-    #[regex(r"\|\|[^\n]*(\|\||\n)", priority = 3, callback = |lex| {
+    #[regex(r"\|\|[^\n]*(\|\||\n)", |lex| {
         if lex.slice().chars().rev().next() == Some('\n') {
             lex.extras.line += 1;
             lex.extras.column = 1;
         }
         Skip
-    })]
+    }, priority = 3)]
     DocComment,
 
-    #[regex(r"\|[^\n|]*(\||\n)", priority = 2, callback = |lex| {
+    #[regex(r"\|[^\n|]*(\||\n)", |lex| {
         if lex.slice().chars().rev().next() == Some('\n') {
             lex.extras.line += 1;
             lex.extras.column = 1;
         }
         Skip
-    })]
+    }, priority = 2)]
     Comment,
 
     #[regex(r".", |lex| lex.slice().chars().next().expect("Wrong: empty symbol"), priority = 1)]
