@@ -1,4 +1,4 @@
-use crate::{errs::ParsingError, log, parser::ParseMode, unexpected_token};
+use crate::{errs::ParsingError, expand::Expanded, log, parser::ParseMode, unexpected_token};
 
 use super::*;
 
@@ -7,6 +7,7 @@ pub enum Expr<'s> {
     String(String),
     StrRef(&'s str),
     TemplateString(TemplateString<'s>),
+    Integer(i64),
     MappingApplication(MappingApplication<'s>),
     IsExpr(IsExpr<'s>),
     Ident(&'s str),
@@ -23,6 +24,7 @@ impl<'s> std::fmt::Debug for Expr<'s> {
             Self::String(s) => write!(f, "String({s})"),
             Self::StrRef(s) => write!(f, "StrRef({s})"),
             Self::TemplateString(s) => s.fmt(f),
+            Self::Integer(s) => s.fmt(f),
             Self::MappingApplication(MappingApplication { name, args }) => {
                 write!(f, "MappingApplication({name}, {args:?})")
             }
@@ -34,12 +36,15 @@ impl<'s> std::fmt::Debug for Expr<'s> {
 }
 
 impl<'s> Expandable<'s> for Expr<'s> {
-    fn expand(&self, ctx: &'s ProgramContext) -> String {
+    fn expand(self, ctx: &'s ProgramContext) -> Expanded {
+        use crate::expand::Expanded::{Int, Str};
+
         match self {
-            Expr::String(val) => val.clone(),
-            Expr::StrRef(val) => val.to_string(),
+            Expr::String(val) => Str(val),
+            Expr::StrRef(val) => Str(val.to_string()),
 
             Expr::TemplateString(tmpl_string) => tmpl_string.expand(ctx),
+            Expr::Integer(val) => Int(val),
 
             Expr::IsExpr(is_expr) => is_expr.expand(ctx),
             Expr::MappingApplication(mapping_application) => mapping_application.expand(ctx),

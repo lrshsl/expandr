@@ -22,8 +22,14 @@ impl<'s> Params<'s> {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Mapping<'s> {
+#[derive(Debug, Clone)]
+pub enum Mapping<'s> {
+    Simple(Expr<'s>),
+    Parameterized(ParameterizedMapping<'s>),
+}
+
+#[derive(Debug, Clone)]
+pub struct ParameterizedMapping<'s> {
     pub params: Params<'s>,
     pub translation: Expr<'s>,
 }
@@ -62,9 +68,13 @@ impl<'s> Parsable<'s> for Mapping<'s> {
                     @ &parser.expr_lexer.extras);
             }
         }?;
-        Ok(Self {
-            params: Params { entries: params },
-            translation,
+        Ok(if params.is_empty() {
+            Self::Simple(translation)
+        } else {
+            Self::Parameterized(ParameterizedMapping {
+                params: Params { entries: params },
+                translation,
+            })
         })
     }
 }

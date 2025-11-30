@@ -1,17 +1,20 @@
 use crate::{
     ast::{
-        mapping, Expandable, Expr, ExprToken, Mapping, MappingParam, Parsable, Parser,
-        ProgramContext, TemplateString,
+        Expandable, Expr, ExprToken, Mapping, MappingParam, Parser, ProgramContext, TemplateString,
     },
+    builtins::get_builtin,
     errs::ParsingError,
+    expand::Expanded,
     parser::{ParseMode, Token},
     unexpected_token,
 };
 
+pub type Args<'s> = Vec<Expr<'s>>;
+
 #[derive(Clone)]
 pub struct MappingApplication<'s> {
     pub name: &'s str,
-    pub args: Vec<Expr<'s>>,
+    pub args: Args<'s>,
 }
 
 impl<'s> MappingApplication<'s> {
@@ -79,12 +82,18 @@ impl<'s> MappingApplication<'s> {
 }
 
 impl<'s> Expandable<'s> for MappingApplication<'s> {
-    fn expand(&self, ctx: &'s ProgramContext) -> String {
+    fn expand(self, ctx: &'s ProgramContext) -> Expanded {
+        if let Some(builtin) = get_builtin(self.name) {
+            return builtin(&self.args);
+        }
         let mut matching_mappings = ctx
             .get(self.name)
             .expect(&format!("Mapping not found: {}", self.name))
             .iter()
-            .filter(|m| m.params.matches_args(&self.args));
+            .filter(|m| match m {
+                Mapping::Parameterized(m) => m.params.matches_args(&self.args),
+                Mapping::Simple(_) => self.args.len() == 0,
+            });
 
         let Some(mapping) = matching_mappings.next() else {
             panic!(
@@ -93,37 +102,39 @@ impl<'s> Expandable<'s> for MappingApplication<'s> {
             );
         };
         if let Some(second_mapping) = matching_mappings.next() {
-            panic!("Found several matching mappings: {mapping:?} and {second_mapping:?} (and possibly more) match for {}, {:?}", self.name, self.args)
+            panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for {}, {:?}", self.name, self.args)
         }
 
-        let mut args = self.args.iter();
-        let mut tmp_ctx = ctx.clone();
-        for param in &mapping.params.entries {
-            match param {
-                MappingParam::ParamExpr { name, rep } => match rep {
-                    None => {
-                        let next_arg = &args
-                            .next()
-                            .expect("Not enough args for the given parameters");
+        match mapping {
+            Mapping::Simple(translation) => translation.clone().expand(ctx),
+            Mapping::Parameterized(mapping) => {
+                let mut args = self.args.into_iter();
+                let mut tmp_ctx = ctx.clone();
+                for param in &mapping.params.entries {
+                    match param {
+                        MappingParam::ParamExpr { name, rep } => match rep {
+                            None => {
+                                let next_arg = args
+                                    .next()
+                                    .expect("Not enough args for the given parameters");
 
-                        let new_entry = Mapping {
-                            params: mapping::Params { entries: vec![] },
-                            translation: Expr::String(next_arg.expand(ctx)),
-                        };
+                                let new_entry = Mapping::Simple(match next_arg.expand(ctx) {
+                                    Expanded::Str(x) => Expr::String(x),
+                                    Expanded::Int(x) => Expr::Integer(x),
+                                });
 
-                        tmp_ctx
-                            .entry(name)
-                            .and_modify(|e| e.push(new_entry.clone()))
-                            .or_insert(vec![new_entry]);
+                                tmp_ctx.entry(name).or_default().push(new_entry);
+                            }
+                            Some(_) => todo!(),
+                        },
+                        MappingParam::Symbol(_) | MappingParam::Ident(_) => {
+                            args.next();
+                        }
                     }
-                    Some(_) => todo!(),
-                },
-                MappingParam::Symbol(_) | MappingParam::Ident(_) => {
-                    args.next();
                 }
+
+                mapping.translation.clone().expand(&tmp_ctx)
             }
         }
-
-        mapping.translation.expand(&tmp_ctx)
     }
 }

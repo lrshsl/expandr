@@ -7,14 +7,17 @@ use ast::Ast;
 use expand::Expandable as _;
 use parser::{Parsable as _, Parser};
 
+use crate::expand::Expanded;
+
 mod ast;
+mod builtins;
 mod errs;
 mod expand;
 mod lexer;
 mod parser;
 
 fn main() {
-    let filename = "examples/asm.exr";
+    let filename = "examples/arithmetic.exr";
     let source = fs::read_to_string(filename).expect("Could not read file");
 
     let _ = remove_file("output/tokens");
@@ -29,7 +32,7 @@ fn main() {
     // Expand
     let mut output = String::new();
     for expr in ast.exprs {
-        output.push_str(&expr.expand(&ast.ctx));
+        output.push_str(&expr.expand(&ast.ctx).as_string())
     }
     let output_file = fs::File::create("output/out").expect("Could not open file output/out");
     write!(&output_file, "{output}").expect("Could not write to file");
