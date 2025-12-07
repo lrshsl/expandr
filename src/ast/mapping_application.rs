@@ -61,6 +61,10 @@ impl<'s> MappingApplication<'s> {
                         args.push(Expr::LiteralSymbol(s));
                         parser.advance();
                     }
+                    ExprToken::Integer(int) => {
+                        args.push(Expr::Integer(int));
+                        parser.advance();
+                    }
                     tok => {
                         unexpected_token!(
                             found: tok,
@@ -84,7 +88,7 @@ impl<'s> MappingApplication<'s> {
 impl<'s> Expandable<'s> for MappingApplication<'s> {
     fn expand(self, ctx: &'s ProgramContext) -> Expanded {
         if let Some(builtin) = get_builtin(self.name) {
-            return builtin(&self.args);
+            return builtin(ctx, &self.args);
         }
         let mut matching_mappings = ctx
             .get(self.name)

@@ -34,7 +34,7 @@ impl Expanded {
     pub fn as_string(self) -> String {
         match self {
             Self::Str(s) => s,
-            Self::Int(i) => format!("[{i}]"),
+            Self::Int(i) => format!("{i}"),
         }
     }
 }

@@ -20,7 +20,10 @@ impl MappingParam<'_> {
         match (self, arg) {
             (
                 Self::ParamExpr { .. },
-                Expr::String(_) | Expr::TemplateString(_) | Expr::MappingApplication { .. },
+                Expr::Integer(_)
+                | Expr::String(_)
+                | Expr::TemplateString(_)
+                | Expr::MappingApplication { .. },
             ) => true,
             (Self::Ident(self_value), Expr::Ident(other_value)) => self_value == other_value,
             (Self::Symbol(self_value), Expr::LiteralSymbol(other_value)) => {
