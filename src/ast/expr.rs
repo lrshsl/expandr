@@ -67,6 +67,16 @@ impl<'s> Expr<'s> {
             }
             ExprToken::String(value) => Ok(Self::StrRef(value)),
             ExprToken::Is => IsExpr::parse(parser).map(Into::into),
+            ExprToken::Integer(n) => {
+                parser.advance();
+                Ok(Expr::Integer(n))
+            }
+            ExprToken::Symbol('[') => {
+                parser.advance();
+                let expr = Expr::parse(parser, ParseMode::Expr)?;
+                parser.skip(crate::parser::Token::Expr(ExprToken::Symbol(']')));
+                Ok(expr)
+            }
             tok => {
                 unexpected_token!(
                         found: tok,

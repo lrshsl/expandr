@@ -7,6 +7,7 @@ elseif exists('b:current_syntax')
 	finish
 endif
 
+syn match		exrIdent					/[A-Za-z_]([A-Za-z0-9_]|(-\+[A-Za-z0-9_]))*/
 syn keyword		exrDefine				map df
 syn match		exrBecomes				'=>'
 syn match		exrStore					'<-'
@@ -30,6 +31,8 @@ syn match		exrExpr					"]"								contained
 
 syn match		exrComment				"||[^|]*\(\n\|||\)\||[^|]*\(\n\||\)"
 
+
+hi	def link		exrIdent					Identifier
 
 hi	def link		ExrOp						Operator
 hi def link		ExrKw						Keyword
