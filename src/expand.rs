@@ -20,7 +20,7 @@ impl PartialEq for Expanded {
             (Self::Str(a), Self::Str(b)) => a == b,
             (Self::Int(a), Self::Int(b)) => a == b,
             (Self::Int(i), Self::Str(s)) | (Self::Str(s), Self::Int(i)) => {
-                if s.len() != 0 || *i < 0 || *i > (u32::MAX as i64) {
+                if !s.is_empty() || *i < 0 || *i > (u32::MAX as i64) {
                     false
                 } else {
                     s.chars().next() == char::from_u32(*i as u32)
@@ -31,7 +31,7 @@ impl PartialEq for Expanded {
 }
 
 impl Expanded {
-    pub fn as_string(self) -> String {
+    pub fn into_string(self) -> String {
         match self {
             Self::Str(s) => s,
             Self::Int(i) => format!("{i}"),

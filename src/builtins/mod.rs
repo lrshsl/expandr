@@ -7,12 +7,12 @@ type BuiltinFn = dyn Fn(&ProgramContext, &Args) -> Expanded;
 
 pub fn get_builtin(name: &str) -> Option<Box<BuiltinFn>> {
     Some(Box::new(match name {
-        "m" => builtins::evaluate_math,
+        "m" => builtin_implementations::evaluate_math,
         &_ => return None,
     }))
 }
 
-mod builtins {
+mod builtin_implementations {
     use crate::{
         ast::{Args, Expr},
         expand::{Expandable as _, Expanded, ProgramContext},

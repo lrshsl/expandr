@@ -59,7 +59,7 @@ pub enum ExprToken<'s> {
     Newline,
 
     #[regex(r"\|\|[^\n]*(\|\||\n)", |lex| {
-        if lex.slice().chars().rev().next() == Some('\n') {
+        if lex.slice().ends_with('\n') {
             lex.extras.line += 1;
             lex.extras.column = 1;
         }
@@ -68,7 +68,7 @@ pub enum ExprToken<'s> {
     DocComment,
 
     #[regex(r"\|[^\n|]*(\||\n)", |lex| {
-        if lex.slice().chars().rev().next() == Some('\n') {
+        if lex.slice().ends_with('\n') {
             lex.extras.line += 1;
             lex.extras.column = 1;
         }

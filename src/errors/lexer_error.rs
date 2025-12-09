@@ -31,7 +31,7 @@ impl<'s> fmt::Display for LexerError<'s> {
                 print_err_ctx(ctx);
 
                 // Write the actual error
-                write!(f, "|  Lexer error: {msg}\n")
+                writeln!(f, "|  Lexer error: {msg}")
             }
         }
     }

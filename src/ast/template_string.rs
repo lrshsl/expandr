@@ -16,7 +16,7 @@ impl<'s> Expandable<'s> for TemplateString<'s> {
             match piece {
                 TemplatePiece::Char(ch) => result.push(ch),
                 TemplatePiece::StrVal(s) => result.push_str(s),
-                TemplatePiece::Expr(expr) => result.push_str(&expr.expand(ctx).as_string()),
+                TemplatePiece::Expr(expr) => result.push_str(&expr.expand(ctx).into_string()),
             }
         }
         Expanded::Str(result)

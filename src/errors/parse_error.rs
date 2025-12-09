@@ -51,7 +51,7 @@ impl<'s> fmt::Display for ParseError<'s> {
             ParseError::UnexpectedEof { ctx, file, line } => {
                 print_raise_ctx(file, *line);
                 print_err_ctx(ctx);
-                write!(f, "|  Unexpected end of file\n")
+                writeln!(f, "|  Unexpected end of file")
             }
             ParseError::LexerError(err) => write!(f, "{err}"),
         }
