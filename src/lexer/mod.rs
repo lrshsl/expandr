@@ -3,7 +3,7 @@ pub use expr_token::ExprToken;
 mod raw_token;
 pub use raw_token::RawToken;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FileContext<'s> {
     pub filename: String,
     pub content: &'s str,

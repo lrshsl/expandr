@@ -1,5 +1,6 @@
 use crate::{
-    errs::ParsingError,
+    errors::parse_error::ParseResult,
+    expand::Expanded,
     lexer::ExprToken,
     log,
     parser::{ParseMode, Token},
@@ -10,31 +11,35 @@ use super::*;
 
 #[derive(Debug)]
 pub struct Ast<'s> {
-    pub ctx: ProgramContext<'s>,
     pub exprs: Vec<Expr<'s>>,
+    pub ctx: ProgramContext<'s>,
 }
 
 impl<'s> Parsable<'s> for Ast<'s> {
-    fn parse(parser: &mut Parser<'s>) -> Result<Ast<'s>, ParsingError<'s>> {
-        let mut mappings = ProgramContext::new();
+    fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
+        let mut ctx = ProgramContext::new();
         let mut exprs = Vec::new();
 
-        while let Some(Token::Expr(token)) = parser.current() {
+        while {
+            let tok = parser.current().expect("Ast::parse on invalid token");
+            tok.is_some()
+        } {
+            let token = parser.current_expr().expect("").expect("");
             log!("Ast::parse starting on {token:?}");
             eprint!("Starting with {token:?} >> ");
             match token {
                 ExprToken::Map => {
                     parser.advance();
-                    let Some(Token::Expr(ExprToken::Ident(name))) = parser.current() else {
+                    let Some(Token::Expr(ExprToken::Ident(name))) = parser.current()? else {
                         panic!("Expecting ident after keyword 'map'");
                     };
                     parser.advance();
                     eprint!("Mapping '{name}' >> ");
                     let mapping = Mapping::parse(parser)?;
-                    match mappings.get_mut(name) {
+                    match ctx.get_mut(name) {
                         Some(slot) => slot.push(mapping),
                         None => {
-                            let _ = mappings.insert(name, vec![mapping]);
+                            let _ = ctx.insert(name, vec![mapping]);
                         }
                     }
                 }
@@ -51,19 +56,28 @@ impl<'s> Parsable<'s> for Ast<'s> {
                     exprs.push(TemplateString::parse(parser, n)?.into());
                     parser.advance();
                 }
-                tok => {
-                    unexpected_token!(
-                        found   : tok,
-                        expected: [ExprToken::Map, ExprToken::Symbol('['), ExprToken::String(_)],
-                        @ &parser.expr_lexer.extras);
-                }
+                tok => unexpected_token!(
+                    found   : tok,
+                    expected: [ExprToken::Map, ExprToken::Symbol('['), ExprToken::String(_)],
+                    @ parser.ctx()
+                )?,
             }
             eprintln!("Done\n");
         }
 
-        Ok(Self {
-            ctx: mappings,
-            exprs,
-        })
+        Ok(Self { exprs, ctx })
+    }
+}
+
+impl<'s> Ast<'s> {
+    pub fn expand(self) -> String {
+        self.exprs
+            .into_iter()
+            .map(|expr| match expr.expand(&self.ctx) {
+                Expanded::Str(s) => s,
+                Expanded::Int(i) => i.to_string(),
+            })
+            .collect::<Vec<_>>()
+            .join("")
     }
 }

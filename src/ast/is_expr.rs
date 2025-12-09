@@ -1,6 +1,6 @@
 use crate::{
     ast::{Expandable, ExprToken, Parsable, Parser},
-    errs::ParsingError,
+    errors::parse_error::ParseResult,
     expand::Expanded,
     parser::{ParseMode, Token},
 };
@@ -21,13 +21,13 @@ impl<'s> Parsable<'s> for IsExpr<'s> {
     ///     .. _ < 0 => "Negative",
     /// }]
     /// ```
-    fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>> {
+    fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         parser.skip(Token::Expr(ExprToken::Is));
         let cond_expr = Expr::parse(parser, ParseMode::Expr)?;
         parser.skip(Token::Expr(ExprToken::Symbol('{')));
         let mut branches = Vec::new();
         loop {
-            if parser.current_expr() == Some(ExprToken::Symbol('}')) {
+            if parser.current_expr()? == Some(ExprToken::Symbol('}')) {
                 parser.advance();
                 break;
             }
@@ -36,7 +36,7 @@ impl<'s> Parsable<'s> for IsExpr<'s> {
             let match_expr = Expr::parse(parser, ParseMode::Expr)?; // TODO: Change to allow '_'
             parser.skip(Token::Expr(ExprToken::Becomes)); // '=>'
             let translation = Expr::parse(parser, ParseMode::Expr)?;
-            if parser.current_expr() == Some(ExprToken::Symbol(',')) {
+            if parser.current_expr()? == Some(ExprToken::Symbol(',')) {
                 // TODO: Optional comma?
                 parser.advance();
             }

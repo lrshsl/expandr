@@ -1,6 +1,6 @@
 use crate::{
     ast::{Expr, ExprToken, Parsable, Parser},
-    errs::ParsingError,
+    errors::parse_error::ParseResult,
     parser::Token,
     unexpected_eof, unexpected_token,
 };
@@ -35,9 +35,9 @@ impl MappingParam<'_> {
 }
 
 impl<'s> Parsable<'s> for MappingParam<'s> {
-    fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>> {
+    fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         match parser
-            .current_expr()
+            .current_expr()?
             .expect("MappingParam::parse on no token")
         {
             ExprToken::Ident(value) => {
@@ -47,12 +47,12 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
             }
             ExprToken::Symbol('[') => {
                 parser.advance();
-                let ExprToken::Ident(name) = parser.current_expr().expect("Expected ident") else {
+                let ExprToken::Ident(name) = parser.current_expr()?.expect("Expected ident") else {
                     panic!("Expecting ident");
                 };
                 eprint!("ParamExpr({:?}) >> ", name);
                 parser.advance();
-                let rep = match parser.current_expr() {
+                let rep = match parser.current_expr()? {
                     Some(ExprToken::Symbol('*')) => {
                         parser.advance();
                         Some(Repetition::Any)
@@ -67,14 +67,12 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
                         //Some(Repetition::Exactly(1))
                     }
                     Some(ExprToken::Symbol(']')) => None,
-                    None => unexpected_eof!(&parser.expr_lexer.extras),
-                    tok => {
-                        unexpected_token!(
-                                found: tok,
-                                expected: [ExprToken::Symbol('*' | '?' | '{' | ']')],
-                                @ &parser.expr_lexer.extras
-                        );
-                    }
+                    None => unexpected_eof!(parser.ctx())?,
+                    tok => unexpected_token!(
+                            found: tok,
+                            expected: [ExprToken::Symbol('*' | '?' | '{' | ']')],
+                            @ parser.ctx()
+                    )?,
                 };
 
                 parser.skip(Token::Expr(ExprToken::Symbol(']')));
@@ -85,13 +83,11 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
                 parser.advance();
                 Ok(Self::Symbol(s))
             }
-            tok => {
-                unexpected_token!(
-                    found: tok,
-                    expected: [Ident, Expr, Symbol],
-                    @ &parser.expr_lexer.extras
-                );
-            }
+            tok => unexpected_token!(
+                found: tok,
+                expected: [Ident, Expr, Symbol],
+                @ parser.ctx()
+            )?,
         }
     }
 }

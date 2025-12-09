@@ -1,5 +1,5 @@
 use crate::{
-    errs::ParsingError,
+    errors::parse_error::ParseResult,
     parser::{ParseMode, Token},
     unexpected_token,
 };
@@ -35,14 +35,15 @@ pub struct ParameterizedMapping<'s> {
 }
 
 impl<'s> Parsable<'s> for Mapping<'s> {
-    fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>> {
+    fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         eprint!("Params >> ");
         let mut params = Vec::new();
-        while parser.current_expr().expect("Unfinished map definition") != ExprToken::Becomes {
+
+        while parser.current_expr()?.expect("Unfinished map definition") != ExprToken::Becomes {
             params.push(MappingParam::parse(parser)?);
         }
         parser.skip(Token::Expr(ExprToken::Becomes));
-        let translation = match parser.current_expr().expect("Unfinished map definition") {
+        let translation = match parser.current_expr()?.expect("Unfinished map definition") {
             ExprToken::String(value) => {
                 parser.advance();
                 eprint!("Output String({value:?})");
@@ -65,7 +66,7 @@ impl<'s> Parsable<'s> for Mapping<'s> {
                     expected: [
                         String(_), TemplateStringDelimiter(_),
                         Symbol('(' | '[')],
-                    @ &parser.expr_lexer.extras);
+                    @ parser.ctx())
             }
         }?;
         Ok(if params.is_empty() {

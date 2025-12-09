@@ -1,4 +1,10 @@
-use crate::{errs::ParsingError, expand::Expanded, lexer::RawToken, parser::ParseMode};
+use crate::{
+    errors::parse_error::{ParseError, ParseResult},
+    expand::Expanded,
+    lexer::RawToken,
+    parser::ParseMode,
+    unexpected_eof,
+};
 
 use super::*;
 
@@ -25,16 +31,17 @@ impl<'s> TemplateString<'s> {
     pub fn parse(
         parser: &mut Parser<'s>,
         number_delimiters: usize,
-    ) -> Result<Self, ParsingError<'s>> {
+    ) -> Result<Self, ParseError<'s>> {
         let mut pieces = Vec::new();
 
         parser.switch_mode(ParseMode::Raw);
         parser.advance();
         loop {
-            match parser
+            let tok = parser
                 .current_raw()
-                .expect("TemplateString::parse on no token")
-            {
+                .expect("TemplateString::parse called on err token")
+                .expect("TemplateString::parse called on no token");
+            match tok {
                 RawToken::RawPart(s) => {
                     eprint!("'{s}' ");
                     pieces.push(TemplatePiece::StrVal(s));

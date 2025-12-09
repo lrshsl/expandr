@@ -1,4 +1,6 @@
-use crate::{errs::ParsingError, expand::Expanded, log, parser::ParseMode, unexpected_token};
+use crate::{
+    errors::parse_error::ParseResult, expand::Expanded, log, parser::ParseMode, unexpected_token,
+};
 
 use super::*;
 
@@ -58,9 +60,9 @@ impl<'s> Expandable<'s> for Expr<'s> {
 }
 
 impl<'s> Expr<'s> {
-    pub fn parse(parser: &mut Parser<'s>, end_mode: ParseMode) -> Result<Self, ParsingError<'s>> {
+    pub fn parse(parser: &mut Parser<'s>, end_mode: ParseMode) -> ParseResult<'s, Self> {
         log!("Expr::parse: Starting on {:?}", parser.current_expr());
-        let expr = match parser.current_expr().expect("Expr::parse on no token") {
+        let expr = match parser.current_expr()?.expect("Expr::parse on no token") {
             ExprToken::Ident(_) => MappingApplication::parse(parser).map(Into::into),
             ExprToken::TemplateStringDelimiter(n) => {
                 TemplateString::parse(parser, n).map(Into::into)
@@ -77,13 +79,11 @@ impl<'s> Expr<'s> {
                 parser.skip(crate::parser::Token::Expr(ExprToken::Symbol(']')));
                 Ok(expr)
             }
-            tok => {
-                unexpected_token!(
-                        found: tok,
-                        expected: [String, Ident, Is],
-                        @&parser.expr_lexer.extras
-                );
-            }
+            tok => unexpected_token!(
+                    found: tok,
+                    expected: [String, Ident, Is],
+                    @parser.ctx()
+            ),
         };
         if end_mode != parser.mode {
             parser.switch_mode(end_mode);

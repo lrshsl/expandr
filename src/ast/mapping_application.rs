@@ -3,7 +3,7 @@ use crate::{
         Expandable, Expr, ExprToken, Mapping, MappingParam, Parser, ProgramContext, TemplateString,
     },
     builtins::get_builtin,
-    errs::ParsingError,
+    errors::parse_error::ParseResult,
     expand::Expanded,
     parser::{ParseMode, Token},
     unexpected_token,
@@ -18,7 +18,7 @@ pub struct MappingApplication<'s> {
 }
 
 impl<'s> MappingApplication<'s> {
-    pub fn parse(parser: &mut Parser<'s>) -> Result<Self, ParsingError<'s>> {
+    pub fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         {
             let name = parser.slice();
             parser.advance();
@@ -26,7 +26,7 @@ impl<'s> MappingApplication<'s> {
 
             let mut args = Vec::new();
             loop {
-                match parser.current_expr().expect("Expr::parse on no token") {
+                match parser.current_expr()?.expect("Expr::parse on no token") {
                     ExprToken::Symbol(']') => {
                         // Caller needs to advance
                         break;
@@ -65,19 +65,17 @@ impl<'s> MappingApplication<'s> {
                         args.push(Expr::Integer(int));
                         parser.advance();
                     }
-                    tok => {
-                        unexpected_token!(
-                            found: tok,
-                            expected: [
-                                Symbol(']' | '[' | '{'),
-                                Symbol(_),
-                                String,
-                                TemplateStringDelimiter,
-                                Ident
-                            ],
-                            @&parser.expr_lexer.extras
-                        );
-                    }
+                    tok => unexpected_token!(
+                        found: tok,
+                        expected: [
+                            Symbol(']' | '[' | '{'),
+                            Symbol(_),
+                            String,
+                            TemplateStringDelimiter,
+                            Ident
+                        ],
+                        @parser.ctx()
+                    )?,
                 };
             }
             Ok(Self { name, args })
