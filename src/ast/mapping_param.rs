@@ -75,7 +75,7 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
                     )?,
                 };
 
-                parser.skip(Token::Expr(ExprToken::Symbol(']')));
+                parser.skip(Token::Expr(ExprToken::Symbol(']')))?;
 
                 Ok(Self::ParamExpr { name, rep })
             }

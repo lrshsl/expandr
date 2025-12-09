@@ -5,7 +5,7 @@ use logos::Logos;
 use crate::{
     errors::{
         lexer_error::{LexerError, LexerResult},
-        parse_error::{ParseError, ParseResult},
+        parse_error::ParseResult,
     },
     lexer::{ExprToken, FileContext, RawToken},
     log_lexer, unexpected_token,

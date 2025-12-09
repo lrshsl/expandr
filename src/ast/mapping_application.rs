@@ -44,7 +44,7 @@ impl<'s> MappingApplication<'s> {
                     ExprToken::Symbol('[') => {
                         parser.advance();
                         args.push(Expr::parse(parser, ParseMode::Expr)?);
-                        parser.skip(Token::Expr(ExprToken::Symbol(']'))); // ']'
+                        parser.skip(Token::Expr(ExprToken::Symbol(']')))?;
                     }
                     ExprToken::String(value) => {
                         args.push(Expr::StrRef(value));

@@ -1,9 +1,5 @@
 use crate::{
-    errors::parse_error::{ParseError, ParseResult},
-    expand::Expanded,
-    lexer::RawToken,
-    parser::ParseMode,
-    unexpected_eof,
+    errors::parse_error::ParseError, expand::Expanded, lexer::RawToken, parser::ParseMode,
 };
 
 use super::*;

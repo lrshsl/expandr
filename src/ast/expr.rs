@@ -76,7 +76,7 @@ impl<'s> Expr<'s> {
             ExprToken::Symbol('[') => {
                 parser.advance();
                 let expr = Expr::parse(parser, ParseMode::Expr)?;
-                parser.skip(crate::parser::Token::Expr(ExprToken::Symbol(']')));
+                parser.skip(crate::parser::Token::Expr(ExprToken::Symbol(']')))?;
                 Ok(expr)
             }
             tok => unexpected_token!(

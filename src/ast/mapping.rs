@@ -42,7 +42,7 @@ impl<'s> Parsable<'s> for Mapping<'s> {
         while parser.current_expr()?.expect("Unfinished map definition") != ExprToken::Becomes {
             params.push(MappingParam::parse(parser)?);
         }
-        parser.skip(Token::Expr(ExprToken::Becomes));
+        parser.skip(Token::Expr(ExprToken::Becomes))?;
         let translation = match parser.current_expr()?.expect("Unfinished map definition") {
             ExprToken::String(value) => {
                 parser.advance();
@@ -57,7 +57,7 @@ impl<'s> Parsable<'s> for Mapping<'s> {
             ExprToken::Symbol('[') => {
                 parser.advance();
                 let expr = Expr::parse(parser, ParseMode::Expr);
-                parser.skip(Token::Expr(ExprToken::Symbol(']'))); // ']'
+                parser.skip(Token::Expr(ExprToken::Symbol(']')))?;
                 expr
             }
             tok => {
