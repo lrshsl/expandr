@@ -18,12 +18,12 @@ pub enum ParseError<'s> {
     UnexpectedToken {
         found: String,
         expected: Vec<String>,
-        ctx: FileContext<'s>,
+        ctx: Box<FileContext<'s>>,
         file: &'static str,
         line: u32,
     },
     UnexpectedEof {
-        ctx: FileContext<'s>,
+        ctx: Box<FileContext<'s>>,
         file: &'static str,
         line: u32,
     },

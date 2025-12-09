@@ -90,11 +90,11 @@ impl<'s> Expandable<'s> for MappingApplication<'s> {
         }
         let mut matching_mappings = ctx
             .get(self.name)
-            .expect(&format!("Mapping not found: {}", self.name))
+            .unwrap_or_else(|| panic!("Mapping not found: {}", self.name))
             .iter()
             .filter(|m| match m {
                 Mapping::Parameterized(m) => m.params.matches_args(&self.args),
-                Mapping::Simple(_) => self.args.len() == 0,
+                Mapping::Simple(_) => self.args.is_empty(),
             });
 
         let Some(mapping) = matching_mappings.next() else {

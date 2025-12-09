@@ -11,7 +11,7 @@ pub type LexerResult<'s, T> = Result<T, LexerError<'s>>;
 pub enum LexerError<'s> {
     UnknownError {
         msg: String,
-        ctx: FileContext<'s>,
+        ctx: Box<FileContext<'s>>,
         file: &'static str,
         line: u32,
     },

@@ -135,10 +135,10 @@ impl<'s> Parser<'s> {
         }
     }
 
-    pub fn ctx(&self) -> FileContext<'s> {
+    pub fn ctx(&self) -> Box<FileContext<'s>> {
         match self.mode {
-            ParseMode::Expr => self.expr_lexer.extras.clone(),
-            ParseMode::Raw => self.raw_lexer.extras.clone(),
+            ParseMode::Expr => Box::new(self.expr_lexer.extras.clone()),
+            ParseMode::Raw => Box::new(self.raw_lexer.extras.clone()),
         }
     }
 

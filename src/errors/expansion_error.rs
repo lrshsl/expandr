@@ -7,11 +7,10 @@ pub type ExpansionResult<'s, T> = Result<T, ExpansionError<'s>>;
 #[derive(Debug, thiserror::Error)]
 pub enum ExpansionError<'s> {
     ParseError(ParseError<'s>),
-    IoError(IoError),
+    IoError(#[from] IoError),
 }
 
 derive_from!(ParseError for ExpansionError<'s>, lt<'s>);
-derive_from!(IoError for ExpansionError<'_>);
 
 impl std::fmt::Display for ExpansionError<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
