@@ -16,10 +16,15 @@ pub struct IsExpr<'s> {
 impl<'s> Parsable<'s> for IsExpr<'s> {
     /// Example:
     /// ```
-    /// [is 4 {
-    ///     .. _ > 0 => "Positive",
-    ///     .. _ < 0 => "Negative",
-    /// }]
+    /// use expandr::ast::IsExpr;
+    /// use expandr::{Parsable, Parser};
+    ///
+    /// let src = r#"is 1 {
+    ///     .. 0 => 'One'
+    ///     .. 1 => 'Two'
+    /// }"#;
+    /// let mut parser = Parser::new(src, None, None);
+    /// assert!(IsExpr::parse(&mut parser).is_ok());
     /// ```
     fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         parser.skip(Token::Expr(ExprToken::Is))?;

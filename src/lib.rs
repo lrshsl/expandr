@@ -1,27 +1,27 @@
+use crate::{
+    ast::Ast,
+    errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
+};
 use std::{
     fs,
     io::{self, Write as _},
     path::PathBuf,
 };
 
-use crate::{
-    ast::Ast,
-    errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
-    parser::{Parsable as _, Parser},
-};
-
-mod ast;
+pub mod ast;
 mod builtins;
 mod errors;
 mod expand;
+pub mod grammar;
 #[cfg(feature = "grammar")]
-mod grammar;
 mod lexer;
 mod parser;
 #[cfg(test)]
 mod tests;
 
+pub use expand::Expandable;
 pub use grammar::check_grammar;
+pub use parser::{Parsable, Parser};
 
 pub fn build<'s>(
     name: &'s str,
