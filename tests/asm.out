@@ -1,0 +1,29 @@
+
+section .data
+   
+msg db "Hi there",0xa
+
+
+section .text
+   global _start
+
+
+exit: 
+   mov rax, 60
+   xor rdi, rdi ; status=0
+   syscall
+
+
+
+
+_start: 
+   ; print Error
+   mov rax, 1
+   mov rdi, 1
+   mov rsi, Error
+   mov rdx, 9
+   syscall
+
+   call exit
+   
+

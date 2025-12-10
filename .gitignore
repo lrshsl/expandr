@@ -16,6 +16,11 @@
 !/src/**
 !/src/**/*.rs
 
+# Include everything in the tests/ directory
+!/tests/
+!/tests/**
+!/tests/**/*
+
 # Include everything in the examples/ directory
 !/examples/
 !/examples/**

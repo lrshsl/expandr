@@ -1,0 +1,64 @@
+|--------------------------------|
+|        Mappings Section        |
+|--------------------------------|
+
+map doctype => '<!DOCTYPE html>'
+
+map language [lang] => '<head lang="[lang]">'
+
+map head [title] =>
+	''''\
+<head>
+	 <meta charset="UTF-8">
+	 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	 <title>[title]</title>
+</head>\
+	''''
+
+map tag [tag] style [style] contains [child] =>
+	''''\
+<[tag] style="[style]">
+	[child]
+</[tag]>\
+''''
+
+|map tag [tag] bg [bg] [child] => [tag [tag] style "background: [bg]" contains [child]]
+
+map tag [tag] bg [bg] [child] =>
+	''''\
+<[tag] style="background=[bg]">
+	[child]
+</[tag]>\
+''''
+
+map tag [tag] [child] =>
+	''''\
+<[tag]>
+	[child]
+</[tag]>\
+''''
+
+|--------------------------------|
+|      Application Section       |
+|--------------------------------|
+
+''''
+[doctype]
+[language 'en']
+[head 'Example exr-html']
+
+<!-- note: [language 'en'] -->
+
+[tag 'body'
+   [tag 'div'
+      [tag 'h1' 'Title']]]
+
+''''
+
+|[tag 'body'
+|	[tag 'div' bg 'black'
+|		[tag 'h1' 'Title is here']
+|	]
+|]
+
+| vim: ft=exr

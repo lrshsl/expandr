@@ -1,0 +1,19 @@
+
+map add [a] [b] => [m [a] + [b]]
+
+map is-answer [answer] => [is answer {
+   .. 42 => 'Correct'
+   .. 63 => 'Incorrect'
+}]
+
+'''
+[m [add 2 3] * 3]
+[m '[add 2 3]' * 3]
+
+[is-answer 42]
+[is-answer [m 7 * 9]]
+[is-answer [m 7 * 6]]
+'''
+
+
+| vim: ft=exr

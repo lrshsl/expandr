@@ -1,0 +1,12 @@
+
+map calc [a] + [b] => 'Addition([a], [b])\n'
+map calc [a] * [b] => '\
+\
+Multiplication([a], [b])\n'
+
+map tab [x] => '\t[x]'
+
+[calc '40' + '2']
+[tab [calc '6' * '9']]
+
+| vim: ft=exr

@@ -32,7 +32,7 @@ pub struct ExpansionArgs {
     pub output: Option<PathBuf>,
 
     /// Emit <out>.ast and <out>.token files
-    #[arg(long, default_value_t = true)]
+    #[arg(long, default_value_t = false)]
     pub all: bool,
 
     /// Emit the ast to FILE
