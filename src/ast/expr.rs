@@ -1,5 +1,8 @@
 use crate::{
-    errors::parse_error::ParseResult, expand::Expanded, log, parser::ParseMode, unexpected_token,
+    errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
+    log,
+    parser::ParseMode,
+    unexpected_token,
 };
 
 use super::*;
@@ -43,20 +46,20 @@ impl<'s> std::fmt::Debug for Expr<'s> {
 }
 
 impl<'s> Expandable<'s> for Expr<'s> {
-    fn expand(self, ctx: &'s ProgramContext) -> Expanded {
+    fn expand(self, ctx: &'s ProgramContext) -> ExpansionResult {
         use crate::expand::Expanded::{Int, Str};
 
         match self {
-            Expr::String(val) => Str(val),
-            Expr::StrRef(val) => Str(val.to_string()),
+            Expr::String(val) => Ok(Str(val)),
+            Expr::StrRef(val) => Ok(Str(val.to_string())),
 
             Expr::TemplateString(tmpl_string) => tmpl_string.expand(ctx),
-            Expr::Integer(val) => Int(val),
+            Expr::Integer(val) => Ok(Int(val)),
 
             Expr::IsExpr(is_expr) => is_expr.expand(ctx),
             Expr::MappingApplication(mapping_application) => mapping_application.expand(ctx),
 
-            Expr::Ident(ident) => unreachable!("Should not try to expand an ident: {ident}"),
+            Expr::Ident(ident) => Ok(Str(ident.to_string())),
             Expr::LiteralSymbol(s) => {
                 unreachable!("Should not try to expand a literal symbol: {s}")
             }

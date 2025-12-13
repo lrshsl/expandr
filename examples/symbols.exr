@@ -9,4 +9,12 @@ map tab [x] => '\t[x]'
 [calc '40' + '2']
 [tab [calc '6' * '9']]
 
+map
+   let [a:ident]: [t:ident] = [e]
+=>
+   '[t] [a] = [e]'
+
+[let x: i32 = 8]
+'\n'
+
 | vim: ft=exr

@@ -1,5 +1,8 @@
 use crate::{
-    errors::parse_error::ParseError, expand::Expanded, lexer::RawToken, parser::ParseMode,
+    errors::{expansion_error::ExpansionResult, parse_error::ParseError},
+    expand::Expanded,
+    lexer::RawToken,
+    parser::ParseMode,
 };
 
 use super::*;
@@ -10,16 +13,16 @@ pub struct TemplateString<'s> {
 }
 
 impl<'s> Expandable<'s> for TemplateString<'s> {
-    fn expand(self, ctx: &'s ProgramContext) -> Expanded {
+    fn expand(self, ctx: &'s ProgramContext) -> ExpansionResult {
         let mut result = String::new();
         for piece in self.pieces.into_iter() {
             match piece {
                 TemplatePiece::Char(ch) => result.push(ch),
                 TemplatePiece::StrVal(s) => result.push_str(s),
-                TemplatePiece::Expr(expr) => result.push_str(&expr.expand(ctx).into_string()),
+                TemplatePiece::Expr(expr) => result.push_str(&expr.expand(ctx)?.into_string()),
             }
         }
-        Expanded::Str(result)
+        Ok(Expanded::Str(result))
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::build;
 
 use std::{
-    fs::{self, OpenOptions},
+    fs,
     path::{Path, PathBuf},
 };
 

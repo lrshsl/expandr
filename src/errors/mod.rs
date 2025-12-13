@@ -1,3 +1,4 @@
+pub(crate) mod general_error;
 pub(crate) mod expansion_error;
 pub(crate) mod lexer_error;
 pub(crate) mod logging;

@@ -1,9 +1,6 @@
-use crate::{
-    ast::Args,
-    expand::{Expanded, ProgramContext},
-};
+use crate::{ast::Args, errors::expansion_error::ExpansionResult, expand::ProgramContext};
 
-type BuiltinFn = dyn Fn(&ProgramContext, &Args) -> Expanded;
+type BuiltinFn = dyn Fn(&ProgramContext, &Args) -> ExpansionResult;
 
 pub fn get_builtin(name: &str) -> Option<Box<BuiltinFn>> {
     Some(Box::new(match name {
@@ -15,20 +12,21 @@ pub fn get_builtin(name: &str) -> Option<Box<BuiltinFn>> {
 mod builtin_implementations {
     use crate::{
         ast::{Args, Expr},
+        errors::expansion_error::ExpansionResult,
         expand::{Expandable as _, Expanded, ProgramContext},
     };
 
-    pub fn evaluate_math(ctx: &ProgramContext, args: &Args) -> Expanded {
-        match &args[..] {
+    pub fn evaluate_math(ctx: &ProgramContext, args: &Args) -> ExpansionResult {
+        Ok(match &args[..] {
             [a, Expr::LiteralSymbol('+'), b] => {
-                match (a.clone().expand(ctx), b.clone().expand(ctx)) {
+                match (a.clone().expand(ctx)?, b.clone().expand(ctx)?) {
                     (Expanded::Int(a), Expanded::Int(b)) => Expanded::Int(a + b),
                     (Expanded::Str(a), Expanded::Str(b)) => Expanded::Str(a + &b),
                     _ => panic!("Operation '+' not defined for Int and String"),
                 }
             }
             [a, Expr::LiteralSymbol('*'), b] => {
-                match (a.clone().expand(ctx), b.clone().expand(ctx)) {
+                match (a.clone().expand(ctx)?, b.clone().expand(ctx)?) {
                     (Expanded::Int(a), Expanded::Int(b)) => Expanded::Int(a * b),
                     (Expanded::Str(s), Expanded::Int(n)) | (Expanded::Int(n), Expanded::Str(s)) => {
                         Expanded::Str(
@@ -42,6 +40,6 @@ mod builtin_implementations {
                 }
             }
             _ => Expanded::Str("Error".to_string()),
-        }
+        })
     }
 }

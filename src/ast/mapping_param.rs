@@ -39,12 +39,11 @@ impl MappingParam<'_> {
 
             (
                 Self::ParamExpr {
-                    name,
                     typ: ParamType::Ident,
                     ..
                 },
-                Expr::Ident(other_value),
-            ) => name == other_value,
+                Expr::Ident(_),
+            ) => true,
 
             (Self::Symbol(self_value), Expr::LiteralSymbol(other_value)) => {
                 self_value == other_value
@@ -85,7 +84,7 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
                         //let Some(Token::Number)
                         //Some(Repetition::Exactly(1))
                     }
-                    Some(ExprToken::Symbol(']')) => None,
+                    Some(ExprToken::Symbol(']' | ':')) => None,
                     None => unexpected_eof!(parser.ctx())?,
                     tok => unexpected_token!(
                             found: tok,

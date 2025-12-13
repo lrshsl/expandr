@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 anstream = "0.6.20"
-anyhow = { version = "1.0.100", features = ["backtrace"] }
 clap = { version = "4.5.53", features = ["derive"] }
 color-print = "0.3.7"
 logos = "0.14.2"

@@ -1,22 +1,20 @@
-use std::io::Error as IoError;
+use std::fmt;
 
-use crate::{derive_from, errors::parse_error::ParseError};
+use crate::expand::Expanded;
 
-pub type ExpansionResult<'s, T> = Result<T, ExpansionError<'s>>;
+pub type ExpansionResult = Result<Expanded, ExpansionError>;
 
 #[derive(Debug, thiserror::Error)]
-pub enum ExpansionError<'s> {
-    ParseError(ParseError<'s>),
-    IoError(#[from] IoError),
+pub enum ExpansionError {
+    UnknownMappingReferenced(String),
 }
 
-derive_from!(ParseError for ExpansionError<'s>, lt<'s>);
-
-impl std::fmt::Display for ExpansionError<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl<'s> fmt::Display for ExpansionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ExpansionError::ParseError(error) => write!(f, "{}", error),
-            ExpansionError::IoError(error) => write!(f, "{}", error),
+            ExpansionError::UnknownMappingReferenced(s) => {
+                write!(f, "[ExpansionError] Unknown mapping referenced: {s}")
+            }
         }
     }
 }

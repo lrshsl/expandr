@@ -1,5 +1,3 @@
-use thiserror::Error;
-
 use crate::{
     derive_from,
     errors::{
@@ -12,7 +10,7 @@ use std::fmt;
 
 pub type ParseResult<'s, T> = Result<T, ParseError<'s>>;
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum ParseError<'s> {
     LexerError(LexerError<'s>),
     UnexpectedToken {

@@ -1,10 +1,8 @@
 use std::{
     fs::File,
-    io::{BufWriter, Write},
+    io::{self, BufWriter, Write},
     path::PathBuf,
 };
-
-use anyhow::{Context as _, Result};
 
 use pest::{iterators::Pairs, Parser};
 use pest_derive::Parser;
@@ -13,11 +11,11 @@ use pest_derive::Parser;
 #[grammar = "grammar.pest"] // put your grammar file here
 pub struct GenParser;
 
-pub fn check_grammar(input: &str, logfile: Option<PathBuf>) -> Result<()> {
-    let pairs = GenParser::parse(Rule::ast, input).with_context(|| "syntax error")?;
+pub fn check_grammar(input: &str, logfile: Option<PathBuf>) -> Result<(), io::Error> {
+    let pairs = GenParser::parse(Rule::ast, input).unwrap();
 
     if let Some(path) = logfile {
-        let file = File::create(&path).with_context(|| format!("failed to create {:?}", path))?;
+        let file = File::create(&path)?;
         let mut writer = BufWriter::new(file);
 
         fn dump_pairs(
@@ -39,7 +37,7 @@ pub fn check_grammar(input: &str, logfile: Option<PathBuf>) -> Result<()> {
             Ok(())
         }
 
-        dump_pairs(pairs, 0, &mut writer).context("failed to write parse log")?;
+        dump_pairs(pairs, 0, &mut writer).expect("failed to write parse log");
     }
 
     Ok(())

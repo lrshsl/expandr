@@ -6,7 +6,10 @@ use crate::{
         ProgramContext, TemplateString,
     },
     builtins::get_builtin,
-    errors::parse_error::ParseResult,
+    errors::{
+        expansion_error::{ExpansionError, ExpansionResult},
+        parse_error::ParseResult,
+    },
     expand::Expanded,
     parser::ParseMode,
     unexpected_token,
@@ -86,7 +89,7 @@ impl<'s> MappingApplication<'s> {
 }
 
 impl<'s> Expandable<'s> for MappingApplication<'s> {
-    fn expand(self, ctx: &'s ProgramContext) -> Expanded {
+    fn expand(self, ctx: &'s ProgramContext) -> ExpansionResult {
         if let Some(builtin) = get_builtin(self.name) {
             return builtin(ctx, &self.args);
         }
@@ -100,10 +103,10 @@ impl<'s> Expandable<'s> for MappingApplication<'s> {
             });
 
         let Some(mapping) = matching_mappings.next() else {
-            panic!(
+            return Err(ExpansionError::UnknownMappingReferenced(format!(
                 "No such mapping found: {}, args: {:?}",
                 self.name, self.args
-            );
+            )));
         };
         if let Some(second_mapping) = matching_mappings.next() {
             panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for {}, {:?}", self.name, self.args)
@@ -123,7 +126,7 @@ impl<'s> Expandable<'s> for MappingApplication<'s> {
                                     .expect("Not enough args for the given parameters");
 
                                 let new_entry = Mapping::Simple(match typ {
-                                    ParamType::Expr => match next_arg.expand(ctx) {
+                                    ParamType::Expr => match next_arg.expand(ctx)? {
                                         Expanded::Str(x) => Expr::String(x),
                                         Expanded::Int(x) => Expr::Integer(x),
                                     },

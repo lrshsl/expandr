@@ -20,7 +20,8 @@
 !/tests/
 !/tests/**
 !/tests/**/*
-!/tests/output
+/tests/output/**
+/tests/output/**/*
 
 # Include everything in the examples/ directory
 !/examples/
@@ -33,8 +34,3 @@
 !/docs/**/*
 
 
-
-
-# Added by cargo
-
-/target

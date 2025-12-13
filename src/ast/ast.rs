@@ -1,5 +1,5 @@
 use crate::{
-    errors::parse_error::ParseResult,
+    errors::{expansion_error::ExpansionError, parse_error::ParseResult},
     expand::Expanded,
     lexer::{ExprToken, Token},
     log,
@@ -67,14 +67,20 @@ impl<'s> Parsable<'s> for Ast<'s> {
 }
 
 impl<'s> Ast<'s> {
-    pub fn expand(self) -> String {
-        self.exprs
-            .into_iter()
-            .map(|expr| match expr.expand(&self.ctx) {
-                Expanded::Str(s) => s,
-                Expanded::Int(i) => i.to_string(),
-            })
-            .collect::<Vec<_>>()
-            .join("")
+    pub fn expand(self) -> (String, Vec<ExpansionError>) {
+        let pieces = self.exprs.into_iter().map(|e| e.expand(&self.ctx));
+        let mut errs = Vec::new();
+        let mut out_str = String::new();
+        for piece in pieces {
+            match piece {
+                Ok(Expanded::Str(s)) => out_str.push_str(&s),
+                Ok(Expanded::Int(i)) => out_str.push(
+                    char::from_u32(i.try_into().expect("Negative number?"))
+                        .expect("This isn't a representable unicode character"),
+                ),
+                Err(e) => errs.push(e),
+            }
+        }
+        (out_str, errs)
     }
 }

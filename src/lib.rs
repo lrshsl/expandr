@@ -2,7 +2,7 @@
 
 use crate::{
     ast::Ast,
-    errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
+    errors::{general_error::GeneralResult, parse_error::ParseResult},
 };
 use std::{
     fs,
@@ -32,7 +32,7 @@ pub fn build<'s>(
     ast_logfile: Option<&PathBuf>,
     token_logfile: Option<PathBuf>,
     ctx_logfile: Option<&PathBuf>,
-) -> ExpansionResult<'s, ()> {
+) -> GeneralResult<'s, ()> {
     // Parse
     let ast = get_ast(name.to_string(), source, token_logfile)?;
 
@@ -49,8 +49,11 @@ pub fn build<'s>(
     }
 
     // Expand
-    let prog_output = ast.expand();
+    let (prog_output, errs) = ast.expand();
     output.write_all(&prog_output.into_bytes())?;
+    if !errs.is_empty() {
+        eprintln!("\nErrors occured: {errs:#?}")
+    }
 
     Ok(())
 }

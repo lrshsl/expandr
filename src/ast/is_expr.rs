@@ -1,7 +1,6 @@
 use crate::{
     ast::{Expandable, ExprToken, Parsable, Parser},
-    errors::parse_error::ParseResult,
-    expand::Expanded,
+    errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
     parser::ParseMode,
 };
 
@@ -59,8 +58,8 @@ impl<'s> Parsable<'s> for IsExpr<'s> {
 }
 
 impl<'s> Expandable<'s> for IsExpr<'s> {
-    fn expand(self, ctx: &'s super::ProgramContext) -> Expanded {
-        let cond = self.cond_expr.expand(ctx);
+    fn expand(self, ctx: &'s super::ProgramContext) -> ExpansionResult {
+        let cond = self.cond_expr.expand(ctx)?;
         self.branches
             .into_iter()
             .find_map(
@@ -68,10 +67,10 @@ impl<'s> Expandable<'s> for IsExpr<'s> {
                      match_expr,
                      translation,
                  }| {
-                    if cond == match_expr.expand(ctx) {
-                        Some(translation.expand(ctx))
-                    } else {
-                        None
+                    match match_expr.expand(ctx) {
+                        Ok(expr) if cond == expr => Some(translation.expand(ctx)),
+                        Err(e) => Some(Err(e)),
+                        Ok(_) => None,
                     }
                 },
             )
