@@ -6,7 +6,7 @@ macro_rules! log {
             std::fs::OpenOptions::new()
                 .append(true)
                 .create(true)
-                .open("output/logs")
+                .open("logs")
                 .unwrap();
         writeln!(f, $($e),*).unwrap();
         f.flush().unwrap();
