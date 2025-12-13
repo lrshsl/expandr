@@ -26,7 +26,6 @@ impl<'s> Parsable<'s> for Ast<'s> {
         } {
             let token = parser.current_expr().expect("").expect("");
             log!("Ast::parse starting on {token:?}");
-            eprint!("Starting with {token:?} >> ");
             match token {
                 ExprToken::Map => {
                     parser.advance();
@@ -34,7 +33,6 @@ impl<'s> Parsable<'s> for Ast<'s> {
                         panic!("Expecting ident after keyword 'map'");
                     };
                     parser.advance();
-                    eprint!("Mapping '{name}' >> ");
                     let mapping = Mapping::parse(parser)?;
                     match ctx.get_mut(name) {
                         Some(slot) => slot.push(mapping),
@@ -62,7 +60,6 @@ impl<'s> Parsable<'s> for Ast<'s> {
                     @ parser.ctx()
                 )?,
             }
-            eprintln!("Done\n");
         }
 
         Ok(Self { exprs, ctx })

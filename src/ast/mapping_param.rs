@@ -40,7 +40,6 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
             .expect("MappingParam::parse on no token")
         {
             ExprToken::Ident(value) => {
-                eprint!("Ident({:?}) >> ", value);
                 parser.advance();
                 Ok(Self::Ident(value))
             }
@@ -49,7 +48,6 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
                 let ExprToken::Ident(name) = parser.current_expr()?.expect("Expected ident") else {
                     panic!("Expecting ident");
                 };
-                eprint!("ParamExpr({:?}) >> ", name);
                 parser.advance();
                 let rep = match parser.current_expr()? {
                     Some(ExprToken::Symbol('*')) => {

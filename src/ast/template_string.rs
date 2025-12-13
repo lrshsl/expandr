@@ -39,7 +39,6 @@ impl<'s> TemplateString<'s> {
                 .expect("TemplateString::parse called on no token");
             match tok {
                 RawToken::RawPart(s) => {
-                    eprint!("'{s}' ");
                     pieces.push(TemplatePiece::StrVal(s));
                     parser.advance();
                 }
@@ -55,21 +54,17 @@ impl<'s> TemplateString<'s> {
                         '\r' => {}
                         c => panic!("Unknown escape sequence: {c:?}"),
                     }
-                    eprint!("{ch}");
                     parser.advance();
                 }
                 RawToken::ExprStart => {
-                    eprint!(">> ");
                     parser.switch_mode(ParseMode::Expr);
                     parser.advance();
                     pieces.push(TemplatePiece::Expr(Expr::parse(parser, ParseMode::Raw)?));
                 }
                 RawToken::TemplateStringDelimiter(n) if n == number_delimiters => {
-                    eprint!("''' >> ");
                     break;
                 }
                 RawToken::TemplateStringDelimiter(_) => {
-                    eprint!("'{}' ", parser.raw_lexer.slice());
                     pieces.push(TemplatePiece::StrVal(parser.raw_lexer.slice()));
                 }
                 RawToken::IgnoredLineContinuation => unreachable!(),

@@ -22,7 +22,6 @@ impl<'s> MappingApplication<'s> {
         {
             let name = parser.slice();
             parser.advance();
-            eprint!("Expr {name} >> ");
 
             let mut args = Vec::new();
             loop {

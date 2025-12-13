@@ -32,7 +32,6 @@ pub struct ParameterizedMapping<'s> {
 
 impl<'s> Parsable<'s> for Mapping<'s> {
     fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
-        eprint!("Params >> ");
         let mut params = Vec::new();
 
         while parser.current_expr()?.expect("Unfinished map definition") != ExprToken::Becomes {
@@ -42,11 +41,9 @@ impl<'s> Parsable<'s> for Mapping<'s> {
         let translation = match parser.current_expr()?.expect("Unfinished map definition") {
             ExprToken::String(value) => {
                 parser.advance();
-                eprint!("Output String({value:?})");
                 Ok(Expr::StrRef(value))
             }
             ExprToken::TemplateStringDelimiter(n) => {
-                eprint!("Output Template String >> ");
                 let s = TemplateString::parse(parser, n)?;
                 Ok(Expr::TemplateString(s))
             }
