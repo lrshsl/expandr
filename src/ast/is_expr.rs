@@ -20,8 +20,8 @@ impl<'s> Parsable<'s> for IsExpr<'s> {
     /// use expandr::{Parsable, Parser};
     ///
     /// let src = r#"is 1 {
-    ///     .. 0 => 'One'
-    ///     .. 1 => 'Two'
+    ///     .. 0 ? 'One'
+    ///     .. 1 ? 'Two'
     /// }"#;
     /// let mut parser = Parser::new(src, None, None);
     /// assert!(IsExpr::parse(&mut parser).is_ok());
@@ -39,7 +39,7 @@ impl<'s> Parsable<'s> for IsExpr<'s> {
 
             parser.skip(ExprToken::DDot)?; // '..'
             let match_expr = Expr::parse(parser, ParseMode::Expr)?; // TODO: Change to allow '_'
-            parser.skip(ExprToken::Becomes)?; // '=>'
+            parser.skip(ExprToken::Symbol('?'))?;
             let translation = Expr::parse(parser, ParseMode::Expr)?;
             if parser.current_expr()? == Some(ExprToken::Symbol(',')) {
                 // TODO: Optional comma?

@@ -3,9 +3,9 @@ map msglen => '9'
 map arch => '64bit'
 
 map reg [x] => [is arch {
-   .. '16bit' => '[x]'
-   .. '32bit' => 'e[x]'
-   .. '64bit' => 'r[x]'
+   .. '16bit' ? '[x]'
+   .. '32bit' ? 'e[x]'
+   .. '64bit' ? 'r[x]'
 }]
 
 map var [name] [value] => '''

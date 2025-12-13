@@ -8,7 +8,7 @@ elseif exists('b:current_syntax')
 endif
 
 syn match		exrIdent					/[A-Za-z_]([A-Za-z0-9_]|(-\+[A-Za-z0-9_]))*/
-syn keyword		exrDefine				map df
+syn keyword		exrDefine				map
 syn match		exrBecomes				'=>'
 syn match		exrStore					'<-'
 syn match		exrIsExpr				/is\|\.\.\|?/

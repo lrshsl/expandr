@@ -14,9 +14,9 @@ Where each source code file produces a string when _expanded_. Possible use case
 
 - Adding variables / functions to config files
 - Generate verbose / repeating code
-- Generate C code / assembly / directly an executable
+- Generate C code, MLIR (or any intermediate representation) or directly an executable
 
-You can find examples in the [examples](examples/) directory.
+You can find examples in the [examples'](examples/) directory.
 
 
 ## Progress
@@ -24,17 +24,23 @@ You can find examples in the [examples](examples/) directory.
 - [ ] Finish implementing repetition operators (`*`, `+`, `?`)
 - [ ] Implement scopes
     - [ ] function scope `>` global scope
+- [ ] Identifiers as expressions
+    - either take their string value
+    - or resolve (lookup) directly (without `[]`)
 
 
 Extend core language:
 
 - [ ] Add number type(s) and arithmetic functions (WIP)
+    - [x] Allow integer variables (resp. mappings)
+    - [ ] Basic built-in functions (WIP)
 - [ ] Namespaces / modules
     - [ ] Importing
     - [ ] `pub` / `priv`
     - [ ] Explicit interfaces?
 - [ ] Pattern matching
     - [ ] Closures
+        - lisp-like quasi-quoting?
     - [ ] `_` special context variable
 - Optimizations (later)
 

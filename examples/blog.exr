@@ -4,15 +4,14 @@ map mode => 'dark'
 map color => [is mode {}]
 
 map bg_color => [is mode {
-   .. 'dark' => 'stone-800'
-   .. 'light' => 'stone-400'
+   .. 'dark' ? 'stone-800'
+   .. 'light' ? 'stone-400'
 }]
 
 map fg_color => [is mode {
-   .. 'dark' => 'stone-200'
-   .. 'light' => 'stone-800'
+   .. 'dark' ? 'stone-200'
+   .. 'light' ? 'stone-800'
 }]
-
 
 '''
 <!doctype html>

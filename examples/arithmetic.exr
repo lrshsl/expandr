@@ -2,13 +2,13 @@
 map add [a] [b] => [m [a] + [b]]
 
 map is-answer [answer] => [is answer {
-   .. 42 => 'Correct'
-   .. 63 => 'Incorrect'
+   .. 42 ? 'Correct'
+   .. 63 ? 'Incorrect'
 }]
 
 map is-answer [answer] => [is answer {
-   .. 42 => 'Correct'
-   .. 63 => 'Incorrect'
+   .. 42 ? 'Correct'
+   .. 63 ? 'Incorrect'
 }]
 
 '''
