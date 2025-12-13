@@ -1,7 +1,6 @@
 use crate::{
     ast::{Expr, ExprToken, Parsable, Parser},
     errors::parse_error::ParseResult,
-    parser::Token,
     unexpected_eof, unexpected_token,
 };
 
@@ -75,7 +74,7 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
                     )?,
                 };
 
-                parser.skip(Token::Expr(ExprToken::Symbol(']')))?;
+                parser.skip(ExprToken::Symbol(']'))?;
 
                 Ok(Self::ParamExpr { name, rep })
             }

@@ -33,7 +33,8 @@ Extend core language:
     - [ ] Importing
     - [ ] `pub` / `priv`
     - [ ] Explicit interfaces?
-- [ ] Closures
 - [ ] Pattern matching
+    - [ ] Closures
+    - [ ] `_` special context variable
 - Optimizations (later)
 

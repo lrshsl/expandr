@@ -7,7 +7,7 @@ use crate::{
         lexer_error::{LexerError, LexerResult},
         parse_error::ParseResult,
     },
-    lexer::{ExprToken, FileContext, RawToken},
+    lexer::{ExprToken, FileContext, RawToken, Token},
     log_lexer, unexpected_token,
 };
 
@@ -130,8 +130,8 @@ impl<'s> Parser<'s> {
 
     pub fn current(&self) -> LexerResult<'s, Option<Token<'s>>> {
         match self.mode {
-            ParseMode::Expr => self.current_expr().map(|x| x.map(Token::Expr)),
-            ParseMode::Raw => self.current_raw().map(|x| x.map(Token::Raw)),
+            ParseMode::Expr => self.current_expr().map(|x| x.map(Into::into)),
+            ParseMode::Raw => self.current_raw().map(|x| x.map(Into::into)),
         }
     }
 
@@ -149,10 +149,13 @@ impl<'s> Parser<'s> {
         }
     }
 
-    pub fn skip(&mut self, token: Token<'_>) -> ParseResult<'s, ()> {
-        if self.current().is_ok_and(|x| x != Some(token)) {
+    pub fn skip<T>(&mut self, token: T) -> ParseResult<'s, ()>
+    where
+        T: Into<Token<'s>> + Copy,
+    {
+        if self.current().is_ok_and(|x| x != Some(token.into())) {
             return unexpected_token!(
-                found: Some(token),
+                found: Some(token.into()),
                 expected: self.current(),
                 @ self.ctx()
             );
@@ -160,12 +163,6 @@ impl<'s> Parser<'s> {
         self.advance();
         Ok(())
     }
-}
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Token<'s> {
-    Expr(ExprToken<'s>),
-    Raw(RawToken<'s>),
 }
 
 #[cfg(test)]
@@ -180,76 +177,65 @@ mod parser_tests {
         map id3 => ' '
     "#;
 
+        fn expr(tok: ExprToken) -> LexerResult<Option<Token>> {
+            Ok(Some(Token::ExprToken(tok)))
+        }
+        fn raw(tok: RawToken) -> LexerResult<Option<Token>> {
+            Ok(Some(Token::RawToken(tok)))
+        }
+
         let mut p = Parser::new(SRC, None, None);
 
         // Expr: map
         assert_eq!(p.slice(), "map");
-        assert_eq!(p.current(), Ok(Some(Token::Expr(ExprToken::Map))));
+        assert_eq!(p.current(), expr(ExprToken::Map));
 
         // ident
         p.advance();
-        assert_eq!(
-            p.current(),
-            Ok(Some(Token::Expr(ExprToken::Ident("ident"))))
-        );
+        assert_eq!(p.current(), expr(ExprToken::Ident("ident")));
 
         // id2
         p.advance();
-        assert_eq!(p.current(), Ok(Some(Token::Expr(ExprToken::Ident("id2")))));
+        assert_eq!(p.current(), expr(ExprToken::Ident("id2")));
 
         // =>
         p.advance();
-        assert_eq!(p.current(), Ok(Some(Token::Expr(ExprToken::Becomes))));
+        assert_eq!(p.current(), expr(ExprToken::Becomes));
 
         // opening '
         p.advance();
-        assert_eq!(
-            p.current(),
-            Ok(Some(Token::Expr(ExprToken::TemplateStringDelimiter(1))))
-        );
+        assert_eq!(p.current(), expr(ExprToken::TemplateStringDelimiter(1)));
 
         // switch into raw
         p.switch_mode(ParseMode::Raw);
         p.advance();
-        assert_eq!(
-            p.current(),
-            Ok(Some(Token::Raw(RawToken::RawPart("raw mode here"))))
-        );
+        assert_eq!(p.current(), raw(RawToken::RawPart("raw mode here")));
         p.advance();
-        assert_eq!(
-            p.current(),
-            Ok(Some(Token::Raw(RawToken::TemplateStringDelimiter(1))))
-        );
+        assert_eq!(p.current(), raw(RawToken::TemplateStringDelimiter(1)));
 
         // back to expr
         p.switch_mode(ParseMode::Expr);
         p.advance();
-        assert_eq!(p.current(), Ok(Some(Token::Expr(ExprToken::Map))));
+        assert_eq!(p.current(), expr(ExprToken::Map));
 
         // id3
         p.advance();
-        assert_eq!(p.current(), Ok(Some(Token::Expr(ExprToken::Ident("id3")))));
+        assert_eq!(p.current(), expr(ExprToken::Ident("id3")));
 
         // =>
         p.advance();
-        assert_eq!(p.current(), Ok(Some(Token::Expr(ExprToken::Becomes))));
+        assert_eq!(p.current(), expr(ExprToken::Becomes));
 
         // opening '
         p.advance();
-        assert_eq!(
-            p.current(),
-            Ok(Some(Token::Expr(ExprToken::TemplateStringDelimiter(1))))
-        );
+        assert_eq!(p.current(), expr(ExprToken::TemplateStringDelimiter(1)));
 
         // switch to raw again
         p.switch_mode(ParseMode::Raw);
         p.advance();
-        assert_eq!(p.current(), Ok(Some(Token::Raw(RawToken::RawPart(" ")))));
+        assert_eq!(p.current(), raw(RawToken::RawPart(" ")));
         p.advance();
-        assert_eq!(
-            p.current(),
-            Ok(Some(Token::Raw(RawToken::TemplateStringDelimiter(1))))
-        );
+        assert_eq!(p.current(), raw(RawToken::TemplateStringDelimiter(1)));
 
         // back to expr, should hit EOF
         p.switch_mode(ParseMode::Expr);

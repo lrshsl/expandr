@@ -1,9 +1,9 @@
 use crate::{
     errors::parse_error::ParseResult,
     expand::Expanded,
-    lexer::ExprToken,
+    lexer::{ExprToken, Token},
     log,
-    parser::{ParseMode, Token},
+    parser::ParseMode,
     unexpected_token,
 };
 
@@ -30,7 +30,7 @@ impl<'s> Parsable<'s> for Ast<'s> {
             match token {
                 ExprToken::Map => {
                     parser.advance();
-                    let Some(Token::Expr(ExprToken::Ident(name))) = parser.current()? else {
+                    let Some(Token::ExprToken(ExprToken::Ident(name))) = parser.current()? else {
                         panic!("Expecting ident after keyword 'map'");
                     };
                     parser.advance();
@@ -46,7 +46,7 @@ impl<'s> Parsable<'s> for Ast<'s> {
                 ExprToken::Symbol('[') => {
                     parser.advance();
                     exprs.push(Expr::parse(parser, ParseMode::Expr)?);
-                    parser.skip(Token::Expr(ExprToken::Symbol(']')))?;
+                    parser.skip(ExprToken::Symbol(']'))?;
                 }
                 ExprToken::String(strval) => {
                     exprs.push(Expr::StrRef(strval));

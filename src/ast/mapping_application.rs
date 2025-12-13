@@ -5,7 +5,7 @@ use crate::{
     builtins::get_builtin,
     errors::parse_error::ParseResult,
     expand::Expanded,
-    parser::{ParseMode, Token},
+    parser::ParseMode,
     unexpected_token,
 };
 
@@ -44,7 +44,7 @@ impl<'s> MappingApplication<'s> {
                     ExprToken::Symbol('[') => {
                         parser.advance();
                         args.push(Expr::parse(parser, ParseMode::Expr)?);
-                        parser.skip(Token::Expr(ExprToken::Symbol(']')))?;
+                        parser.skip(ExprToken::Symbol(']'))?;
                     }
                     ExprToken::String(value) => {
                         args.push(Expr::StrRef(value));

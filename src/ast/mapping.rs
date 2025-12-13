@@ -1,8 +1,4 @@
-use crate::{
-    errors::parse_error::ParseResult,
-    parser::{ParseMode, Token},
-    unexpected_token,
-};
+use crate::{errors::parse_error::ParseResult, parser::ParseMode, unexpected_token};
 
 use super::*;
 
@@ -42,7 +38,7 @@ impl<'s> Parsable<'s> for Mapping<'s> {
         while parser.current_expr()?.expect("Unfinished map definition") != ExprToken::Becomes {
             params.push(MappingParam::parse(parser)?);
         }
-        parser.skip(Token::Expr(ExprToken::Becomes))?;
+        parser.skip(ExprToken::Becomes)?;
         let translation = match parser.current_expr()?.expect("Unfinished map definition") {
             ExprToken::String(value) => {
                 parser.advance();
@@ -57,7 +53,7 @@ impl<'s> Parsable<'s> for Mapping<'s> {
             ExprToken::Symbol('[') => {
                 parser.advance();
                 let expr = Expr::parse(parser, ParseMode::Expr);
-                parser.skip(Token::Expr(ExprToken::Symbol(']')))?;
+                parser.skip(ExprToken::Symbol(']'))?;
                 expr
             }
             tok => {

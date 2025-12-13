@@ -3,6 +3,17 @@ pub use expr_token::ExprToken;
 mod raw_token;
 pub use raw_token::RawToken;
 
+use crate::derive_from;
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum Token<'s> {
+    ExprToken(ExprToken<'s>),
+    RawToken(RawToken<'s>),
+}
+
+derive_from!(ExprToken for Token<'s>, lt<'s>);
+derive_from!(RawToken for Token<'s>, lt<'s>);
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct FileContext<'s> {
     pub filename: String,

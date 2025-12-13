@@ -6,14 +6,19 @@ use super::*;
 
 #[derive(Clone)]
 pub enum Expr<'s> {
+    // Primitives
     String(String),
     StrRef(&'s str),
     TemplateString(TemplateString<'s>),
     Integer(i64),
-    MappingApplication(MappingApplication<'s>),
-    IsExpr(IsExpr<'s>),
+
+    // Meta tokens
     Ident(&'s str),
     LiteralSymbol(char),
+
+    // Compound expressions
+    MappingApplication(MappingApplication<'s>),
+    IsExpr(IsExpr<'s>),
 }
 
 derive_from!(TemplateString for Expr<'s>, lt<'s>);
@@ -76,7 +81,7 @@ impl<'s> Expr<'s> {
             ExprToken::Symbol('[') => {
                 parser.advance();
                 let expr = Expr::parse(parser, ParseMode::Expr)?;
-                parser.skip(crate::parser::Token::Expr(ExprToken::Symbol(']')))?;
+                parser.skip(ExprToken::Symbol(']'))?;
                 Ok(expr)
             }
             tok => unexpected_token!(
