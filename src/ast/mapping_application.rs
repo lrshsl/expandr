@@ -1,6 +1,9 @@
+use std::assert_matches::assert_matches;
+
 use crate::{
     ast::{
-        Expandable, Expr, ExprToken, Mapping, MappingParam, Parser, ProgramContext, TemplateString,
+        mapping_param::ParamType, Expandable, Expr, ExprToken, Mapping, MappingParam, Parser,
+        ProgramContext, TemplateString,
     },
     builtins::get_builtin,
     errors::parse_error::ParseResult,
@@ -113,15 +116,21 @@ impl<'s> Expandable<'s> for MappingApplication<'s> {
                 let mut tmp_ctx = ctx.clone();
                 for param in &mapping.params.entries {
                     match param {
-                        MappingParam::ParamExpr { name, rep } => match rep {
+                        MappingParam::ParamExpr { name, typ, rep } => match rep {
                             None => {
                                 let next_arg = args
                                     .next()
                                     .expect("Not enough args for the given parameters");
 
-                                let new_entry = Mapping::Simple(match next_arg.expand(ctx) {
-                                    Expanded::Str(x) => Expr::String(x),
-                                    Expanded::Int(x) => Expr::Integer(x),
+                                let new_entry = Mapping::Simple(match typ {
+                                    ParamType::Expr => match next_arg.expand(ctx) {
+                                        Expanded::Str(x) => Expr::String(x),
+                                        Expanded::Int(x) => Expr::Integer(x),
+                                    },
+                                    ParamType::Ident => {
+                                        assert_matches!(next_arg, Expr::Ident(_), "Mapping should not have matched for param type 'ident' and non-ident argument");
+                                        next_arg
+                                    }
                                 });
 
                                 tmp_ctx.entry(name).or_default().push(new_entry);

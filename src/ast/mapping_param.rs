@@ -4,12 +4,19 @@ use crate::{
     unexpected_eof, unexpected_token,
 };
 
+#[derive(Clone, Copy, Debug)]
+pub enum ParamType {
+    Expr,
+    Ident,
+}
+
 #[derive(Clone, Debug)]
 pub enum MappingParam<'s> {
     Ident(&'s str),
     ParamExpr {
         name: &'s str,
         rep: Option<Repetition>,
+        typ: ParamType,
     },
     Symbol(char),
 }
@@ -18,16 +25,31 @@ impl MappingParam<'_> {
     pub fn matches_arg(&self, arg: &Expr<'_>) -> bool {
         match (self, arg) {
             (
-                Self::ParamExpr { .. },
+                Self::ParamExpr {
+                    typ: ParamType::Expr,
+                    ..
+                },
                 Expr::Integer(_)
                 | Expr::String(_)
                 | Expr::TemplateString(_)
                 | Expr::MappingApplication { .. },
             ) => true,
+
             (Self::Ident(self_value), Expr::Ident(other_value)) => self_value == other_value,
+
+            (
+                Self::ParamExpr {
+                    name,
+                    typ: ParamType::Ident,
+                    ..
+                },
+                Expr::Ident(other_value),
+            ) => name == other_value,
+
             (Self::Symbol(self_value), Expr::LiteralSymbol(other_value)) => {
                 self_value == other_value
             }
+
             _ => false,
         }
     }
@@ -72,9 +94,30 @@ impl<'s> Parsable<'s> for MappingParam<'s> {
                     )?,
                 };
 
+                // Optionally a type (`[a:ident]`, `[a:expr]`)
+                let typ = if parser.current_expr()? == Some(ExprToken::Symbol(':')) {
+                    parser.advance(); // ':'
+                    let typ = match parser.current_expr()? {
+                        Some(ExprToken::Ident("ident")) => ParamType::Ident,
+                        Some(ExprToken::Ident("expr")) => ParamType::Expr,
+                        Some(ExprToken::Ident(ident)) => {
+                            panic!("Unknown param type specifier: {ident}")
+                        }
+                        tok => unexpected_token!(
+                            found: tok,
+                            expected: [ExprToken::Ident],
+                            @ parser.ctx()
+                        )?,
+                    };
+                    parser.advance();
+                    typ
+                } else {
+                    ParamType::Expr
+                };
+
                 parser.skip(ExprToken::Symbol(']'))?;
 
-                Ok(Self::ParamExpr { name, rep })
+                Ok(Self::ParamExpr { name, rep, typ })
             }
             ExprToken::Symbol(s) if s != '[' => {
                 parser.advance();

@@ -1,3 +1,5 @@
+#![feature(assert_matches)]
+
 use crate::{
     ast::Ast,
     errors::{expansion_error::ExpansionResult, parse_error::ParseResult},

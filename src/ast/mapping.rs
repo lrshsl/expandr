@@ -58,7 +58,7 @@ impl<'s> Parsable<'s> for Mapping<'s> {
                     found: tok,
                     expected: [
                         String(_), TemplateStringDelimiter(_),
-                        Symbol('(' | '[')],
+                        Symbol('[')],
                     @ parser.ctx())
             }
         }?;
