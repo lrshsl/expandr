@@ -21,6 +21,8 @@ You can find examples in the [examples'](examples/) directory.
 
 ## Progress
 
+- Create lifetime independent (i.e. owned) `ProgramContext` for deps
+
 - [ ] Finish implementing repetition operators (`*`, `+`, `?`)
 - [ ] Implement scopes
     - [ ] function scope `>` global scope
