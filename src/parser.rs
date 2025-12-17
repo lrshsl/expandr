@@ -41,7 +41,6 @@ impl<'s> Parser<'s> {
     pub fn new(src: &'s str, filename: Option<String>, log_file: Option<PathBuf>) -> Self {
         let ctx = FileContext {
             filename: filename.unwrap_or_else(|| "unknown".to_string()),
-            content: src,
             ..Default::default()
         };
         let expr_lexer = ExprToken::lexer_with_extras(src, ctx.clone());
@@ -76,7 +75,6 @@ impl<'s> Parser<'s> {
         match self.mode {
             ParseMode::Expr => {
                 self.current_expr = self.expr_lexer.next();
-                self.expr_lexer.extras.cur_slice = self.expr_lexer.slice();
                 self.expr_lexer.extras.column += self.expr_lexer.slice().len();
                 if let Some(ref file) = self.log_file {
                     log_lexer!(file, "Expr: {:?}", self.current_expr);
@@ -84,7 +82,7 @@ impl<'s> Parser<'s> {
             }
             ParseMode::Raw => {
                 self.current_raw = self.raw_lexer.next();
-                self.raw_lexer.extras.cur_slice = self.raw_lexer.slice();
+                self.raw_lexer.extras.cur_slice = self.raw_lexer.slice().to_string();
                 if let Some(ref file) = self.log_file {
                     log_lexer!(file, "Raw: {:?}", self.current_raw);
                 }
@@ -92,7 +90,7 @@ impl<'s> Parser<'s> {
         }
     }
 
-    pub fn current_expr(&self) -> LexerResult<'s, Option<ExprToken<'s>>> {
+    pub fn current_expr(&self) -> LexerResult<Option<ExprToken<'s>>> {
         assert_eq!(
             self.mode,
             ParseMode::Expr,
@@ -110,7 +108,7 @@ impl<'s> Parser<'s> {
             .transpose()
     }
 
-    pub fn current_raw(&self) -> LexerResult<'s, Option<RawToken<'s>>> {
+    pub fn current_raw(&self) -> LexerResult<Option<RawToken<'s>>> {
         assert_eq!(
             self.mode,
             ParseMode::Raw,
@@ -128,18 +126,31 @@ impl<'s> Parser<'s> {
             .transpose()
     }
 
-    pub fn current(&self) -> LexerResult<'s, Option<Token<'s>>> {
+    pub fn current(&self) -> LexerResult<Option<Token<'s>>> {
         match self.mode {
             ParseMode::Expr => self.current_expr().map(|x| x.map(Into::into)),
             ParseMode::Raw => self.current_raw().map(|x| x.map(Into::into)),
         }
     }
 
-    pub fn ctx(&self) -> Box<FileContext<'s>> {
-        match self.mode {
-            ParseMode::Expr => Box::new(self.expr_lexer.extras.clone()),
-            ParseMode::Raw => Box::new(self.raw_lexer.extras.clone()),
-        }
+    pub fn ctx(&self) -> Box<FileContext> {
+        let mut ctx = match self.mode {
+            ParseMode::Expr => self.expr_lexer.extras.clone(),
+            ParseMode::Raw => self.raw_lexer.extras.clone(),
+        };
+        ctx.cur_slice = match self.mode {
+            ParseMode::Expr => self.expr_lexer.slice().to_string(),
+            ParseMode::Raw => self.raw_lexer.slice().to_string(),
+        };
+        // Only get the line when needed
+        ctx.cur_line = self
+            .expr_lexer
+            .source()
+            .lines()
+            .nth(ctx.line - 1)
+            .expect("Line does not exist")
+            .to_string();
+        Box::new(ctx)
     }
 
     pub fn slice(&self) -> &'s str {

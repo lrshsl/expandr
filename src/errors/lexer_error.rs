@@ -5,19 +5,19 @@ use crate::{
     lexer::FileContext,
 };
 
-pub type LexerResult<'s, T> = Result<T, LexerError<'s>>;
+pub type LexerResult<T> = Result<T, LexerError>;
 
 #[derive(Debug, thiserror::Error, PartialEq, Clone)]
-pub enum LexerError<'s> {
+pub enum LexerError {
     UnknownError {
         msg: String,
-        ctx: Box<FileContext<'s>>,
+        ctx: Box<FileContext>,
         file: &'static str,
         line: u32,
     },
 }
 
-impl<'s> fmt::Display for LexerError<'s> {
+impl fmt::Display for LexerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             LexerError::UnknownError {

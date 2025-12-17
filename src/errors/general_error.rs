@@ -5,18 +5,18 @@ use crate::{
     errors::{expansion_error::ExpansionError, parse_error::ParseError},
 };
 
-pub type GeneralResult<'s, T> = Result<T, GeneralError<'s>>;
+pub type GeneralResult<T> = Result<T, GeneralError>;
 
 #[derive(Debug, thiserror::Error)]
-pub enum GeneralError<'s> {
-    ParseError(ParseError<'s>),
+pub enum GeneralError {
+    ParseError(ParseError),
     IoError(#[from] IoError),
     ExpansionError(ExpansionError),
 }
 
-derive_from!(ParseError for GeneralError<'s>, lt<'s>);
+derive_from!(ParseError for GeneralError);
 
-impl std::fmt::Display for GeneralError<'_> {
+impl std::fmt::Display for GeneralError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             GeneralError::ParseError(error) => write!(f, "{}", error),

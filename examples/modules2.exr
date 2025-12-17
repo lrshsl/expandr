@@ -1,5 +1,5 @@
 
-print <- .modules1.print
+map print => .modules1.print
 
 '[print "text"]'
 

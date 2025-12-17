@@ -14,15 +14,13 @@ pub fn print_raise_ctx(file: &str, line: u32) {
 pub fn print_err_ctx(file_ctx: &FileContext) {
     let FileContext {
         filename,
-        content,
+        cur_line,
         line,
         cur_slice,
         ..
     } = file_ctx;
     let token_len = cur_slice.len();
     let token_start = file_ctx.token_start();
-
-    let cur_line = content.lines().nth(*line - 1).expect("Line does not exist");
 
     ceprint!(
         "\

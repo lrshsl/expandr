@@ -3,7 +3,7 @@ use logos::{Lexer, Logos, Skip};
 use crate::lexer::FileContext;
 
 #[derive(Logos, Debug, PartialEq, Clone, Copy)]
-#[logos(extras = FileContext<'s>)]
+#[logos(extras = FileContext)]
 pub enum RawToken<'s> {
     #[regex(r"\\(\n|\r\n)", |lex| {
         lex.extras.line += 1;

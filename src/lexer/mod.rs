@@ -15,27 +15,27 @@ derive_from!(ExprToken for Token<'s>, lt<'s>);
 derive_from!(RawToken for Token<'s>, lt<'s>);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct FileContext<'s> {
+pub struct FileContext {
     pub filename: String,
-    pub content: &'s str,
+    pub cur_line: String,
     pub line: usize,
     pub column: usize,
-    pub cur_slice: &'s str,
+    pub cur_slice: String,
 }
 
-impl Default for FileContext<'_> {
+impl Default for FileContext {
     fn default() -> Self {
         Self {
             filename: "unknown".to_string(),
-            content: "",
+            cur_line: String::new(),
             line: 1,
             column: 1,
-            cur_slice: "",
+            cur_slice: String::new(),
         }
     }
 }
 
-impl FileContext<'_> {
+impl FileContext {
     pub fn token_start(&self) -> usize {
         self.column - self.cur_slice.len()
     }

@@ -3,7 +3,7 @@ use logos::{Logos, Skip};
 use crate::lexer::FileContext;
 
 #[derive(Logos, Debug, PartialEq, Clone, Copy)]
-#[logos(extras = FileContext<'s>)]
+#[logos(extras = FileContext)]
 pub enum ExprToken<'s> {
     // Keywords
     #[token(r"map", priority = 5)]

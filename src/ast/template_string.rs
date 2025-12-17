@@ -28,10 +28,7 @@ impl<S: SourceType> Expandable<S> for TemplateString<S> {
 }
 
 impl<'s> TemplateString<Borrowed<'s>> {
-    pub fn parse(
-        parser: &mut Parser<'s>,
-        number_delimiters: usize,
-    ) -> Result<Self, ParseError<'s>> {
+    pub fn parse(parser: &mut Parser<'s>, number_delimiters: usize) -> Result<Self, ParseError> {
         let mut pieces = Vec::new();
 
         parser.switch_mode(ParseMode::Raw);

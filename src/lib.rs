@@ -34,10 +34,10 @@ pub fn build<'s>(
     registry: &mut ModuleRegistry,
     ast_logfile: Option<&PathBuf>,
     ctx_logfile: Option<&PathBuf>,
-) -> GeneralResult<'s, ProgramContext<Owned>> {
+) -> GeneralResult<ProgramContext<Owned>> {
     // Parse / get AST
     let srcname = path.file_stem().unwrap().to_str().unwrap();
-    let ast = get_ast(srcname.to_string(), &source, None).unwrap();
+    let ast = get_ast(srcname.to_string(), &source, None)?;
 
     // (Maybe) write AST to file
     if let Some(file) = ast_logfile {

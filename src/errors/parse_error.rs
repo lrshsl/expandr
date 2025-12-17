@@ -8,28 +8,28 @@ use crate::{
 };
 use std::fmt;
 
-pub type ParseResult<'s, T> = Result<T, ParseError<'s>>;
+pub type ParseResult<'s, T> = Result<T, ParseError>;
 
 #[derive(Debug, thiserror::Error)]
-pub enum ParseError<'s> {
-    LexerError(LexerError<'s>),
+pub enum ParseError {
+    LexerError(LexerError),
     UnexpectedToken {
         found: String,
         expected: Vec<String>,
-        ctx: Box<FileContext<'s>>,
+        ctx: Box<FileContext>,
         file: &'static str,
         line: u32,
     },
     UnexpectedEof {
-        ctx: Box<FileContext<'s>>,
+        ctx: Box<FileContext>,
         file: &'static str,
         line: u32,
     },
 }
 
-derive_from!(LexerError for ParseError<'s>, lt<'s>);
+derive_from!(LexerError for ParseError);
 
-impl<'s> fmt::Display for ParseError<'s> {
+impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ParseError::UnexpectedToken {
