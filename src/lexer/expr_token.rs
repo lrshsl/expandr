@@ -9,6 +9,9 @@ pub enum ExprToken<'s> {
     #[token(r"map", priority = 5)]
     Map,
 
+    #[token(r"use", priority = 5)]
+    Use,
+
     #[token(r"is", priority = 5)]
     Is,
 

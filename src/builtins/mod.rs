@@ -1,12 +1,15 @@
-use crate::{ast::Args, errors::expansion_error::ExpansionResult, expand::ProgramContext};
+use crate::{
+    ast::Args, errors::expansion_error::ExpansionResult, expand::ProgramContext,
+    source_type::SourceType,
+};
 
-type BuiltinFn = dyn Fn(&ProgramContext, &Args) -> ExpansionResult;
+type BuiltinFn<S> = fn(&ProgramContext<S>, &Args<S>) -> ExpansionResult;
 
-pub fn get_builtin(name: &str) -> Option<Box<BuiltinFn>> {
-    Some(Box::new(match name {
+pub fn get_builtin<S: SourceType>(name: &str) -> Option<BuiltinFn<S>> {
+    Some(match name {
         "m" => builtin_implementations::evaluate_math,
         &_ => return None,
-    }))
+    })
 }
 
 mod builtin_implementations {
@@ -14,9 +17,13 @@ mod builtin_implementations {
         ast::{Args, Expr},
         errors::expansion_error::ExpansionResult,
         expand::{Expandable as _, Expanded, ProgramContext},
+        source_type::SourceType,
     };
 
-    pub fn evaluate_math(ctx: &ProgramContext, args: &Args) -> ExpansionResult {
+    pub fn evaluate_math<S: SourceType>(
+        ctx: &ProgramContext<S>,
+        args: &Args<S>,
+    ) -> ExpansionResult {
         Ok(match &args[..] {
             [a, Expr::LiteralSymbol('+'), b] => {
                 match (a.clone().expand(ctx)?, b.clone().expand(ctx)?) {

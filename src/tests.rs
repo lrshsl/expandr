@@ -1,4 +1,4 @@
-use crate::build;
+use crate::{build, ModuleRegistry};
 
 use std::{
     fs,
@@ -17,7 +17,7 @@ fn integration_exr_files() {
             continue;
         }
 
-        let filename = path.file_name().unwrap().to_string_lossy();
+        let filename = path.file_name().unwrap();
         let stem = path.file_stem().unwrap().to_string_lossy();
 
         let contents = fs::read_to_string(&path).unwrap();
@@ -26,12 +26,21 @@ fn integration_exr_files() {
         let expected_path: PathBuf = format!("tests/expected/{stem}.out").into();
 
         let mut out_writer = fs::File::create(&out_path).unwrap();
+        let mut registry = ModuleRegistry::new();
 
-        build(&filename, &contents, &mut out_writer, None, None, None).unwrap();
+        build(
+            filename.into(),
+            contents,
+            &mut out_writer,
+            &mut registry,
+            None,
+            None,
+        )
+        .unwrap();
 
         let expected = fs::read_to_string(&expected_path).unwrap();
         let actual = fs::read_to_string(&out_path).unwrap();
 
-        assert_eq!(actual, expected, "Mismatch in test {filename}");
+        assert_eq!(actual, expected, "Mismatch in test {filename:?}");
     }
 }

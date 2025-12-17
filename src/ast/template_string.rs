@@ -3,22 +3,23 @@ use crate::{
     expand::Expanded,
     lexer::RawToken,
     parser::ParseMode,
+    source_type::{Borrowed, SourceType},
 };
 
 use super::*;
 
 #[derive(Clone, Debug)]
-pub struct TemplateString<'s> {
-    pieces: Vec<TemplatePiece<'s>>,
+pub struct TemplateString<S: SourceType> {
+    pub pieces: Vec<TemplatePiece<S>>,
 }
 
-impl<'s> Expandable<'s> for TemplateString<'s> {
-    fn expand(self, ctx: &'s ProgramContext) -> ExpansionResult {
+impl<S: SourceType> Expandable<S> for TemplateString<S> {
+    fn expand(self, ctx: &ProgramContext<S>) -> ExpansionResult {
         let mut result = String::new();
         for piece in self.pieces.into_iter() {
             match piece {
                 TemplatePiece::Char(ch) => result.push(ch),
-                TemplatePiece::StrVal(s) => result.push_str(s),
+                TemplatePiece::StrVal(s) => result.push_str(s.as_ref()),
                 TemplatePiece::Expr(expr) => result.push_str(&expr.expand(ctx)?.into_string()),
             }
         }
@@ -26,7 +27,7 @@ impl<'s> Expandable<'s> for TemplateString<'s> {
     }
 }
 
-impl<'s> TemplateString<'s> {
+impl<'s> TemplateString<Borrowed<'s>> {
     pub fn parse(
         parser: &mut Parser<'s>,
         number_delimiters: usize,
@@ -81,8 +82,8 @@ impl<'s> TemplateString<'s> {
 }
 
 #[derive(Clone, Debug)]
-pub enum TemplatePiece<'s> {
-    StrVal(&'s str),
+pub enum TemplatePiece<S: SourceType> {
+    StrVal(S::Str),
     Char(char),
-    Expr(Expr<'s>),
+    Expr(Expr<S>),
 }

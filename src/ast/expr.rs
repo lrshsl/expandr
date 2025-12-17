@@ -2,51 +2,52 @@ use crate::{
     errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
     log,
     parser::ParseMode,
+    source_type::{Borrowed, SourceType},
     unexpected_token,
 };
 
 use super::*;
 
 #[derive(Clone)]
-pub enum Expr<'s> {
+pub enum Expr<S: SourceType> {
     // Primitives
     String(String),
-    StrRef(&'s str),
-    TemplateString(TemplateString<'s>),
+    StrRef(S::Str),
+    TemplateString(TemplateString<S>),
     Integer(i64),
 
     // Meta tokens
-    Ident(&'s str),
+    Ident(S::Str),
     LiteralSymbol(char),
 
     // Compound expressions
-    MappingApplication(MappingApplication<'s>),
-    IsExpr(IsExpr<'s>),
+    MappingApplication(MappingApplication<S>),
+    IsExpr(IsExpr<S>),
 }
 
-derive_from!(TemplateString for Expr<'s>, lt<'s>);
-derive_from!(MappingApplication for Expr<'s>, lt<'s>);
-derive_from!(IsExpr for Expr<'s>, lt<'s>);
+derive_from!(TemplateString for Expr where S: SourceType);
+derive_from!(MappingApplication for Expr where S: SourceType);
+derive_from!(IsExpr for Expr where S: SourceType);
 
-impl<'s> std::fmt::Debug for Expr<'s> {
+impl<S: SourceType> std::fmt::Debug for Expr<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::String(s) => write!(f, "String({s})"),
-            Self::StrRef(s) => write!(f, "StrRef({s})"),
+            Self::StrRef(s) => write!(f, "StrRef({s:?})"),
             Self::TemplateString(s) => s.fmt(f),
             Self::Integer(s) => s.fmt(f),
             Self::MappingApplication(MappingApplication { name, args }) => {
-                write!(f, "MappingApplication({name}, {args:?})")
+                write!(f, "MappingApplication({name:?}, {args:?})")
             }
             Self::IsExpr(s) => write!(f, "IsExpr({s:#?})"),
-            Self::Ident(s) => write!(f, "Ident({s})"),
+            Self::Ident(s) => write!(f, "Ident({s:?})"),
             Self::LiteralSymbol(s) => write!(f, "Symbol '{s}'"),
         }
     }
 }
 
-impl<'s> Expandable<'s> for Expr<'s> {
-    fn expand(self, ctx: &'s ProgramContext) -> ExpansionResult {
+impl<S: SourceType> Expandable<S> for Expr<S> {
+    fn expand(self, ctx: &ProgramContext<S>) -> ExpansionResult {
         use crate::expand::Expanded::{Int, Str};
 
         match self {
@@ -67,7 +68,7 @@ impl<'s> Expandable<'s> for Expr<'s> {
     }
 }
 
-impl<'s> Expr<'s> {
+impl<'s> Expr<Borrowed<'s>> {
     pub fn parse(parser: &mut Parser<'s>, end_mode: ParseMode) -> ParseResult<'s, Self> {
         log!("Expr::parse: Starting on {:?}", parser.current_expr());
         let expr = match parser.current_expr()?.expect("Expr::parse on no token") {

@@ -13,6 +13,13 @@ macro_rules! derive_from {
             }
         }
     };
+    ($src:ident for $dst:ident where $t:ident : $bound:ident) => {
+        impl<$t: $bound> From<$src<$t>> for $dst<$t> {
+            fn from(s: $src<$t>) -> Self {
+                <$dst<$t>>::$src(s)
+            }
+        }
+    };
     ($src:ident for $dst:ty, lt<$lt:lifetime>) => {
         impl<$lt> From<$src<$lt>> for $dst {
             fn from(s: $src<$lt>) -> Self {
@@ -24,6 +31,9 @@ macro_rules! derive_from {
 
 mod ast;
 pub use ast::Ast;
+
+mod path_ident;
+pub use path_ident::{PathIdent, PathIdentRoot};
 
 mod expr;
 pub use expr::Expr;
@@ -42,3 +52,6 @@ pub use mapping_param::MappingParam;
 
 mod mapping_application;
 pub use mapping_application::{Args, MappingApplication};
+
+mod ast_into_owned;
+pub use ast_into_owned::IntoOwned;

@@ -1,18 +1,20 @@
 use crate::{
     ast::{Expandable, ExprToken, Parsable, Parser},
     errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
+    expand::ProgramContext,
     parser::ParseMode,
+    source_type::{Borrowed, SourceType},
 };
 
 use super::Expr;
 
 #[derive(Debug, Clone)]
-pub struct IsExpr<'s> {
-    pub cond_expr: Box<Expr<'s>>,
-    pub branches: Vec<Branch<'s>>,
+pub struct IsExpr<S: SourceType> {
+    pub cond_expr: Box<Expr<S>>,
+    pub branches: Vec<Branch<S>>,
 }
 
-impl<'s> Parsable<'s> for IsExpr<'s> {
+impl<'s> Parsable<'s> for IsExpr<Borrowed<'s>> {
     /// Example:
     /// ```
     /// use expandr::ast::IsExpr;
@@ -57,8 +59,8 @@ impl<'s> Parsable<'s> for IsExpr<'s> {
     }
 }
 
-impl<'s> Expandable<'s> for IsExpr<'s> {
-    fn expand(self, ctx: &'s super::ProgramContext) -> ExpansionResult {
+impl<S: SourceType> Expandable<S> for IsExpr<S> {
+    fn expand(self, ctx: &ProgramContext<S>) -> ExpansionResult {
         let cond = self.cond_expr.expand(ctx)?;
         self.branches
             .into_iter()
@@ -79,7 +81,7 @@ impl<'s> Expandable<'s> for IsExpr<'s> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Branch<'s> {
-    pub match_expr: Expr<'s>,
-    pub translation: Expr<'s>,
+pub struct Branch<S: SourceType> {
+    pub match_expr: Expr<S>,
+    pub translation: Expr<S>,
 }

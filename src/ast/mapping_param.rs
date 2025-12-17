@@ -1,6 +1,7 @@
 use crate::{
     ast::{Expr, ExprToken, Parsable, Parser},
     errors::parse_error::ParseResult,
+    source_type::{Borrowed, SourceType},
     unexpected_eof, unexpected_token,
 };
 
@@ -11,18 +12,18 @@ pub enum ParamType {
 }
 
 #[derive(Clone, Debug)]
-pub enum MappingParam<'s> {
-    Ident(&'s str),
+pub enum MappingParam<S: SourceType> {
+    Ident(S::Str),
     ParamExpr {
-        name: &'s str,
+        name: S::Str,
         rep: Option<Repetition>,
         typ: ParamType,
     },
     Symbol(char),
 }
 
-impl MappingParam<'_> {
-    pub fn matches_arg(&self, arg: &Expr<'_>) -> bool {
+impl<S: SourceType> MappingParam<S> {
+    pub fn matches_arg(&self, arg: &Expr<S>) -> bool {
         match (self, arg) {
             (
                 Self::ParamExpr {
@@ -54,7 +55,7 @@ impl MappingParam<'_> {
     }
 }
 
-impl<'s> Parsable<'s> for MappingParam<'s> {
+impl<'s> Parsable<'s> for MappingParam<Borrowed<'s>> {
     fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         match parser
             .current_expr()?

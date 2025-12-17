@@ -1,11 +1,38 @@
 use std::collections::HashMap;
 
-use crate::{ast::Mapping, errors::expansion_error::ExpansionResult};
+use crate::{
+    ast::Mapping,
+    errors::expansion_error::ExpansionResult,
+    source_type::{Borrowed, Owned, SourceType},
+};
 
-pub type ProgramContext<'s> = HashMap<&'s str, Vec<Mapping<'s>>>;
+pub type ProgramContext<S: SourceType> = HashMap<String, Vec<Mapping<S>>>;
 
-pub trait Expandable<'s> {
-    fn expand(self, ctx: &'s ProgramContext) -> ExpansionResult;
+/// Merges another context into this one. Mutates `a` in place.
+///
+/// If a key (variable/function name) exists in both, the mappings
+/// from `b` are appended to the list in `a`.
+pub fn merge_contexts<S: SourceType>(a: &mut ProgramContext<S>, b: ProgramContext<S>) {
+    for (key, mappings) in b {
+        a.entry(key).or_default().extend(mappings);
+    }
+}
+pub fn get_owned_context(ctx: ProgramContext<Borrowed<'_>>) -> ProgramContext<Owned> {
+    ctx.into_iter()
+        .map(|(key, mappings)| {
+            let owned_key = key.to_owned();
+            let owned_mappings = mappings
+                .into_iter()
+                .map(crate::ast::IntoOwned::into_owned)
+                .collect();
+
+            (owned_key, owned_mappings)
+        })
+        .collect()
+}
+
+pub trait Expandable<S: SourceType> {
+    fn expand(self, ctx: &ProgramContext<S>) -> ExpansionResult;
 }
 
 #[derive(Clone, Debug)]

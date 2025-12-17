@@ -12,18 +12,19 @@ use crate::{
     },
     expand::Expanded,
     parser::ParseMode,
+    source_type::{Borrowed, SourceType},
     unexpected_token,
 };
 
-pub type Args<'s> = Vec<Expr<'s>>;
+pub type Args<S: SourceType> = Vec<Expr<S>>;
 
 #[derive(Clone)]
-pub struct MappingApplication<'s> {
-    pub name: &'s str,
-    pub args: Args<'s>,
+pub struct MappingApplication<S: SourceType> {
+    pub name: S::Str,
+    pub args: Args<S>,
 }
 
-impl<'s> MappingApplication<'s> {
+impl<'s> MappingApplication<Borrowed<'s>> {
     pub fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         {
             let name = parser.slice();
@@ -88,14 +89,14 @@ impl<'s> MappingApplication<'s> {
     }
 }
 
-impl<'s> Expandable<'s> for MappingApplication<'s> {
-    fn expand(self, ctx: &'s ProgramContext) -> ExpansionResult {
-        if let Some(builtin) = get_builtin(self.name) {
+impl<S: SourceType> Expandable<S> for MappingApplication<S> {
+    fn expand(self, ctx: &ProgramContext<S>) -> ExpansionResult {
+        if let Some(builtin) = get_builtin(self.name.as_ref()) {
             return builtin(ctx, &self.args);
         }
         let mut matching_mappings = ctx
-            .get(self.name)
-            .unwrap_or_else(|| panic!("Mapping not found: {}", self.name))
+            .get(self.name.as_ref())
+            .unwrap_or_else(|| panic!("Mapping not found: {}", self.name.as_ref()))
             .iter()
             .filter(|m| match m {
                 Mapping::Parameterized(m) => m.params.matches_args(&self.args),
@@ -105,11 +106,13 @@ impl<'s> Expandable<'s> for MappingApplication<'s> {
         let Some(mapping) = matching_mappings.next() else {
             return Err(ExpansionError::UnknownMappingReferenced(format!(
                 "No such mapping found: {}, args: {:?}",
-                self.name, self.args
+                self.name.as_ref(),
+                self.args
             )));
         };
         if let Some(second_mapping) = matching_mappings.next() {
-            panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for {}, {:?}", self.name, self.args)
+            panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for {}, {:?}",
+            self.name.as_ref(), self.args)
         }
 
         match mapping {
@@ -136,7 +139,7 @@ impl<'s> Expandable<'s> for MappingApplication<'s> {
                                     }
                                 });
 
-                                tmp_ctx.entry(name).or_default().push(new_entry);
+                                tmp_ctx.entry(name.to_string()).or_default().push(new_entry);
                             }
                             Some(_) => todo!(),
                         },

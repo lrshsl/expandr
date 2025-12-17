@@ -1,0 +1,5 @@
+
+print <- .modules1.print
+
+'[print "text"]'
+

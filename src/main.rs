@@ -1,7 +1,7 @@
-use std::{fs, io, path::PathBuf};
+use std::{collections::HashMap, fs, io, path::PathBuf};
 
 use clap::Parser as _;
-use expandr::build;
+use expandr::{build, ModuleRegistry};
 
 use crate::cli::{Cli, CliSubCommand, ExpansionArgs};
 
@@ -45,39 +45,37 @@ fn main() {
 
 fn expand(cli_args: ExpansionArgs) {
     let (source_name, source) = match cli_args.input_files.as_deref() {
-        Some([ref filename]) => (
-            filename.file_stem().unwrap().to_str().unwrap(),
+        Some([filename]) => (
+            filename.clone(),
             fs::read_to_string(filename)
                 .expect("Could not read input file (might be caused by not enough memory)"),
         ),
-        None => (
-            "stdin",
-            io::read_to_string(io::stdin().lock())
-                .expect("Could not read stdin (might be caused by not enough memory)"),
-        ),
+        None => todo!("Input from stdin"),
         Some([..]) => panic!("Too many files"),
     };
 
-    let default_ast_logfile = PathBuf::from(source_name).with_extension("ast");
+    let default_ast_logfile = PathBuf::from(&source_name).with_extension("ast");
     let ast_logfile = cli_args.ast.as_ref().or(if cli_args.all {
         Some(&default_ast_logfile)
     } else {
         None
     });
 
-    let default_token_logfile = PathBuf::from(source_name).with_extension("tok");
+    let default_token_logfile = PathBuf::from(&source_name).with_extension("tok");
     let token_logfile = cli_args.symbols.clone().or(if cli_args.all {
         Some(default_token_logfile)
     } else {
         None
     });
 
-    let default_ctx_logfile = PathBuf::from(source_name).with_extension("ctx");
+    let default_ctx_logfile = PathBuf::from(&source_name).with_extension("ctx");
     let ctx_logfile = cli_args.symbols.as_ref().or(if cli_args.all {
         Some(&default_ctx_logfile)
     } else {
         None
     });
+
+    let mut module_registry = ModuleRegistry::new();
 
     let result = match cli_args.output.as_ref() {
         None => {
@@ -85,10 +83,10 @@ fn expand(cli_args: ExpansionArgs) {
 
             build(
                 source_name,
-                &source,
+                source,
                 &mut output,
+                &mut module_registry,
                 ast_logfile,
-                token_logfile,
                 ctx_logfile,
             )
         }
@@ -98,10 +96,10 @@ fn expand(cli_args: ExpansionArgs) {
 
             build(
                 source_name,
-                &source,
+                source,
                 &mut output_file,
+                &mut module_registry,
                 ast_logfile,
-                token_logfile,
                 ctx_logfile,
             )
         }

@@ -1,14 +1,17 @@
-use crate::{errors::parse_error::ParseResult, parser::ParseMode, unexpected_token};
+use crate::{
+    errors::parse_error::ParseResult, parser::ParseMode, source_type::Borrowed,
+    source_type::SourceType, unexpected_token,
+};
 
 use super::*;
 
 #[derive(Clone, Debug)]
-pub struct Params<'s> {
-    pub entries: Vec<MappingParam<'s>>,
+pub struct Params<S: SourceType> {
+    pub entries: Vec<MappingParam<S>>,
 }
 
-impl<'s> Params<'s> {
-    pub fn matches_args(&self, other: &Vec<Expr<'_>>) -> bool {
+impl<S: SourceType> Params<S> {
+    pub fn matches_args(&self, other: &Vec<Expr<S>>) -> bool {
         self.entries.len() == other.len()
             && self
                 .entries
@@ -19,18 +22,18 @@ impl<'s> Params<'s> {
 }
 
 #[derive(Debug, Clone)]
-pub enum Mapping<'s> {
-    Simple(Expr<'s>),
-    Parameterized(ParameterizedMapping<'s>),
+pub enum Mapping<S: SourceType> {
+    Simple(Expr<S>),
+    Parameterized(ParameterizedMapping<S>),
 }
 
 #[derive(Debug, Clone)]
-pub struct ParameterizedMapping<'s> {
-    pub params: Params<'s>,
-    pub translation: Expr<'s>,
+pub struct ParameterizedMapping<S: SourceType> {
+    pub params: Params<S>,
+    pub translation: Expr<S>,
 }
 
-impl<'s> Parsable<'s> for Mapping<'s> {
+impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
     fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         let mut params = Vec::new();
 

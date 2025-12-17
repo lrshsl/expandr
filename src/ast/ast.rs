@@ -4,29 +4,36 @@ use crate::{
     lexer::{ExprToken, Token},
     log,
     parser::ParseMode,
+    source_type::{Borrowed, SourceType},
     unexpected_token,
 };
 
 use super::*;
 
 #[derive(Debug)]
-pub struct Ast<'s> {
-    pub exprs: Vec<Expr<'s>>,
-    pub ctx: ProgramContext<'s>,
+pub struct Ast<S: SourceType> {
+    pub exprs: Vec<Expr<S>>,
+    pub imports: Vec<PathIdent<S>>,
+    pub ctx: ProgramContext<S>,
 }
 
-impl<'s> Parsable<'s> for Ast<'s> {
+impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
     fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         let mut ctx = ProgramContext::new();
+        let mut imports = Vec::new();
         let mut exprs = Vec::new();
 
         while {
             let tok = parser.current().expect("Ast::parse on invalid token");
             tok.is_some()
         } {
-            let token = parser.current_expr().expect("").expect("");
+            let token = parser.current_expr().unwrap().unwrap();
             log!("Ast::parse starting on {token:?}");
             match token {
+                ExprToken::Use => {
+                    parser.advance();
+                    imports.push(PathIdent::parse(parser)?);
+                }
                 ExprToken::Map => {
                     parser.advance();
                     let Some(Token::ExprToken(ExprToken::Ident(name))) = parser.current()? else {
@@ -37,7 +44,7 @@ impl<'s> Parsable<'s> for Ast<'s> {
                     match ctx.get_mut(name) {
                         Some(slot) => slot.push(mapping),
                         None => {
-                            let _ = ctx.insert(name, vec![mapping]);
+                            let _ = ctx.insert(name.to_string(), vec![mapping]);
                         }
                     }
                 }
@@ -56,21 +63,31 @@ impl<'s> Parsable<'s> for Ast<'s> {
                 }
                 tok => unexpected_token!(
                     found   : tok,
-                    expected: [ExprToken::Map, ExprToken::Symbol('['), ExprToken::String(_)],
+                    expected: [ExprToken::Use, ExprToken::Map, ExprToken::Symbol('['), ExprToken::String(_)],
                     @ parser.ctx()
                 )?,
             }
         }
 
-        Ok(Self { exprs, ctx })
+        Ok(Self {
+            exprs,
+            imports,
+            ctx,
+        })
     }
 }
 
-impl<'s> Ast<'s> {
-    pub fn expand(self) -> (String, Vec<ExpansionError>) {
+impl<S: SourceType> Ast<S> {
+    /// Imports must be handled already and passed in as argument
+    pub fn expand(
+        self,
+        imported_ctx: &ProgramContext<impl SourceType>,
+    ) -> (String, Vec<ExpansionError>) {
         let pieces = self.exprs.into_iter().map(|e| e.expand(&self.ctx));
         let mut errs = Vec::new();
         let mut out_str = String::new();
+
+        // Expand all pieces, joining into string, collecting errors
         for piece in pieces {
             match piece {
                 Ok(Expanded::Str(s)) => out_str.push_str(&s),
