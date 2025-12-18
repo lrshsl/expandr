@@ -166,7 +166,8 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
                     }
                 }
 
-                mapping.translation.clone().expand(&tmp_ctx)
+                let owned: Expr<Owned> = mapping.translation.clone().into_owned();
+                owned.expand(&tmp_ctx)
             }
         }
     }

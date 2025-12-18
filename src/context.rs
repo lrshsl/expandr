@@ -47,22 +47,18 @@ pub fn get_owned_context(ctx: ProgramContext<Borrowed<'_>>) -> ProgramContext<Ow
 }
 
 /// Local scope (~= stack frame)
-pub struct ScopedContext<'parent, P, S>
+pub struct ScopedContext<'parent, S>
 where
-    P: EvaluationContext<S>,
     S: SourceType,
 {
     /// Reference to the context below us (Global or another Scope)
-    pub parent: &'parent P,
+    pub parent: &'parent dyn EvaluationContext<S>,
 
     /// Local variables added by this scope
     pub locals: HashMap<String, Vec<Mapping<S>>>,
 }
 
-impl<'parent, P, S: SourceType> EvaluationContext<S> for ScopedContext<'parent, P, S>
-where
-    P: EvaluationContext<S>,
-{
+impl<'parent, S: SourceType> EvaluationContext<S> for ScopedContext<'parent, S> {
     fn lookup(&self, name: &str) -> Option<&Vec<Mapping<S>>> {
         // Try lookup locally first
         if let Some(mappings) = self.locals.get(name) {
