@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, io, path::PathBuf};
+use std::{fs, io, path::PathBuf};
 
 use clap::Parser as _;
 use expandr::{build, ModuleRegistry};
@@ -57,13 +57,6 @@ fn expand(cli_args: ExpansionArgs) {
     let default_ast_logfile = PathBuf::from(&source_name).with_extension("ast");
     let ast_logfile = cli_args.ast.as_ref().or(if cli_args.all {
         Some(&default_ast_logfile)
-    } else {
-        None
-    });
-
-    let default_token_logfile = PathBuf::from(&source_name).with_extension("tok");
-    let token_logfile = cli_args.symbols.clone().or(if cli_args.all {
-        Some(default_token_logfile)
     } else {
         None
     });

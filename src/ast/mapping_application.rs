@@ -1,22 +1,23 @@
-use std::assert_matches::assert_matches;
+use std::{assert_matches::assert_matches, collections::HashMap};
 
 use crate::{
     ast::{
-        mapping_param::ParamType, Expandable, Expr, ExprToken, Mapping, MappingParam, Parser,
-        ProgramContext, TemplateString,
+        mapping_param::ParamType, Expandable, Expr, ExprToken, IntoOwned, Mapping, MappingParam,
+        Parser, TemplateString,
     },
     builtins::get_builtin,
+    context::{EvaluationContext, ScopedContext},
     errors::{
         expansion_error::{ExpansionError, ExpansionResult},
         parse_error::ParseResult,
     },
     expand::Expanded,
     parser::ParseMode,
-    source_type::{Borrowed, SourceType},
+    source_type::{Borrowed, Owned, SourceType},
     unexpected_token,
 };
 
-pub type Args<S: SourceType> = Vec<Expr<S>>;
+pub type Args<S> = Vec<Expr<S>>;
 
 #[derive(Clone)]
 pub struct MappingApplication<S: SourceType> {
@@ -89,17 +90,26 @@ impl<'s> MappingApplication<Borrowed<'s>> {
     }
 }
 
-impl<S: SourceType> Expandable<S> for MappingApplication<S> {
-    fn expand(self, ctx: &ProgramContext<S>) -> ExpansionResult {
+impl<S: SourceType> Expandable for MappingApplication<S> {
+    fn expand<Ctx>(self, ctx: &Ctx) -> ExpansionResult
+    where
+        Ctx: EvaluationContext<Owned>,
+    {
         if let Some(builtin) = get_builtin(self.name.as_ref()) {
             return builtin(ctx, &self.args);
         }
+        let owned_args = self
+            .args
+            .clone() // You can easily get rid of that one
+            .into_iter()
+            .map(IntoOwned::into_owned)
+            .collect();
         let mut matching_mappings = ctx
-            .get(self.name.as_ref())
+            .lookup(self.name.as_ref())
             .unwrap_or_else(|| panic!("Mapping not found: {}", self.name.as_ref()))
             .iter()
             .filter(|m| match m {
-                Mapping::Parameterized(m) => m.params.matches_args(&self.args),
+                Mapping::Parameterized(m) => m.params.matches_args(&owned_args),
                 Mapping::Simple(_) => self.args.is_empty(),
             });
 
@@ -119,7 +129,10 @@ impl<S: SourceType> Expandable<S> for MappingApplication<S> {
             Mapping::Simple(translation) => translation.clone().expand(ctx),
             Mapping::Parameterized(mapping) => {
                 let mut args = self.args.into_iter();
-                let mut tmp_ctx = ctx.clone();
+                let mut tmp_ctx = ScopedContext {
+                    parent: ctx,
+                    locals: HashMap::new(),
+                };
                 for param in &mapping.params.entries {
                     match param {
                         MappingParam::ParamExpr { name, typ, rep } => match rep {
@@ -139,7 +152,11 @@ impl<S: SourceType> Expandable<S> for MappingApplication<S> {
                                     }
                                 });
 
-                                tmp_ctx.entry(name.to_string()).or_default().push(new_entry);
+                                tmp_ctx
+                                    .locals
+                                    .entry(name.to_string())
+                                    .or_default()
+                                    .push(new_entry.into_owned());
                             }
                             Some(_) => todo!(),
                         },

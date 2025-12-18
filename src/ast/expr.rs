@@ -1,8 +1,10 @@
 use crate::{
+    context::EvaluationContext,
     errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
+    expand::Expandable,
     log,
     parser::ParseMode,
-    source_type::{Borrowed, SourceType},
+    source_type::{Borrowed, Owned, SourceType},
     unexpected_token,
 };
 
@@ -46,8 +48,8 @@ impl<S: SourceType> std::fmt::Debug for Expr<S> {
     }
 }
 
-impl<S: SourceType> Expandable<S> for Expr<S> {
-    fn expand(self, ctx: &ProgramContext<S>) -> ExpansionResult {
+impl<S: SourceType> Expandable for Expr<S> {
+    fn expand<Ctx: EvaluationContext<Owned>>(self, ctx: &Ctx) -> ExpansionResult {
         use crate::expand::Expanded::{Int, Str};
 
         match self {

@@ -12,6 +12,7 @@ pub struct Params<S: SourceType> {
 
 impl<S: SourceType> Params<S> {
     pub fn matches_args(&self, other: &Vec<Expr<S>>) -> bool {
+        // TODO: convert and compare as Borrowed version
         self.entries.len() == other.len()
             && self
                 .entries

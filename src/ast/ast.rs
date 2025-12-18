@@ -1,10 +1,11 @@
 use crate::{
+    context::{EvaluationContext, ProgramContext},
     errors::{expansion_error::ExpansionError, parse_error::ParseResult},
-    expand::Expanded,
+    expand::{Expandable as _, Expanded},
     lexer::{ExprToken, Token},
     log,
     parser::ParseMode,
-    source_type::{Borrowed, SourceType},
+    source_type::{Borrowed, Owned, SourceType},
     unexpected_token,
 };
 
@@ -44,7 +45,7 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
                     match ctx.get_mut(name) {
                         Some(slot) => slot.push(mapping),
                         None => {
-                            let _ = ctx.insert(name.to_string(), vec![mapping]);
+                            let _ = ctx.insert(name, vec![mapping]);
                         }
                     }
                 }
@@ -79,11 +80,11 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
 
 impl<S: SourceType> Ast<S> {
     /// Imports must be handled already and passed in as argument
-    pub fn expand(
+    pub fn expand<Ctx: EvaluationContext<Owned>>(
         self,
-        imported_ctx: &ProgramContext<impl SourceType>,
+        imported_ctx: &Ctx,
     ) -> (String, Vec<ExpansionError>) {
-        let pieces = self.exprs.into_iter().map(|e| e.expand(&self.ctx));
+        let pieces = self.exprs.into_iter().map(|e| e.expand(imported_ctx));
         let mut errs = Vec::new();
         let mut out_str = String::new();
 

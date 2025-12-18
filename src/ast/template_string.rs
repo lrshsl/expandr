@@ -1,9 +1,10 @@
 use crate::{
+    context::EvaluationContext,
     errors::{expansion_error::ExpansionResult, parse_error::ParseError},
     expand::Expanded,
     lexer::RawToken,
     parser::ParseMode,
-    source_type::{Borrowed, SourceType},
+    source_type::{Borrowed, Owned, SourceType},
 };
 
 use super::*;
@@ -13,8 +14,8 @@ pub struct TemplateString<S: SourceType> {
     pub pieces: Vec<TemplatePiece<S>>,
 }
 
-impl<S: SourceType> Expandable<S> for TemplateString<S> {
-    fn expand(self, ctx: &ProgramContext<S>) -> ExpansionResult {
+impl<S: SourceType> Expandable for TemplateString<S> {
+    fn expand<Ctx: EvaluationContext<Owned>>(self, ctx: &Ctx) -> ExpansionResult {
         let mut result = String::new();
         for piece in self.pieces.into_iter() {
             match piece {

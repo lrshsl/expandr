@@ -1,5 +1,5 @@
 use crate::{
-    expand::{Expandable, ProgramContext},
+    expand::Expandable,
     lexer::ExprToken,
     parser::{Parsable, Parser},
 };

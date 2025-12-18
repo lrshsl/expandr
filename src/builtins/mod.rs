@@ -1,27 +1,32 @@
 use crate::{
-    ast::Args, errors::expansion_error::ExpansionResult, expand::ProgramContext,
-    source_type::SourceType,
+    ast::Args,
+    context::EvaluationContext,
+    errors::expansion_error::ExpansionResult,
+    source_type::{Owned, SourceType},
 };
 
-type BuiltinFn<S> = fn(&ProgramContext<S>, &Args<S>) -> ExpansionResult;
+type BuiltinFn<S, Ctx> = fn(&Ctx, &Args<S>) -> ExpansionResult;
 
-pub fn get_builtin<S: SourceType>(name: &str) -> Option<BuiltinFn<S>> {
-    Some(match name {
-        "m" => builtin_implementations::evaluate_math,
-        &_ => return None,
-    })
+pub fn get_builtin<S: SourceType, Ctx: EvaluationContext<Owned>>(
+    name: &str,
+) -> Option<BuiltinFn<S, Ctx>> {
+    match name {
+        "m" => Some(builtin_implementations::evaluate_math),
+        &_ => None,
+    }
 }
 
 mod builtin_implementations {
     use crate::{
         ast::{Args, Expr},
+        context::EvaluationContext,
         errors::expansion_error::ExpansionResult,
-        expand::{Expandable as _, Expanded, ProgramContext},
-        source_type::SourceType,
+        expand::{Expandable as _, Expanded},
+        source_type::{Owned, SourceType},
     };
 
-    pub fn evaluate_math<S: SourceType>(
-        ctx: &ProgramContext<S>,
+    pub fn evaluate_math<S: SourceType, Ctx: EvaluationContext<Owned>>(
+        ctx: &Ctx,
         args: &Args<S>,
     ) -> ExpansionResult {
         Ok(match &args[..] {

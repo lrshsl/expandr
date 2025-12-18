@@ -1,9 +1,9 @@
 use crate::{
     ast::{Expandable, ExprToken, Parsable, Parser},
+    context::EvaluationContext,
     errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
-    expand::ProgramContext,
     parser::ParseMode,
-    source_type::{Borrowed, SourceType},
+    source_type::{Borrowed, Owned, SourceType},
 };
 
 use super::Expr;
@@ -59,8 +59,8 @@ impl<'s> Parsable<'s> for IsExpr<Borrowed<'s>> {
     }
 }
 
-impl<S: SourceType> Expandable<S> for IsExpr<S> {
-    fn expand(self, ctx: &ProgramContext<S>) -> ExpansionResult {
+impl<S: SourceType> Expandable for IsExpr<S> {
+    fn expand<Ctx: EvaluationContext<Owned>>(self, ctx: &Ctx) -> ExpansionResult {
         let cond = self.cond_expr.expand(ctx)?;
         self.branches
             .into_iter()

@@ -1,8 +1,10 @@
 use std::{fmt::Debug, marker::PhantomData};
 
+use crate::ast::IntoOwned;
+
 /// How to represent the source
-pub trait SourceType: Clone + Debug {
-    type Str: Clone + Debug + PartialEq + ToString + AsRef<str>;
+pub trait SourceType: Clone + Debug + IntoOwned {
+    type Str: Clone + Debug + PartialEq + Eq + std::hash::Hash + ToString + AsRef<str>;
 }
 
 /// Owned version of SourceType
@@ -16,6 +18,14 @@ impl SourceType for Owned {
     type Str = String;
 }
 
+impl IntoOwned for Owned {
+    type Owned = Owned;
+
+    fn into_owned(self) -> Self::Owned {
+        self
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Borrowed<'s>(
     // Tell rustc that 's is needed
@@ -24,4 +34,12 @@ pub struct Borrowed<'s>(
 
 impl<'s> SourceType for Borrowed<'s> {
     type Str = &'s str;
+}
+
+impl IntoOwned for Borrowed<'_> {
+    type Owned = Owned;
+
+    fn into_owned(self) -> Self::Owned {
+        Owned
+    }
 }

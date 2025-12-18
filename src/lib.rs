@@ -2,8 +2,8 @@
 
 use crate::{
     ast::{Ast, PathIdentRoot},
+    context::{get_owned_context, merge_contexts, ProgramContext},
     errors::{general_error::GeneralResult, parse_error::ParseResult},
-    expand::{get_owned_context, merge_contexts, ProgramContext},
     source_type::{Borrowed, Owned},
 };
 use std::io::Write as _;
@@ -11,6 +11,7 @@ use std::{collections::HashMap, fs, io, path::PathBuf};
 
 pub mod ast;
 mod builtins;
+mod context;
 mod errors;
 mod expand;
 pub mod grammar;
@@ -21,7 +22,6 @@ mod source_type;
 #[cfg(test)]
 mod tests;
 
-pub use expand::Expandable;
 pub use grammar::check_grammar;
 pub use parser::{Parsable, Parser};
 
