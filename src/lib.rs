@@ -60,12 +60,13 @@ pub fn build<'s>(
             PathIdentRoot::File => path.parent().unwrap().join(&dep.path_parts[0]),
             PathIdentRoot::Directory => {
                 let dep_file = dep.path_parts.first().unwrap();
-                path.with_file_name(dep_file)
+                path.with_file_name(dep_file).with_extension("exr")
             }
             PathIdentRoot::Crate => todo!("Crate handling"),
         };
 
         // Canonicalize to ensure cache hits work (e.g., ./lib.rs vs lib.rs)
+        println!("dep: {dep_path:?}");
         let dep_path = fs::canonicalize(&dep_path).unwrap_or(dep_path);
 
         if let Some(cached_ctx) = registry.get(&dep_path) {

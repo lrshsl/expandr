@@ -20,6 +20,7 @@ pub enum Expr<S: SourceType> {
 
     // Meta tokens
     Ident(S::Str),
+    PathIdent(PathIdent<S>),
     LiteralSymbol(char),
 
     // Compound expressions
@@ -30,6 +31,7 @@ pub enum Expr<S: SourceType> {
 derive_from!(TemplateString for Expr where S: SourceType);
 derive_from!(MappingApplication for Expr where S: SourceType);
 derive_from!(IsExpr for Expr where S: SourceType);
+derive_from!(PathIdent for Expr where S: SourceType);
 
 impl<S: SourceType> std::fmt::Debug for Expr<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -38,12 +40,15 @@ impl<S: SourceType> std::fmt::Debug for Expr<S> {
             Self::StrRef(s) => write!(f, "StrRef({s:?})"),
             Self::TemplateString(s) => s.fmt(f),
             Self::Integer(s) => s.fmt(f),
+
+            Self::Ident(s) => write!(f, "Ident({s:?})"),
+            Self::PathIdent(s) => write!(f, "PathIdent({s:?})"),
+            Self::LiteralSymbol(s) => write!(f, "Symbol '{s}'"),
+
             Self::MappingApplication(MappingApplication { name, args }) => {
                 write!(f, "MappingApplication({name:?}, {args:?})")
             }
             Self::IsExpr(s) => write!(f, "IsExpr({s:#?})"),
-            Self::Ident(s) => write!(f, "Ident({s:?})"),
-            Self::LiteralSymbol(s) => write!(f, "Symbol '{s}'"),
         }
     }
 }
@@ -59,13 +64,14 @@ impl<S: SourceType> Expandable for Expr<S> {
             Expr::TemplateString(tmpl_string) => tmpl_string.expand(ctx),
             Expr::Integer(val) => Ok(Int(val)),
 
-            Expr::IsExpr(is_expr) => is_expr.expand(ctx),
-            Expr::MappingApplication(mapping_application) => mapping_application.expand(ctx),
-
             Expr::Ident(ident) => Ok(Str(ident.to_string())),
+            Expr::PathIdent(_) => unimplemented!(),
             Expr::LiteralSymbol(s) => {
                 unreachable!("Should not try to expand a literal symbol: {s}")
             }
+
+            Expr::IsExpr(is_expr) => is_expr.expand(ctx),
+            Expr::MappingApplication(mapping_application) => mapping_application.expand(ctx),
         }
     }
 }
@@ -90,9 +96,10 @@ impl<'s> Expr<Borrowed<'s>> {
                 parser.skip(ExprToken::Symbol(']'))?;
                 Ok(expr)
             }
+            ExprToken::Symbol('.') => PathIdent::parse(parser).map(Into::into),
             tok => unexpected_token!(
                     found: tok,
-                    expected: [String, Ident, Is],
+                    expected: [String, Ident, Is, Symbol('[' | '.')],
                     @parser.ctx()
             ),
         };

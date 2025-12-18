@@ -51,6 +51,7 @@ impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
                 let s = TemplateString::parse(parser, n)?;
                 Ok(Expr::TemplateString(s))
             }
+            ExprToken::Symbol('.') => PathIdent::parse(parser).map(Into::into),
             ExprToken::Symbol('[') => {
                 parser.advance();
                 let expr = Expr::parse(parser, ParseMode::Expr);
