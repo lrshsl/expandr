@@ -82,14 +82,14 @@ pub fn build<'s>(
         }
     }
 
-    let (prog_output, errs) = ast.expand(&external_ctx);
+    merge_contexts(&mut local_ctx, external_ctx);
+
+    let (prog_output, errs) = ast.expand(&local_ctx);
 
     output.write_all(&prog_output.into_bytes())?;
     if !errs.is_empty() {
         eprintln!("\nErrors occured in {}: {:#?}", srcname, errs);
     }
-
-    merge_contexts(&mut local_ctx, external_ctx);
 
     registry.insert(path, local_ctx.clone());
 
