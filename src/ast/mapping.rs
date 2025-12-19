@@ -41,7 +41,7 @@ impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
         while parser.current_expr()?.expect("Unfinished map definition") != ExprToken::Becomes {
             params.push(MappingParam::parse(parser)?);
         }
-        parser.skip(ExprToken::Becomes)?;
+        parser.skip(ExprToken::Becomes, file!(), line!())?;
         let translation = match parser.current_expr()?.expect("Unfinished map definition") {
             ExprToken::String(value) => {
                 parser.advance();
@@ -55,7 +55,7 @@ impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
             ExprToken::Symbol('[') => {
                 parser.advance();
                 let expr = Expr::parse(parser, ParseMode::Expr);
-                parser.skip(ExprToken::Symbol(']'))?;
+                parser.skip(ExprToken::Symbol(']'), file!(), line!())?;
                 expr
             }
             tok => {

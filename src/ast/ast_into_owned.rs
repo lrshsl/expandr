@@ -1,6 +1,6 @@
 use crate::{
     ast::{
-        is_expr::Branch,
+        is_expr::{Branch, MatchExpr},
         mapping::{ParameterizedMapping, Params},
         template_string::TemplatePiece,
     },
@@ -70,6 +70,16 @@ impl<S: SourceType> IntoOwned for Branch<S> {
         Branch {
             match_expr: self.match_expr.into_owned(),
             translation: self.translation.into_owned(),
+        }
+    }
+}
+
+impl<S: SourceType> IntoOwned for MatchExpr<S> {
+    type Owned = MatchExpr<Owned>;
+    fn into_owned(self) -> Self::Owned {
+        match self {
+            MatchExpr::MatchAll => MatchExpr::MatchAll,
+            MatchExpr::Expr(expr) => MatchExpr::Expr(expr.into_owned()),
         }
     }
 }

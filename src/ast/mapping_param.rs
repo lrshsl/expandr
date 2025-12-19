@@ -69,7 +69,7 @@ impl<'s> Parsable<'s> for MappingParam<Borrowed<'s>> {
             ExprToken::Symbol('[') => {
                 parser.advance();
                 let ExprToken::Ident(name) = parser.current_expr()?.expect("Expected ident") else {
-                    panic!("Expecting ident");
+                    unexpected_token!(found: parser.current_expr()?, expected: [Ident], @ parser.ctx())?
                 };
                 parser.advance();
                 let rep = match parser.current_expr()? {
@@ -116,7 +116,7 @@ impl<'s> Parsable<'s> for MappingParam<Borrowed<'s>> {
                     ParamType::Expr
                 };
 
-                parser.skip(ExprToken::Symbol(']'))?;
+                parser.skip(ExprToken::Symbol(']'), file!(), line!())?;
 
                 Ok(Self::ParamExpr { name, rep, typ })
             }

@@ -33,7 +33,7 @@ impl Parsable<'_> for PathIdent {
             unexpected_token!(found: parser.current_expr(), expected: [Ident], @ parser.ctx())?
         };
         parser
-            .skip(ExprToken::Ident(s))
+            .skip(ExprToken::Ident(s), file!(), line!())
             .expect(" the best, prepare for the impossible");
         Ok(Self::from_str(s))
     }

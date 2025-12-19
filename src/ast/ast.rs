@@ -52,7 +52,7 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
                 ExprToken::Symbol('[') => {
                     parser.advance();
                     exprs.push(Expr::parse(parser, ParseMode::Expr)?);
-                    parser.skip(ExprToken::Symbol(']'))?;
+                    parser.skip(ExprToken::Symbol(']'), file!(), line!())?;
                 }
                 ExprToken::String(strval) => {
                     exprs.push(Expr::StrRef(strval));

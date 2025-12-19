@@ -96,7 +96,7 @@ impl<'s> Expr<Borrowed<'s>> {
             ExprToken::Symbol('[') => {
                 parser.advance();
                 let expr = Expr::parse(parser, ParseMode::Expr)?;
-                parser.skip(ExprToken::Symbol(']'))?;
+                parser.skip(ExprToken::Symbol(']'), file!(), line!())?;
                 Ok(expr)
             }
             tok => unexpected_token!(

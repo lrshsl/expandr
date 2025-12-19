@@ -8,7 +8,7 @@ use crate::{
         parse_error::ParseResult,
     },
     lexer::{ExprToken, FileContext, RawToken, Token},
-    log_lexer, unexpected_token,
+    log_lexer,
 };
 
 pub type LogosError<'s> = <ExprToken<'s> as Logos<'s>>::Error;
@@ -160,16 +160,22 @@ impl<'s> Parser<'s> {
         }
     }
 
-    pub fn skip<T>(&mut self, token: T) -> ParseResult<'s, ()>
+    pub fn skip<T>(&mut self, token: T, file: &'static str, line: u32) -> ParseResult<'s, ()>
     where
         T: Into<Token<'s>> + Copy,
     {
         if self.current().is_ok_and(|x| x != Some(token.into())) {
-            return unexpected_token!(
-                found: Some(token.into()),
-                expected: self.current(),
-                @ self.ctx()
-            );
+            return {
+                let found = format!("{:?}", self.current().unwrap());
+                let expected = vec![format!("{:?}", Some(token.into()))];
+                Err(crate::errors::parse_error::ParseError::UnexpectedToken {
+                    found,
+                    expected,
+                    ctx: self.ctx(),
+                    file: file,
+                    line: line,
+                })
+            };
         }
         self.advance();
         Ok(())
