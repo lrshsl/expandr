@@ -275,22 +275,20 @@ map bar [param] => '''nested [tmplstr 'str']'''
         // ---- First line: map foo => 'bar' ----
         assert_eq!(p.current_expr(), Ok(Some(ExprToken::Map)));
         assert_eq!(p.slice(), "map");
-        assert_eq!(p.expr_lexer.extras.cur_slice, "map");
-        assert_eq!(p.expr_lexer.extras.line, 2);
-        assert_eq!(p.expr_lexer.extras.token_start(), 1);
+        assert_eq!(p.ctx().line, 2);
+        assert_eq!(p.ctx().token_start(), 1);
 
         p.advance();
         assert_eq!(p.current_expr(), Ok(Some(ExprToken::Ident("foo"))));
         assert_eq!(p.slice(), "foo");
-        assert_eq!(p.expr_lexer.extras.cur_slice, "foo");
         assert_eq!(p.expr_lexer.extras.line, 2);
-        assert_eq!(p.expr_lexer.extras.token_start(), 5);
+        assert_eq!(p.ctx().token_start(), 5);
 
         p.advance();
         assert_eq!(p.current_expr(), Ok(Some(ExprToken::Becomes)));
         assert_eq!(p.slice(), "=>");
         assert_eq!(p.expr_lexer.extras.line, 2);
-        assert_eq!(p.expr_lexer.extras.token_start(), 9);
+        assert_eq!(p.ctx().token_start(), 9);
 
         p.advance();
         assert_eq!(
@@ -299,16 +297,15 @@ map bar [param] => '''nested [tmplstr 'str']'''
         );
         assert_eq!(p.slice(), "'");
         assert_eq!(p.expr_lexer.extras.line, 2);
-        assert_eq!(p.expr_lexer.extras.token_start(), 12);
+        assert_eq!(p.ctx().token_start(), 12);
 
         // Switch into Raw mode for 'bar'
         p.switch_mode(ParseMode::Raw);
         p.advance();
         assert_eq!(p.current_raw(), Ok(Some(RawToken::RawPart("bar"))));
         assert_eq!(p.slice(), "bar");
-        assert_eq!(p.raw_lexer.extras.cur_slice, "bar");
         assert_eq!(p.raw_lexer.extras.line, 2);
-        assert_eq!(p.raw_lexer.extras.token_start(), 13);
+        assert_eq!(p.ctx().token_start(), 13);
 
         p.advance();
         assert_eq!(
@@ -325,7 +322,7 @@ map bar [param] => '''nested [tmplstr 'str']'''
         assert_eq!(p.current_expr(), Ok(Some(ExprToken::Map)));
         assert_eq!(p.slice(), "map");
         assert_eq!(p.expr_lexer.extras.line, 7);
-        assert_eq!(p.expr_lexer.extras.token_start(), 1);
+        assert_eq!(p.ctx().token_start(), 1);
 
         p.advance();
         assert_eq!(p.current_expr(), Ok(Some(ExprToken::Ident("bar"))));
