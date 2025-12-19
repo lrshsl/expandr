@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Expr, ExprToken, Parsable, Parser},
+    ast::{Expr, ExprToken, Parsable, Parser, PathIdent},
     errors::parse_error::ParseResult,
     source_type::{Borrowed, SourceType},
     unexpected_eof, unexpected_token,
@@ -13,7 +13,7 @@ pub enum ParamType {
 
 #[derive(Clone, Debug)]
 pub enum MappingParam<S: SourceType> {
-    Ident(S::Str),
+    Ident(PathIdent),
     ParamExpr {
         name: S::Str,
         rep: Option<Repetition>,
@@ -36,14 +36,14 @@ impl<S: SourceType> MappingParam<S> {
                 | Expr::MappingApplication { .. },
             ) => true,
 
-            (Self::Ident(self_value), Expr::Ident(other_value)) => self_value == other_value,
+            (Self::Ident(self_value), Expr::PathIdent(other_value)) => self_value == other_value,
 
             (
                 Self::ParamExpr {
                     typ: ParamType::Ident,
                     ..
                 },
-                Expr::Ident(_),
+                Expr::PathIdent(_),
             ) => true,
 
             (Self::Symbol(self_value), Expr::LiteralSymbol(other_value)) => {
@@ -63,7 +63,7 @@ impl<'s> Parsable<'s> for MappingParam<Borrowed<'s>> {
         {
             ExprToken::Ident(value) => {
                 parser.advance();
-                Ok(Self::Ident(value))
+                Ok(Self::Ident(PathIdent::from_str(value)))
             }
             ExprToken::Symbol('[') => {
                 parser.advance();

@@ -27,8 +27,8 @@ impl fmt::Display for LexerError {
                 line,
             } => {
                 // Print the location/context
-                print_raise_ctx(file, *line);
-                print_err_ctx(ctx);
+                print_raise_ctx(f, file, *line)?;
+                print_err_ctx(f, ctx)?;
 
                 // Write the actual error
                 writeln!(f, "|  Lexer error: {msg}")

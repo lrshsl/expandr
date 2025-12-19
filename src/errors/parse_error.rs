@@ -39,16 +39,16 @@ impl fmt::Display for ParseError {
                 file,
                 line,
             } => {
-                print_raise_ctx(file, *line);
-                print_err_ctx(ctx);
+                print_raise_ctx(f, file, *line)?;
+                print_err_ctx(f, ctx)?;
                 write!(
                     f,
                     "|  Unexpected token: \"{found}\"\n|  Expecting one of {expected:?}\n"
                 )
             }
             ParseError::UnexpectedEof { ctx, file, line } => {
-                print_raise_ctx(file, *line);
-                print_err_ctx(ctx);
+                print_raise_ctx(f, file, *line)?;
+                print_err_ctx(f, ctx)?;
                 writeln!(f, "|  Unexpected end of file")
             }
             ParseError::LexerError(err) => write!(f, "{err}"),

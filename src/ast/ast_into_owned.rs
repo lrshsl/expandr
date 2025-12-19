@@ -22,7 +22,6 @@ impl<S: SourceType> IntoOwned for Expr<S> {
             Expr::StrRef(s) => Expr::StrRef(s.to_string()),
             Expr::TemplateString(s) => Expr::TemplateString(s.into_owned()),
             Expr::Integer(i) => Expr::Integer(i),
-            Expr::Ident(s) => Expr::Ident(s.to_string()),
             Expr::PathIdent(s) => Expr::PathIdent(s),
             Expr::LiteralSymbol(c) => Expr::LiteralSymbol(c),
             Expr::MappingApplication(ma) => Expr::MappingApplication(ma.into_owned()),
@@ -99,13 +98,13 @@ impl<S: SourceType> IntoOwned for MappingParam<S> {
     type Owned = MappingParam<Owned>;
     fn into_owned(self) -> MappingParam<Owned> {
         match self {
-            MappingParam::Ident(ident) => MappingParam::Ident(ident.to_string()),
             MappingParam::ParamExpr { name, rep, typ } => MappingParam::ParamExpr {
                 name: name.to_string(),
                 rep,
                 typ,
             },
             MappingParam::Symbol(c) => MappingParam::Symbol(c),
+            MappingParam::Ident(ident) => MappingParam::Ident(ident),
         }
     }
 }

@@ -19,7 +19,6 @@ pub enum Expr<S: SourceType> {
     Integer(i64),
 
     // Meta tokens
-    Ident(S::Str),
     PathIdent(PathIdent),
     LiteralSymbol(char),
 
@@ -46,7 +45,6 @@ impl<S: SourceType> std::fmt::Debug for Expr<S> {
             Self::TemplateString(s) => s.fmt(f),
             Self::Integer(s) => s.fmt(f),
 
-            Self::Ident(s) => write!(f, "Ident({s:?})"),
             Self::PathIdent(s) => write!(f, "PathIdent({s:?})"),
             Self::LiteralSymbol(s) => write!(f, "Symbol '{s}'"),
 
@@ -69,7 +67,6 @@ impl<S: SourceType> Expandable for Expr<S> {
             Expr::TemplateString(tmpl_string) => tmpl_string.expand(ctx),
             Expr::Integer(val) => Ok(Int(val)),
 
-            Expr::Ident(ident) => Ok(Str(ident.to_string())),
             Expr::PathIdent(_) => unimplemented!(),
             Expr::LiteralSymbol(s) => {
                 unreachable!("Should not try to expand a literal symbol: {s}")

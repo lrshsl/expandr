@@ -7,14 +7,12 @@ use crate::{
     },
     builtins::get_builtin,
     context::{EvaluationContext, ScopedContext},
-    errors::{
-        expansion_error::{ExpansionError, ExpansionResult},
-        parse_error::ParseResult,
-    },
+    errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
     expand::Expanded,
+    log,
     parser::ParseMode,
     source_type::{Borrowed, Owned, SourceType},
-    unexpected_token, Parsable as _,
+    undefined_mapping, unexpected_token, Parsable as _,
 };
 
 pub type Args<S> = Vec<Expr<S>>;
@@ -60,7 +58,7 @@ impl<'s> MappingApplication<Borrowed<'s>> {
                         args.push(TemplateString::parse(parser, n)?.into());
                     }
                     ExprToken::Ident(value) => {
-                        args.push(Expr::Ident(value));
+                        args.push(PathIdent::from_str(value).into());
                         parser.advance();
                     }
                     ExprToken::Symbol(s) => {
@@ -99,27 +97,35 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
     {
         if let Some(builtin) = get_builtin(self.path_ident.name()) {
             return builtin(ctx, &self.args);
+        } else {
+            log!("No builtin found for {:#?}", self.path_ident);
         }
-        let owned_args = self
+        let owned_args: Vec<_> = self
             .args
             .clone() // You can easily get rid of that one
             .into_iter()
             .map(IntoOwned::into_owned)
             .collect();
-        let mut matching_mappings = ctx
-            .lookup(&self.path_ident)
-            .unwrap_or_else(|| panic!("Mapping not found: {:?}", self.path_ident))
-            .iter()
-            .filter(|m| match m {
-                Mapping::Parameterized(m) => m.params.matches_args(&owned_args),
-                Mapping::Simple(_) => self.args.is_empty(),
-            });
+
+        let Some(matching_mappings) = ctx.lookup(&self.path_ident) else {
+            undefined_mapping!("Lookup failed", self.path_ident, owned_args)?
+        };
+
+        if matching_mappings.is_empty() {
+            undefined_mapping!("Lookup empty", self.path_ident, owned_args)?
+        }
+
+        let mut matching_mappings = matching_mappings.iter().filter(|m| match m {
+            Mapping::Parameterized(m) => m.params.matches_args(&owned_args),
+            Mapping::Simple(_) => self.args.is_empty(),
+        });
 
         let Some(mapping) = matching_mappings.next() else {
-            return Err(ExpansionError::UnknownMappingReferenced(format!(
-                "No such mapping found: {:?}, args: {:?}",
-                self.path_ident, self.args
-            )));
+            undefined_mapping!(
+                "No matching overload for the given arguments",
+                self.path_ident,
+                owned_args
+            )?
         };
         if let Some(second_mapping) = matching_mappings.next() {
             panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for {:?}, {:?}",
@@ -148,7 +154,7 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
                                         Expanded::Int(x) => Expr::Integer(x),
                                     },
                                     ParamType::Ident => {
-                                        assert_matches!(next_arg, Expr::Ident(_), "Mapping should not have matched for param type 'ident' and non-ident argument");
+                                        assert_matches!(next_arg, Expr::PathIdent(_), "Mapping should not have matched for param type 'ident' and non-ident argument");
                                         next_arg
                                     }
                                 });

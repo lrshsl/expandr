@@ -3,14 +3,14 @@ use crate::{
     Parser,
 };
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PathIdentRoot {
     File,
     Directory,
     Crate,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PathIdent {
     pub root: PathIdentRoot,
     pub path_parts: Vec<String>,
