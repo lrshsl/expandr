@@ -32,6 +32,7 @@ impl<S: SourceType> MappingParam<S> {
                 },
                 Expr::Integer(_)
                 | Expr::String(_)
+                | Expr::StrRef(_)
                 | Expr::TemplateString(_)
                 | Expr::MappingApplication { .. },
             ) => true,

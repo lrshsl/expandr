@@ -1,6 +1,6 @@
 import ./modules1/print
 
-map p [txt] => '[./modules1/print [txt]]'
+map p [text] => '[./modules1/print [text]]'
 
-'[p "text"]'
+'[p "Hi there"]'
 

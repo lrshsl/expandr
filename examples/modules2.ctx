@@ -5,7 +5,7 @@
                 params: Params {
                     entries: [
                         ParamExpr {
-                            name: "txt",
+                            name: "text",
                             rep: None,
                             typ: Expr,
                         },
@@ -14,7 +14,7 @@
                 translation: TemplateString {
                     pieces: [
                         Expr(
-                            MappingApplication(PathIdent { root: Directory, path_parts: ["modules1", "print"] }, [MappingApplication(PathIdent { root: File, path_parts: ["txt"] }, [])]),
+                            MappingApplication(PathIdent { root: Directory, path_parts: ["modules1", "print"] }, [MappingApplication(PathIdent { root: File, path_parts: ["text"] }, [])]),
                         ),
                     ],
                 },

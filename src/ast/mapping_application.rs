@@ -107,25 +107,23 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
             .map(IntoOwned::into_owned)
             .collect();
 
-        let Some(matching_mappings) = ctx.lookup(&self.path_ident) else {
+        let Some(name_matches) = ctx.lookup(&self.path_ident) else {
             undefined_mapping!("Lookup failed", self.path_ident, owned_args)?
         };
 
-        if matching_mappings.is_empty() {
+        if name_matches.is_empty() {
             undefined_mapping!("Lookup empty", self.path_ident, owned_args)?
         }
 
-        let mut matching_mappings = matching_mappings.iter().filter(|m| match m {
+        let mut matching_mappings = name_matches.iter().filter(|m| match m {
             Mapping::Parameterized(m) => m.params.matches_args(&owned_args),
             Mapping::Simple(_) => self.args.is_empty(),
         });
 
         let Some(mapping) = matching_mappings.next() else {
-            undefined_mapping!(
-                "No matching overload for the given arguments",
-                self.path_ident,
-                owned_args
-            )?
+            let msg =
+                format!("No matching overload for the given arguments. Found: {name_matches:#?}");
+            undefined_mapping!(&msg, self.path_ident, owned_args)?
         };
         if let Some(second_mapping) = matching_mappings.next() {
             panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for {:?}, {:?}",

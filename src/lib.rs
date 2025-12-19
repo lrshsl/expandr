@@ -89,7 +89,14 @@ pub fn build<'s>(
 
     output.write_all(&prog_output.into_bytes())?;
     if !errs.is_empty() {
-        eprintln!("\nErrors occured in {}: {:#?}", srcname, errs);
+        eprintln!(
+            "\nErrors occured in {}: {}",
+            srcname,
+            errs.iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+                .join("\n\n")
+        );
     }
 
     registry.insert(path, local_ctx.clone());
