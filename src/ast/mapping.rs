@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{
     errors::parse_error::ParseResult, parser::ParseMode, source_type::Borrowed,
     source_type::SourceType, unexpected_token,
@@ -5,9 +7,15 @@ use crate::{
 
 use super::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Params<S: SourceType> {
     pub entries: Vec<MappingParam<S>>,
+}
+
+impl<S: SourceType> fmt::Debug for Params<S> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:#?}", self.entries)
+    }
 }
 
 impl<S: SourceType> Params<S> {
@@ -28,10 +36,16 @@ pub enum Mapping<S: SourceType> {
     Parameterized(ParameterizedMapping<S>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ParameterizedMapping<S: SourceType> {
     pub params: Params<S>,
     pub translation: Expr<S>,
+}
+
+impl<S: SourceType> fmt::Debug for ParameterizedMapping<S> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "map {:#?} => {:#?}", self.params, self.translation)
+    }
 }
 
 impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {

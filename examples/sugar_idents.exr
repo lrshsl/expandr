@@ -1,0 +1,14 @@
+
+
+
+map ident [x:ident] => '[x]'
+
+map expr [x] => '[x]'
+
+map name => 'value'
+
+'
+"[expr name]"  ?= "value"
+"[ident name]" ?= "name"
+'
+

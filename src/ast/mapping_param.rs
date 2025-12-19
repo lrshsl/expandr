@@ -11,7 +11,7 @@ pub enum ParamType {
     Ident,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum MappingParam<S: SourceType> {
     Ident(PathIdent),
     ParamExpr {
@@ -20,6 +20,25 @@ pub enum MappingParam<S: SourceType> {
         typ: ParamType,
     },
     Symbol(char),
+}
+
+impl<S: SourceType> std::fmt::Debug for MappingParam<S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ParamExpr {
+                name,
+                typ,
+                rep: Some(rep),
+            } => {
+                write!(f, "Expr(name: {:?}, type: {:?}, rep: {rep:?})", name, typ)
+            }
+            Self::ParamExpr { name, typ, .. } => {
+                write!(f, "Expr(name: {:?}, type: {:?})", name, typ)
+            }
+            Self::Ident(ident) => write!(f, "Exactly('{:?}')", ident),
+            Self::Symbol(c) => write!(f, "Exactly('{}')", c),
+        }
+    }
 }
 
 impl<S: SourceType> MappingParam<S> {

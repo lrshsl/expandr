@@ -34,7 +34,7 @@ impl<'s> fmt::Display for ExpansionError {
                 color_print::cwrite!(
                     f,
                     "\
-| Mapping could not be resolved: <italic>{name:?} {args:?}</>
+| Mapping could not be resolved: <italic>{name:?} {args:#?}</>
 | <red>{msg}</>
 "
                 )
