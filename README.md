@@ -24,20 +24,19 @@ You can find examples in the [examples'](examples/) directory.
 - Create lifetime independent (i.e. owned) `ProgramContext` for deps
 
 - [ ] Finish implementing repetition operators (`*`, `+`, `?`)
-- [ ] Implement scopes
+- [x] Implement scopes
     - [ ] function scope `>` global scope
-- [ ] Identifiers as expressions
-    - either take their string value
-    - or resolve (lookup) directly (without `[]`)
+
 
 
 Extend core language:
 
 - [ ] Add number type(s) and arithmetic functions (WIP)
     - [x] Allow integer variables (resp. mappings)
+    - [x] Allow implementation of built-in functions
     - [ ] Basic built-in functions (WIP)
 - [ ] Namespaces / modules
-    - [ ] Importing
+    - [x] Importing
     - [ ] `pub` / `priv`
     - [ ] Explicit interfaces?
 - [ ] Pattern matching

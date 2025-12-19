@@ -14,7 +14,7 @@ use super::*;
 #[derive(Debug)]
 pub struct Ast<S: SourceType> {
     pub exprs: Vec<Expr<S>>,
-    pub imports: Vec<PathIdent<S>>,
+    pub imports: Vec<PathIdent>,
     pub ctx: ProgramContext<S>,
 }
 
@@ -31,7 +31,7 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
             let token = parser.current_expr().unwrap().unwrap();
             log!("Ast::parse starting on {token:?}");
             match token {
-                ExprToken::Use => {
+                ExprToken::Import => {
                     parser.advance();
                     imports.push(PathIdent::parse(parser)?);
                 }
@@ -64,7 +64,7 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
                 }
                 tok => unexpected_token!(
                     found   : tok,
-                    expected: [ExprToken::Use, ExprToken::Map, ExprToken::Symbol('['), ExprToken::String(_)],
+                    expected: [ExprToken::Import, ExprToken::Map, ExprToken::Symbol('['), ExprToken::String(_)],
                     @ parser.ctx()
                 )?,
             }

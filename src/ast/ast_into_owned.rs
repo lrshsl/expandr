@@ -23,7 +23,7 @@ impl<S: SourceType> IntoOwned for Expr<S> {
             Expr::TemplateString(s) => Expr::TemplateString(s.into_owned()),
             Expr::Integer(i) => Expr::Integer(i),
             Expr::Ident(s) => Expr::Ident(s.to_string()),
-            Expr::PathIdent(s) => Expr::PathIdent(s.into_owned()),
+            Expr::PathIdent(s) => Expr::PathIdent(s),
             Expr::LiteralSymbol(c) => Expr::LiteralSymbol(c),
             Expr::MappingApplication(ma) => Expr::MappingApplication(ma.into_owned()),
             Expr::IsExpr(is_expr) => Expr::IsExpr(is_expr.into_owned()),
@@ -127,19 +127,8 @@ impl<S: SourceType> IntoOwned for MappingApplication<S> {
     type Owned = MappingApplication<Owned>;
     fn into_owned(self) -> MappingApplication<Owned> {
         MappingApplication {
-            name: self.name.to_string(),
+            path_ident: self.path_ident,
             args: self.args.into_iter().map(IntoOwned::into_owned).collect(),
-        }
-    }
-}
-
-impl<S: SourceType> IntoOwned for PathIdent<S> {
-    type Owned = PathIdent<Owned>;
-    fn into_owned(self) -> PathIdent<Owned> {
-        PathIdent {
-            root: self.root,
-            path_parts: self.path_parts.into_iter().map(|s| s.to_string()).collect(),
-            name: self.name.to_string(),
         }
     }
 }

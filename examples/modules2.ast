@@ -1,0 +1,9 @@
+[
+    TemplateString {
+        pieces: [
+            Expr(
+                MappingApplication(PathIdent { root: File, path_parts: ["p"] }, [StrRef("text")]),
+            ),
+        ],
+    },
+]

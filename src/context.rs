@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    ast::Mapping,
+    ast::{Mapping, PathIdent},
     source_type::{Borrowed, Owned, SourceType},
 };
 
@@ -9,7 +9,7 @@ use crate::{
 pub trait EvaluationContext<S: SourceType> {
     /// Looks up a mapping by name and immediately expands it.
     /// This hides whether the underlying mapping was Borrowed or Owned.
-    fn lookup(&self, name: &str) -> Option<&Vec<Mapping<S>>>;
+    fn lookup(&self, name: &PathIdent) -> Option<&Vec<Mapping<S>>>;
 }
 
 pub type ProgramContext<S> = HashMap<<S as SourceType>::Str, Vec<Mapping<S>>>;
@@ -18,8 +18,8 @@ impl<S: SourceType> EvaluationContext<S> for ProgramContext<S>
 where
     S::Str: std::borrow::Borrow<str> + std::hash::Hash + Eq,
 {
-    fn lookup(&self, name: &str) -> Option<&Vec<Mapping<S>>> {
-        self.get(name)
+    fn lookup(&self, path_ident: &PathIdent) -> Option<&Vec<Mapping<S>>> {
+        self.get(path_ident.name())
     }
 }
 /// Merges another context into this one. Mutates `a` in place.
@@ -59,13 +59,13 @@ where
 }
 
 impl<'parent, S: SourceType> EvaluationContext<S> for ScopedContext<'parent, S> {
-    fn lookup(&self, name: &str) -> Option<&Vec<Mapping<S>>> {
+    fn lookup(&self, path_ident: &PathIdent) -> Option<&Vec<Mapping<S>>> {
         // Try lookup locally first
-        if let Some(mappings) = self.locals.get(name) {
+        if let Some(mappings) = self.locals.get(path_ident.name()) {
             return Some(mappings);
         }
 
         // Not found? Delegate to the parent
-        self.parent.lookup(name)
+        self.parent.lookup(path_ident)
     }
 }

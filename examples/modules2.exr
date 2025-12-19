@@ -1,6 +1,6 @@
-use .modules1.print
+import ./modules1/print
 
-map print => .modules1.print
+map p [txt] => '[./modules1/print [txt]]'
 
-'[print "text"]'
+'[p "text"]'
 

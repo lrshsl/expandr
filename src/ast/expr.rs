@@ -20,7 +20,7 @@ pub enum Expr<S: SourceType> {
 
     // Meta tokens
     Ident(S::Str),
-    PathIdent(PathIdent<S>),
+    PathIdent(PathIdent),
     LiteralSymbol(char),
 
     // Compound expressions
@@ -31,7 +31,12 @@ pub enum Expr<S: SourceType> {
 derive_from!(TemplateString for Expr where S: SourceType);
 derive_from!(MappingApplication for Expr where S: SourceType);
 derive_from!(IsExpr for Expr where S: SourceType);
-derive_from!(PathIdent for Expr where S: SourceType);
+
+impl<S: SourceType> From<PathIdent> for Expr<S> {
+    fn from(s: PathIdent) -> Self {
+        <Expr<S>>::PathIdent(s)
+    }
+}
 
 impl<S: SourceType> std::fmt::Debug for Expr<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -45,8 +50,8 @@ impl<S: SourceType> std::fmt::Debug for Expr<S> {
             Self::PathIdent(s) => write!(f, "PathIdent({s:?})"),
             Self::LiteralSymbol(s) => write!(f, "Symbol '{s}'"),
 
-            Self::MappingApplication(MappingApplication { name, args }) => {
-                write!(f, "MappingApplication({name:?}, {args:?})")
+            Self::MappingApplication(MappingApplication { path_ident, args }) => {
+                write!(f, "MappingApplication({path_ident:?}, {args:?})")
             }
             Self::IsExpr(s) => write!(f, "IsExpr({s:#?})"),
         }
@@ -81,6 +86,7 @@ impl<'s> Expr<Borrowed<'s>> {
         log!("Expr::parse: Starting on {:?}", parser.current_expr());
         let expr = match parser.current_expr()?.expect("Expr::parse on no token") {
             ExprToken::Ident(_) => MappingApplication::parse(parser).map(Into::into),
+            ExprToken::Symbol('.') => MappingApplication::parse(parser).map(Into::into),
             ExprToken::TemplateStringDelimiter(n) => {
                 TemplateString::parse(parser, n).map(Into::into)
             }
@@ -96,7 +102,6 @@ impl<'s> Expr<Borrowed<'s>> {
                 parser.skip(ExprToken::Symbol(']'))?;
                 Ok(expr)
             }
-            ExprToken::Symbol('.') => PathIdent::parse(parser).map(Into::into),
             tok => unexpected_token!(
                     found: tok,
                     expected: [String, Ident, Is, Symbol('[' | '.')],

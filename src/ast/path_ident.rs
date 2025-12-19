@@ -1,8 +1,6 @@
 use crate::{
-    errors::parse_error::ParseResult,
-    lexer::ExprToken,
-    source_type::{Borrowed, SourceType},
-    unexpected_token, Parsable, Parser,
+    errors::parse_error::ParseResult, lexer::ExprToken, unexpected_eof, unexpected_token, Parsable,
+    Parser,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -13,45 +11,49 @@ pub enum PathIdentRoot {
 }
 
 #[derive(Clone, Debug)]
-pub struct PathIdent<S: SourceType> {
+pub struct PathIdent {
     pub root: PathIdentRoot,
-    pub path_parts: Vec<S::Str>,
-    pub name: S::Str,
+    pub path_parts: Vec<String>,
 }
 
-impl<'s> Parsable<'s> for PathIdent<Borrowed<'s>> {
-    fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
-        let root = match parser.current_expr()? {
-            Some(ExprToken::Symbol('.')) => {
-                parser.advance();
-                PathIdentRoot::Directory
-            }
-            Some(ExprToken::Ident(_)) => PathIdentRoot::File,
-            tok => unexpected_token!(
-                found: tok,
-                expected: [ExprToken::Symbol('.'), ExprToken::Ident(_)],
-                @ parser.ctx()
-            )?,
+impl PathIdent {
+    pub fn name(&self) -> &str {
+        self.path_parts
+            .last()
+            .expect("Path ident needs at least one part")
+    }
+}
+
+impl Parsable<'_> for PathIdent {
+    fn parse<'s>(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
+        let Some(tok) = parser.current_expr()? else {
+            unexpected_eof!(parser.ctx())?
+        };
+        let ExprToken::Ident(s) = tok else {
+            unexpected_token!(found: parser.current_expr(), expected: [Ident], @ parser.ctx())?
+        };
+        parser
+            .skip(ExprToken::Ident(s))
+            .expect(" the best, prepare for the impossible");
+        Ok(Self::from_str(s))
+    }
+}
+
+impl PathIdent {
+    pub fn from_str(raw: &str) -> Self {
+        // Determine Root and starting offset
+        let (root, start_index) = if raw.starts_with("./") {
+            (PathIdentRoot::Directory, 2) // Skip "./"
+        } else if raw.starts_with('/') {
+            (PathIdentRoot::Crate, 1) // Skip "/"
+        } else {
+            (PathIdentRoot::File, 0) // No prefix
         };
 
-        let mut path_parts = Vec::new();
-        loop {
-            if let Some(ExprToken::Ident(part)) = parser.current_expr()? {
-                path_parts.push(part);
-            } else {
-                break;
-            }
-            parser.advance();
-            let Some(ExprToken::Symbol('.')) = parser.current_expr()? else {
-                break;
-            };
-            parser.advance();
-        }
-        let name = path_parts.pop().expect("Empty pathident?");
-        Ok(Self {
-            root,
-            path_parts,
-            name,
-        })
+        let main_path = &raw[start_index..];
+
+        let path_parts: Vec<String> = main_path.split('/').map(ToString::to_string).collect();
+
+        PathIdent { root, path_parts }
     }
 }

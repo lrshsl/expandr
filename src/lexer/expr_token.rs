@@ -9,8 +9,8 @@ pub enum ExprToken<'s> {
     #[token(r"map", priority = 5)]
     Map,
 
-    #[token(r"use", priority = 5)]
-    Use,
+    #[token(r"import", priority = 5)]
+    Import,
 
     #[token(r"is", priority = 5)]
     Is,
@@ -24,15 +24,11 @@ pub enum ExprToken<'s> {
     #[regex(r"[0-9]+", |lex| lex.slice().parse::<i64>().expect("Invalid integer?"), priority = 4)]
     Integer(i64),
 
-    // Identifiers:
-    // 1. Start with [A-Za-z_]
-    // 2. Followed by zero or more groups of:
-    //    a. A safe char [A-Za-z0-9_]
-    //    OR
-    //    b. A hyphen (or hyphens) -+, which MUST be followed by a safe char [A-Za-z0-9_]
-    //
-    // Note: '_' yields a Ident("_"), not a Symbol('_')
-    #[regex(r"[A-Za-z_]([A-Za-z0-9_]|(-+[A-Za-z0-9_]))*", priority = 3)]
+    // Regex explanation:
+    //    Part A: ((\./)|/)?  -> Optional prefix: "./" (cwd) or "/" (crate root)
+    //    Part B: {ID_PATTERN} -> The first segment
+    //    Part C: (/{ID_PATTERN})* -> Zero or more subsequent segments starting with "/"
+    #[regex(r"((\./)|/)?([A-Za-z_]([A-Za-z0-9_]|(-+[A-Za-z0-9_]))*)(/[A-Za-z_]([A-Za-z0-9_]|(-+[A-Za-z0-9_]))*)*")]
     Ident(&'s str),
 
     #[regex(r#""([^"\\]|\\["\\bnfrt])*""#, |lex| {

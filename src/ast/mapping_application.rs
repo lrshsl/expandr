@@ -3,7 +3,7 @@ use std::{assert_matches::assert_matches, collections::HashMap};
 use crate::{
     ast::{
         mapping_param::ParamType, Expandable, Expr, ExprToken, IntoOwned, Mapping, MappingParam,
-        Parser, TemplateString,
+        Parser, PathIdent, TemplateString,
     },
     builtins::get_builtin,
     context::{EvaluationContext, ScopedContext},
@@ -14,22 +14,21 @@ use crate::{
     expand::Expanded,
     parser::ParseMode,
     source_type::{Borrowed, Owned, SourceType},
-    unexpected_token,
+    unexpected_token, Parsable as _,
 };
 
 pub type Args<S> = Vec<Expr<S>>;
 
 #[derive(Clone)]
 pub struct MappingApplication<S: SourceType> {
-    pub name: S::Str,
+    pub path_ident: PathIdent,
     pub args: Args<S>,
 }
 
 impl<'s> MappingApplication<Borrowed<'s>> {
     pub fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         {
-            let name = parser.slice();
-            parser.advance();
+            let name = PathIdent::parse(parser)?;
 
             let mut args = Vec::new();
             loop {
@@ -85,7 +84,10 @@ impl<'s> MappingApplication<Borrowed<'s>> {
                     )?,
                 };
             }
-            Ok(Self { name, args })
+            Ok(Self {
+                path_ident: name,
+                args,
+            })
         }
     }
 }
@@ -95,7 +97,7 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
     where
         Ctx: EvaluationContext<Owned>,
     {
-        if let Some(builtin) = get_builtin(self.name.as_ref()) {
+        if let Some(builtin) = get_builtin(self.path_ident.name()) {
             return builtin(ctx, &self.args);
         }
         let owned_args = self
@@ -105,8 +107,8 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
             .map(IntoOwned::into_owned)
             .collect();
         let mut matching_mappings = ctx
-            .lookup(self.name.as_ref())
-            .unwrap_or_else(|| panic!("Mapping not found: {}", self.name.as_ref()))
+            .lookup(&self.path_ident)
+            .unwrap_or_else(|| panic!("Mapping not found: {:?}", self.path_ident))
             .iter()
             .filter(|m| match m {
                 Mapping::Parameterized(m) => m.params.matches_args(&owned_args),
@@ -115,14 +117,13 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
 
         let Some(mapping) = matching_mappings.next() else {
             return Err(ExpansionError::UnknownMappingReferenced(format!(
-                "No such mapping found: {}, args: {:?}",
-                self.name.as_ref(),
-                self.args
+                "No such mapping found: {:?}, args: {:?}",
+                self.path_ident, self.args
             )));
         };
         if let Some(second_mapping) = matching_mappings.next() {
-            panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for {}, {:?}",
-            self.name.as_ref(), self.args)
+            panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for {:?}, {:?}",
+            self.path_ident, self.args)
         }
 
         match mapping {
