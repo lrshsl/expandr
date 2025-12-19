@@ -17,6 +17,8 @@ pub fn get_builtin<S: SourceType, Ctx: EvaluationContext<Owned>>(
 }
 
 mod builtin_implementations {
+    use std::ops;
+
     use crate::{
         ast::{Args, Expr},
         context::EvaluationContext,
@@ -29,14 +31,14 @@ mod builtin_implementations {
         ctx: &Ctx,
         args: &Args<S>,
     ) -> ExpansionResult {
+        let op = match args.get(1) {
+            Some(Expr::LiteralSymbol('+')) => <i64 as ops::Add>::add,
+            Some(Expr::LiteralSymbol('-')) => ops::Sub::sub,
+            Some(Expr::LiteralSymbol('*')) => ops::Mul::mul,
+            Some(Expr::LiteralSymbol('/')) => ops::Div::div,
+            _ => todo!("No such operation {args:?}"),
+        };
         Ok(match &args[..] {
-            [a, Expr::LiteralSymbol('+'), b] => {
-                match (a.clone().expand(ctx)?, b.clone().expand(ctx)?) {
-                    (Expanded::Int(a), Expanded::Int(b)) => Expanded::Int(a + b),
-                    (Expanded::Str(a), Expanded::Str(b)) => Expanded::Str(a + &b),
-                    _ => panic!("Operation '+' not defined for Int and String"),
-                }
-            }
             [a, Expr::LiteralSymbol('*'), b] => {
                 match (a.clone().expand(ctx)?, b.clone().expand(ctx)?) {
                     (Expanded::Int(a), Expanded::Int(b)) => Expanded::Int(a * b),
@@ -49,6 +51,12 @@ mod builtin_implementations {
                         )
                     }
                     _ => panic!("Operation '*' not defined for String and String"),
+                }
+            }
+            [a, Expr::LiteralSymbol('+' | '-' | '/'), b] => {
+                match (a.clone().expand(ctx)?, b.clone().expand(ctx)?) {
+                    (Expanded::Int(a), Expanded::Int(b)) => Expanded::Int(op(a, b)),
+                    _ => panic!("Operation {:?} only implemented for integers", args[1]),
                 }
             }
             _ => Expanded::Str("Error".to_string()),

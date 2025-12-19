@@ -20,17 +20,21 @@ impl<'s> Parsable<'s> for IsExpr<Borrowed<'s>> {
     /// use expandr::ast::IsExpr;
     /// use expandr::{Parsable, Parser};
     ///
-    /// let src = r#"is 1 {
-    ///     .. 0 ? 'One'
-    ///     .. 1 ? 'Two'
+    /// let src = r#"is 2 {
+    ///     .. 0 ? 'Nope'
+    ///     .. 1 ? 'Also no'
+    ///     .. _ ? 'Yes'
     /// }"#;
     /// let mut parser = Parser::new(src, None, None);
     /// assert!(IsExpr::parse(&mut parser).is_ok());
     /// ```
     fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
+        //
+        // `is <cond_expr> {`
         parser.skip(ExprToken::Is, file!(), line!())?;
         let cond_expr = Expr::parse(parser, ParseMode::Expr)?;
         parser.skip(ExprToken::Symbol('{'), file!(), line!())?;
+
         let mut branches = Vec::new();
         loop {
             if parser.current_expr()? == Some(ExprToken::Symbol('}')) {
@@ -38,16 +42,22 @@ impl<'s> Parsable<'s> for IsExpr<Borrowed<'s>> {
                 break;
             }
 
+            //
+            // `.. <match_expr>`
             parser.skip(ExprToken::DDot, file!(), line!())?; // '..'
             let match_expr = if parser.current_expr()? == Some(ExprToken::Ident("_")) {
+                parser.advance();
                 MatchExpr::MatchAll
             } else {
                 Expr::parse(parser, ParseMode::Expr)?.into()
             };
+            //
+            // `? <translation>`
             parser.skip(ExprToken::Symbol('?'), file!(), line!())?;
             let translation = Expr::parse(parser, ParseMode::Expr)?;
+
+            // Optionally a comma `,`
             if parser.current_expr()? == Some(ExprToken::Symbol(',')) {
-                // TODO: Optional comma?
                 parser.advance();
             }
 

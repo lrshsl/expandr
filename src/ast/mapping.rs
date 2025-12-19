@@ -38,10 +38,13 @@ impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
     fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         let mut params = Vec::new();
 
+        // Params
         while parser.current_expr()?.expect("Unfinished map definition") != ExprToken::Becomes {
             params.push(MappingParam::parse(parser)?);
         }
         parser.skip(ExprToken::Becomes, file!(), line!())?;
+
+        // Translation
         let translation = match parser.current_expr()?.expect("Unfinished map definition") {
             ExprToken::String(value) => {
                 parser.advance();
