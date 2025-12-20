@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{
     errors::parse_error::ParseResult, lexer::ExprToken, unexpected_eof, unexpected_token, Parsable,
     Parser,
@@ -10,7 +12,7 @@ pub enum PathIdentRoot {
     Crate,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct PathIdent {
     pub original_src: String,
     pub root: PathIdentRoot,
@@ -61,15 +63,25 @@ impl PathIdent {
             path_parts,
         }
     }
-}
 
-impl ToString for PathIdent {
-    fn to_string(&self) -> String {
+    pub fn canonical(&self) -> String {
         let prefix = match self.root {
             PathIdentRoot::File => "./",
             PathIdentRoot::Directory => "./",
             PathIdentRoot::Crate => "/",
         };
-        prefix.to_string() + &self.path_parts.join("/")
+        format!("{}{}", prefix.to_string(), self.path_parts.join("/"))
+    }
+}
+
+impl fmt::Debug for PathIdent {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.canonical())
+    }
+}
+
+impl fmt::Display for PathIdent {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.canonical())
     }
 }

@@ -71,7 +71,7 @@ impl<S: SourceType> Expandable for Expr<S> {
                 // application without arguments), to allow writing things like `[m x + y]` instead
                 // of having to write `[m [x] + [y]]` explicitly.
                 let pseudo_mapping: MappingApplication<S> = MappingApplication {
-                    path_ident: ident,
+                    name: ident,
                     args: vec![],
                 };
                 pseudo_mapping.expand(ctx)

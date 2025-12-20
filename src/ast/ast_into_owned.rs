@@ -138,7 +138,7 @@ impl<S: SourceType> IntoOwned for MappingApplication<S> {
     type Owned = MappingApplication<Owned>;
     fn into_owned(self) -> MappingApplication<Owned> {
         MappingApplication {
-            path_ident: self.path_ident,
+            name: self.name,
             args: self.args.into_iter().map(IntoOwned::into_owned).collect(),
         }
     }

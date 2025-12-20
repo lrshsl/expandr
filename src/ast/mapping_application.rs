@@ -17,9 +17,9 @@ use crate::{
 
 pub type Args<S> = Vec<Expr<S>>;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct MappingApplication<S: SourceType> {
-    pub path_ident: PathIdent,
+    pub name: PathIdent,
     pub args: Args<S>,
 }
 
@@ -82,10 +82,7 @@ impl<'s> MappingApplication<Borrowed<'s>> {
                     )?,
                 };
             }
-            Ok(Self {
-                path_ident: name,
-                args,
-            })
+            Ok(Self { name, args })
         }
     }
 }
@@ -97,13 +94,13 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
     {
         log!(
             "Trying to resolve {} with args {:#?}",
-            self.path_ident.to_string(),
+            self.name.to_string(),
             self.args
         );
-        if let Some(builtin) = get_builtin(self.path_ident.name()) {
+        if let Some(builtin) = get_builtin(self.name.name()) {
             return builtin(ctx, &self.args);
         } else {
-            log!("No builtin found for {}", self.path_ident.to_string());
+            log!("No builtin found for {}", self.name.to_string());
         }
         let owned_args: Vec<_> = self
             .args
@@ -112,14 +109,14 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
             .map(IntoOwned::into_owned)
             .collect();
 
-        let Some(name_matches) = ctx.lookup(&self.path_ident) else {
+        let Some(name_matches) = ctx.lookup(&self.name) else {
             log!("No matching by name found");
-            undefined_mapping!("Lookup failed", self.path_ident, owned_args)?
+            undefined_mapping!("Lookup failed", self.name, owned_args)?
         };
 
         log!("Found the following name matches: {name_matches:#?}");
         if name_matches.is_empty() {
-            undefined_mapping!("Lookup empty", self.path_ident, owned_args)?
+            undefined_mapping!("Lookup empty", self.name, owned_args)?
         }
 
         let mut matching_mappings = name_matches.iter().filter(|m| match m {
@@ -134,13 +131,13 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
         let Some(mapping) = matching_mappings.next() else {
             let msg = format!(
                 "No matching overload for {:?} the given arguments. Mappings with the same name: {name_matches:#?}",
-                self.path_ident.name()
+                self.name.name()
             );
-            undefined_mapping!(&msg, self.path_ident, owned_args)?
+            undefined_mapping!(&msg, self.name, owned_args)?
         };
         if let Some(second_mapping) = matching_mappings.next() {
             panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for {:?}, {:?}",
-            self.path_ident, self.args)
+            self.name, self.args)
         }
 
         log!("Inserting previously resolved definition");
