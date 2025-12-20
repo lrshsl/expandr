@@ -12,6 +12,7 @@ pub enum PathIdentRoot {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PathIdent {
+    pub original_src: String,
     pub root: PathIdentRoot,
     pub path_parts: Vec<String>,
 }
@@ -54,6 +55,21 @@ impl PathIdent {
 
         let path_parts: Vec<String> = main_path.split('/').map(ToString::to_string).collect();
 
-        PathIdent { root, path_parts }
+        PathIdent {
+            original_src: raw.to_string(),
+            root,
+            path_parts,
+        }
+    }
+}
+
+impl ToString for PathIdent {
+    fn to_string(&self) -> String {
+        let prefix = match self.root {
+            PathIdentRoot::File => "./",
+            PathIdentRoot::Directory => "./",
+            PathIdentRoot::Crate => "/",
+        };
+        prefix.to_string() + &self.path_parts.join("/")
     }
 }

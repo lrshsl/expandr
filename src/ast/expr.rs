@@ -48,9 +48,7 @@ impl<S: SourceType> std::fmt::Debug for Expr<S> {
             Self::PathIdent(s) => write!(f, "PathIdent({s:?})"),
             Self::LiteralSymbol(s) => write!(f, "Symbol '{s}'"),
 
-            Self::MappingApplication(MappingApplication { path_ident, args }) => {
-                write!(f, "MappingApplication({path_ident:?}, {args:?})")
-            }
+            Self::MappingApplication(m_app) => m_app.fmt(f),
             Self::IsExpr(s) => write!(f, "IsExpr({s:#?})"),
         }
     }

@@ -53,10 +53,9 @@ impl<S: SourceType> MappingParam<S> {
                 | Expr::String(_)
                 | Expr::StrRef(_)
                 | Expr::TemplateString(_)
-                | Expr::MappingApplication { .. },
+                | Expr::MappingApplication { .. }
+                | Expr::PathIdent(_),
             ) => true,
-
-            (Self::Ident(self_value), Expr::PathIdent(other_value)) => self_value == other_value,
 
             (
                 Self::ParamExpr {
@@ -66,6 +65,8 @@ impl<S: SourceType> MappingParam<S> {
                 Expr::PathIdent(_),
             ) => true,
 
+            // Raw literal matches
+            (Self::Ident(self_value), Expr::PathIdent(other_value)) => self_value == other_value,
             (Self::Symbol(self_value), Expr::LiteralSymbol(other_value)) => {
                 self_value == other_value
             }

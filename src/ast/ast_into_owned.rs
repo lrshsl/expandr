@@ -88,8 +88,10 @@ impl<S: SourceType> IntoOwned for Mapping<S> {
     type Owned = Mapping<Owned>;
     fn into_owned(self) -> Mapping<Owned> {
         match self {
-            Mapping::Simple(expr) => Mapping::Simple(expr.into_owned()),
-            Mapping::Parameterized(p_map) => Mapping::Parameterized(p_map.into_owned()),
+            Mapping::SimpleMapping(expr) => Mapping::SimpleMapping(expr.into_owned()),
+            Mapping::ParameterizedMapping(p_map) => {
+                Mapping::ParameterizedMapping(p_map.into_owned())
+            }
         }
     }
 }

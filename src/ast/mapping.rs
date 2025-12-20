@@ -32,8 +32,8 @@ impl<S: SourceType> Params<S> {
 
 #[derive(Debug, Clone)]
 pub enum Mapping<S: SourceType> {
-    Simple(Expr<S>),
-    Parameterized(ParameterizedMapping<S>),
+    SimpleMapping(Expr<S>),
+    ParameterizedMapping(ParameterizedMapping<S>),
 }
 
 #[derive(Clone)]
@@ -85,9 +85,9 @@ impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
             }
         }?;
         Ok(if params.is_empty() {
-            Self::Simple(translation)
+            Self::SimpleMapping(translation)
         } else {
-            Self::Parameterized(ParameterizedMapping {
+            Self::ParameterizedMapping(ParameterizedMapping {
                 params: Params { entries: params },
                 translation,
             })

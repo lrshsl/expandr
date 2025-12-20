@@ -1,4 +1,4 @@
-use std::{assert_matches::assert_matches, collections::HashMap};
+use std::collections::HashMap;
 
 use crate::{
     ast::{
@@ -17,7 +17,7 @@ use crate::{
 
 pub type Args<S> = Vec<Expr<S>>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MappingApplication<S: SourceType> {
     pub path_ident: PathIdent,
     pub args: Args<S>,
@@ -95,10 +95,15 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
     where
         Ctx: EvaluationContext<Owned>,
     {
+        log!(
+            "Trying to resolve {} with args {:#?}",
+            self.path_ident.to_string(),
+            self.args
+        );
         if let Some(builtin) = get_builtin(self.path_ident.name()) {
             return builtin(ctx, &self.args);
         } else {
-            log!("No builtin found for {:#?}", self.path_ident);
+            log!("No builtin found for {}", self.path_ident.to_string());
         }
         let owned_args: Vec<_> = self
             .args
@@ -108,21 +113,29 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
             .collect();
 
         let Some(name_matches) = ctx.lookup(&self.path_ident) else {
+            log!("No matching by name found");
             undefined_mapping!("Lookup failed", self.path_ident, owned_args)?
         };
 
+        log!("Found the following name matches: {name_matches:#?}");
         if name_matches.is_empty() {
             undefined_mapping!("Lookup empty", self.path_ident, owned_args)?
         }
 
         let mut matching_mappings = name_matches.iter().filter(|m| match m {
-            Mapping::Parameterized(m) => m.params.matches_args(&owned_args),
-            Mapping::Simple(_) => self.args.is_empty(),
+            Mapping::ParameterizedMapping(m) => m.params.matches_args(&owned_args),
+            Mapping::SimpleMapping(_) => self.args.is_empty(),
         });
+        log!(
+            "Found the following matching overloads: {:#?}",
+            matching_mappings.clone()
+        );
 
         let Some(mapping) = matching_mappings.next() else {
-            let msg =
-                format!("No matching overload for the given arguments. Found: {name_matches:#?}");
+            let msg = format!(
+                "No matching overload for {:?} the given arguments. Mappings with the same name: {name_matches:#?}",
+                self.path_ident.name()
+            );
             undefined_mapping!(&msg, self.path_ident, owned_args)?
         };
         if let Some(second_mapping) = matching_mappings.next() {
@@ -130,9 +143,11 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
             self.path_ident, self.args)
         }
 
+        log!("Inserting previously resolved definition");
+
         match mapping {
-            Mapping::Simple(translation) => translation.clone().expand(ctx),
-            Mapping::Parameterized(mapping) => {
+            Mapping::SimpleMapping(translation) => translation.clone().expand(ctx),
+            Mapping::ParameterizedMapping(mapping) => {
                 let mut args = self.args.into_iter();
                 let mut tmp_ctx = ScopedContext {
                     parent: ctx,
@@ -146,14 +161,16 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
                                     .next()
                                     .expect("Not enough args for the given parameters");
 
-                                let new_entry = Mapping::Simple(match typ {
+                                let new_entry = Mapping::SimpleMapping(match typ {
                                     ParamType::Expr => match next_arg.expand(ctx)? {
-                                        Expanded::Str(x) => Expr::String(x),
+                                        Expanded::Str(x) => Expr::String::<S>(x),
                                         Expanded::Int(x) => Expr::Integer(x),
                                     },
                                     ParamType::Ident => {
-                                        assert_matches!(next_arg, Expr::PathIdent(_), "Mapping should not have matched for param type 'ident' and non-ident argument");
-                                        next_arg
+                                        let Expr::PathIdent(id) = next_arg else {
+                                            panic!("Expected an ident");
+                                        };
+                                        Expr::String(id.original_src)
                                     }
                                 });
 

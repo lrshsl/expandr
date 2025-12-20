@@ -21,6 +21,7 @@ impl<S: SourceType> Expandable for TemplateString<S> {
             match piece {
                 TemplatePiece::Char(ch) => result.push(ch),
                 TemplatePiece::StrVal(s) => result.push_str(s.as_ref()),
+                TemplatePiece::Expr(Expr::PathIdent(id)) => result.push_str(&id.to_string()),
                 TemplatePiece::Expr(expr) => result.push_str(&expr.expand(ctx)?.into_string()),
             }
         }
