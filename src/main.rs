@@ -10,6 +10,8 @@ mod cli;
 fn main() {
     let cli = Cli::parse();
 
+    let _ = fs::remove_file("logs");
+
     match cli.command {
         CliSubCommand::Expand(build_args) => expand(build_args),
         CliSubCommand::Check { input, log_file } => {

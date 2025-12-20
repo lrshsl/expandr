@@ -1,7 +1,7 @@
 use crate::{
     ast::{Expr, ExprToken, Parsable, Parser, PathIdent},
     errors::parse_error::ParseResult,
-    source_type::{Borrowed, SourceType},
+    source_type::SourceType,
     unexpected_eof, unexpected_token,
 };
 
@@ -12,17 +12,17 @@ pub enum ParamType {
 }
 
 #[derive(Clone)]
-pub enum MappingParam<S: SourceType> {
+pub enum MappingParam {
     Ident(PathIdent),
     ParamExpr {
-        name: S::Str,
+        name: PathIdent,
         rep: Option<Repetition>,
         typ: ParamType,
     },
     Symbol(char),
 }
 
-impl<S: SourceType> std::fmt::Debug for MappingParam<S> {
+impl std::fmt::Debug for MappingParam {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::ParamExpr {
@@ -33,16 +33,16 @@ impl<S: SourceType> std::fmt::Debug for MappingParam<S> {
                 write!(f, "Expr(name: {:?}, type: {:?}, rep: {rep:?})", name, typ)
             }
             Self::ParamExpr { name, typ, .. } => {
-                write!(f, "Expr(name: {:?}, type: {:?})", name, typ)
+                write!(f, "Expr(name: `{}`, type: {:?})", name.to_string(), typ)
             }
-            Self::Ident(ident) => write!(f, "Exactly('{:?}')", ident),
+            Self::Ident(ident) => write!(f, "Exactly('{}')", ident.original_src),
             Self::Symbol(c) => write!(f, "Exactly('{}')", c),
         }
     }
 }
 
-impl<S: SourceType> MappingParam<S> {
-    pub fn matches_arg(&self, arg: &Expr<S>) -> bool {
+impl MappingParam {
+    pub fn matches_arg<S: SourceType>(&self, arg: &Expr<S>) -> bool {
         match (self, arg) {
             (
                 Self::ParamExpr {
@@ -76,7 +76,7 @@ impl<S: SourceType> MappingParam<S> {
     }
 }
 
-impl<'s> Parsable<'s> for MappingParam<Borrowed<'s>> {
+impl<'s> Parsable<'s> for MappingParam {
     fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         match parser
             .current_expr()?
@@ -88,9 +88,11 @@ impl<'s> Parsable<'s> for MappingParam<Borrowed<'s>> {
             }
             ExprToken::Symbol('[') => {
                 parser.advance();
-                let ExprToken::Ident(name) = parser.current_expr()?.expect("Expected ident") else {
+                let ExprToken::Ident(raw_ident) = parser.current_expr()?.expect("Expected ident")
+                else {
                     unexpected_token!(found: parser.current_expr()?, expected: [Ident], @ parser.ctx())?
                 };
+                let name = PathIdent::from_str(raw_ident);
                 parser.advance();
                 let rep = match parser.current_expr()? {
                     Some(ExprToken::Symbol('*')) => {

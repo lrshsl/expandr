@@ -93,14 +93,14 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
         Ctx: EvaluationContext<Owned>,
     {
         log!(
-            "Trying to resolve {} with args {:#?}",
-            self.name.to_string(),
+            "Trying to resolve `{}` with args {:#?}",
+            self.name,
             self.args
         );
         if let Some(builtin) = get_builtin(self.name.name()) {
             return builtin(ctx, &self.args);
         } else {
-            log!("No builtin found for {}", self.name.to_string());
+            log!("No builtin found for `{}`", self.name);
         }
         let owned_args: Vec<_> = self
             .args
@@ -130,17 +130,20 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
 
         let Some(mapping) = matching_mappings.next() else {
             let msg = format!(
-                "No matching overload for {:?} the given arguments. Mappings with the same name: {name_matches:#?}",
-                self.name.name()
+                "No matching overload for `{}` the given arguments. Mappings with the same name: {name_matches:#?}",
+                self.name
             );
             undefined_mapping!(&msg, self.name, owned_args)?
         };
         if let Some(second_mapping) = matching_mappings.next() {
-            panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for {:?}, {:?}",
-            self.name, self.args)
+            panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for `{:?}`",
+            self)
         }
 
-        log!("Inserting previously resolved definition");
+        log!(
+            "Inserting previously resolved definition for `{}`",
+            self.name
+        );
 
         match mapping {
             Mapping::SimpleMapping(translation) => translation.clone().expand(ctx),

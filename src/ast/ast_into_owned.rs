@@ -1,7 +1,7 @@
 use crate::{
     ast::{
         is_expr::{Branch, MatchExpr},
-        mapping::{ParameterizedMapping, Params},
+        mapping::ParameterizedMapping,
         template_string::TemplatePiece,
     },
     source_type::{Owned, SourceType},
@@ -100,36 +100,8 @@ impl<S: SourceType> IntoOwned for ParameterizedMapping<S> {
     type Owned = ParameterizedMapping<Owned>;
     fn into_owned(self) -> ParameterizedMapping<Owned> {
         ParameterizedMapping {
-            params: self.params.into_owned(),
+            params: self.params,
             translation: self.translation.into_owned(),
-        }
-    }
-}
-
-impl<S: SourceType> IntoOwned for MappingParam<S> {
-    type Owned = MappingParam<Owned>;
-    fn into_owned(self) -> MappingParam<Owned> {
-        match self {
-            MappingParam::ParamExpr { name, rep, typ } => MappingParam::ParamExpr {
-                name: name.to_string(),
-                rep,
-                typ,
-            },
-            MappingParam::Symbol(c) => MappingParam::Symbol(c),
-            MappingParam::Ident(ident) => MappingParam::Ident(ident),
-        }
-    }
-}
-
-impl<S: SourceType> IntoOwned for Params<S> {
-    type Owned = Params<Owned>;
-    fn into_owned(self) -> Params<Owned> {
-        Params {
-            entries: self
-                .entries
-                .into_iter()
-                .map(IntoOwned::into_owned)
-                .collect(),
         }
     }
 }

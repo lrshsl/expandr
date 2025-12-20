@@ -8,18 +8,18 @@ use crate::{
 use super::*;
 
 #[derive(Clone)]
-pub struct Params<S: SourceType> {
-    pub entries: Vec<MappingParam<S>>,
+pub struct Params {
+    pub entries: Vec<MappingParam>,
 }
 
-impl<S: SourceType> fmt::Debug for Params<S> {
+impl fmt::Debug for Params {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:#?}", self.entries)
     }
 }
 
-impl<S: SourceType> Params<S> {
-    pub fn matches_args(&self, other: &Vec<Expr<S>>) -> bool {
+impl Params {
+    pub fn matches_args<S: SourceType>(&self, other: &Vec<Expr<S>>) -> bool {
         // TODO: convert and compare as Borrowed version
         self.entries.len() == other.len()
             && self
@@ -38,7 +38,7 @@ pub enum Mapping<S: SourceType> {
 
 #[derive(Clone)]
 pub struct ParameterizedMapping<S: SourceType> {
-    pub params: Params<S>,
+    pub params: Params,
     pub translation: Expr<S>,
 }
 

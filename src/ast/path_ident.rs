@@ -66,7 +66,7 @@ impl PathIdent {
 
     pub fn canonical(&self) -> String {
         let prefix = match self.root {
-            PathIdentRoot::File => "./",
+            PathIdentRoot::File => "",
             PathIdentRoot::Directory => "./",
             PathIdentRoot::Crate => "/",
         };
