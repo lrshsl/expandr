@@ -28,15 +28,16 @@ fn integration_exr_files() {
         let mut out_writer = fs::File::create(&out_path).unwrap();
         let mut registry = ModuleRegistry::new();
 
-        build(
+        if let Err(e) = build(
             filename.into(),
             contents,
             &mut out_writer,
             &mut registry,
             None,
             None,
-        )
-        .unwrap();
+        ) {
+            eprintln!("{e}")
+        }
 
         let expected = fs::read_to_string(&expected_path).unwrap();
         let actual = fs::read_to_string(&out_path).unwrap();

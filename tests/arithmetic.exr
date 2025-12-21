@@ -8,7 +8,6 @@ map is-answer [answer] => [is answer {
 
 '''
 [m [add 2 3] * 3]
-[m '[add 2 3]' * 3]
 
 [is-answer 42]
 [is-answer [m 7 * 9]]

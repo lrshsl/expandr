@@ -17,10 +17,10 @@ exit:
 
 
 _start: 
-   ; print Error
+   ; print msg
    mov rax, 1
    mov rdi, 1
-   mov rsi, Error
+   mov rsi, msg
    mov rdx, 9
    syscall
 

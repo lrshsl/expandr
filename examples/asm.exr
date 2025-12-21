@@ -16,11 +16,11 @@ map fn [name] [children] => '''
 [name]: [children]
 '''
 
-map print [m] [len] => '''
-   ; print [m]
+map print [msg] [len] => '''
+   ; print [msg]
    mov [reg 'ax'], 1
    mov [reg 'di'], 1
-   mov [reg 'si'], [m]
+   mov [reg 'si'], [msg]
    mov [reg 'dx'], [len]
    syscall
 '''
