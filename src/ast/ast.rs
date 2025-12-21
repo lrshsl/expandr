@@ -24,11 +24,8 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
         let mut imports = Vec::new();
         let mut exprs = Vec::new();
 
-        loop {
-            let Some(token) = parser.current_expr().expect("Ast::parse on invalid token") else {
-                break;
-            };
-            log!("Ast::parse starting on {token:?}");
+        while let Some(token) = parser.current_expr().expect("Ast::parse on invalid token") {
+            log!("Starting on {token:?}");
 
             match token {
                 ExprToken::Import => {

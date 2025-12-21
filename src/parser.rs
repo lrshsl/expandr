@@ -148,7 +148,7 @@ impl<'s> Parser<'s> {
             .source()
             .lines()
             .nth(ctx.line - 1)
-            .expect("Line does not exist")
+            .unwrap_or_default()
             .to_string();
         Box::new(ctx)
     }

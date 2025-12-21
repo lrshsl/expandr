@@ -88,7 +88,7 @@ impl<S: SourceType> Expandable for Expr<S> {
 
 impl<'s> Expr<Borrowed<'s>> {
     pub fn parse(parser: &mut Parser<'s>, end_mode: ParseMode) -> ParseResult<'s, Self> {
-        log!("Expr::parse: Starting on {:?}", parser.current_expr());
+        log!("Starting on {:?}", parser.current_expr());
         let expr = match parser.current_expr()?.expect("Expr::parse on no token") {
             ExprToken::Ident(_) => MappingApplication::parse(parser).map(Into::into),
             ExprToken::Symbol('.') => MappingApplication::parse(parser).map(Into::into),
