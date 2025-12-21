@@ -26,11 +26,19 @@ pub struct MappingApplication<S: SourceType> {
 impl<'s> MappingApplication<Borrowed<'s>> {
     pub fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         {
+            log!(
+                "MappingApplication::parse: Starting on {:?}",
+                parser.current_expr()
+            );
             let name = PathIdent::parse(parser)?;
+            println!("Found name = {name:?}");
 
             let mut args = Vec::new();
             loop {
-                match parser.current_expr()?.expect("Expr::parse on no token") {
+                match parser
+                    .current_expr()?
+                    .expect(&format!("Expr::parse on no token in {:?}", parser.ctx()))
+                {
                     ExprToken::Symbol(']') => {
                         // Caller needs to advance
                         break;

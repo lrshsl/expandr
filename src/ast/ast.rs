@@ -24,12 +24,12 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
         let mut imports = Vec::new();
         let mut exprs = Vec::new();
 
-        while {
-            let tok = parser.current().expect("Ast::parse on invalid token");
-            tok.is_some()
-        } {
-            let token = parser.current_expr().unwrap().unwrap();
+        loop {
+            let Some(token) = parser.current_expr().expect("Ast::parse on invalid token") else {
+                break;
+            };
             log!("Ast::parse starting on {token:?}");
+
             match token {
                 ExprToken::Import => {
                     imports.push(Import::parse(parser)?);
@@ -60,6 +60,9 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
                 ExprToken::TemplateStringDelimiter(n) => {
                     exprs.push(TemplateString::parse(parser, n)?.into());
                     parser.advance();
+                }
+                ExprToken::Ident(_) => {
+                    exprs.push(Expr::parse(parser, ParseMode::Expr)?);
                 }
                 tok => unexpected_token!(
                     found   : tok,

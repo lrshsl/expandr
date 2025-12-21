@@ -1,16 +1,14 @@
 import ./stdlib/*
 
-[module
-	[fn main() -> i32
-	''
-		[const a: i32 = '10']
-		[const b: i32 = '32']
+module [
+   fn main() -> i32 ''
+      [const a: i32 = '10']
+      [const b: i32 = '32']
 
-		[let result: i32 = [math 'a' + 'b']]
+      [let result: i32 = [math 'a' + 'b']]
 
-		[return result : i32]
-	''
-	]
+      [return result : i32]
+   ''
 ]
 
 | vim: ft=exr
