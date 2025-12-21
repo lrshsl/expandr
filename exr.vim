@@ -7,8 +7,9 @@ elseif exists('b:current_syntax')
 	finish
 endif
 
-syn match		exrIdent					/[A-Za-z_]([A-Za-z0-9_]|(-\+[A-Za-z0-9_]))*/
+syn match		exrIdent					/[A-Za-z_]([-A-Za-z0-9_]|(-\+[-A-Za-z0-9_]))*/
 syn keyword		exrDefine				map
+syn keyword		exrImport				import
 syn match		exrBecomes				'=>'
 syn match		exrStore					'<-'
 syn match		exrIsExpr				/is\|\.\.\|?/
@@ -26,8 +27,8 @@ syn region		exrTString2				start="''"		end="''"		contains=exrExpr,exrString
 syn region		exrTString3				start="'''"		end="'''"	contains=exrExpr,exrString
 syn region		exrTString4				start="''''"	end="''''"	contains=exrExpr,exrString
 syn region		exrString				start='"'		end='"'		contains=exrExpr
-syn region		exrExpr					start="\["		end="\W"		contained
-syn match		exrExpr					"]"								contained
+syn region		exrExpr					start="\["		end="\W"
+syn match		exrExpr					"]"
 
 syn match		exrComment				"||[^|]*\(\n\|||\)\||[^|]*\(\n\||\)"
 
@@ -42,6 +43,7 @@ hi def link		ExrCtrlFlow				Conditional
 hi def link		ExrString				String
 
 hi def link		exrDefine				ExrKw
+hi def link		exrImport				ExrKw
 hi def link		exrBecomes				ExrKw
 hi def link		exrIsExpr				ExrCtrlFlow
 

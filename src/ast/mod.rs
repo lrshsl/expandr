@@ -32,6 +32,9 @@ macro_rules! derive_from {
 mod ast;
 pub use ast::Ast;
 
+mod import;
+pub use import::Import;
+
 mod path_ident;
 pub use path_ident::{PathIdent, PathIdentRoot};
 

@@ -14,7 +14,7 @@ use super::*;
 #[derive(Debug)]
 pub struct Ast<S: SourceType> {
     pub exprs: Vec<Expr<S>>,
-    pub imports: Vec<PathIdent>,
+    pub imports: Vec<Import>,
     pub ctx: ProgramContext<S>,
 }
 
@@ -32,8 +32,7 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
             log!("Ast::parse starting on {token:?}");
             match token {
                 ExprToken::Import => {
-                    parser.advance();
-                    imports.push(PathIdent::parse(parser)?);
+                    imports.push(Import::parse(parser)?);
                 }
                 ExprToken::Map => {
                     parser.advance();

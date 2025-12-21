@@ -1,0 +1,32 @@
+
+map module [child] => '
+module {
+[child]
+}
+'
+
+map fn [name:ident]() -> [ret:ident] [body] => '
+llvm.func @[name]() -> [ret] {
+[body]
+}
+'
+
+map
+	return [name:ident] : [type:ident]
+=>
+	'llvm.return %[name] : [type]'
+
+map
+	const [name:ident] : [type:ident] = [value]
+=>
+	'%[name] = llvm.mlir.constant([value] : [type]) : [type]'
+
+map
+	let [name:ident] : [type:ident] = [expr]
+=>
+	'%[name] = [expr] : [type]'
+
+map math [a] + [b] => 'llvm.add %[a], %[b]'
+
+
+

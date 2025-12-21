@@ -1,42 +1,14 @@
-
-map module [child] => '
-module {
-[child]
-}
-'
-
-map fn [name]() -> [ret] [body] => '
-llvm.func @[name]() -> [ret] {
-[body]
-}
-'
-
-map
-	return [name] : [type]
-=>
-	'llvm.return %[name] : [type]'
-
-map
-	const [name] : [type] = [value]
-=>
-	'%[name] = llvm.mlir.constant([value] : [type]) : [type]'
-
-map
-	let [name] : [type] = [expr]
-=>
-	'%[name] = [expr] : [type]'
-
-map math [a] + [b] => 'llvm.add %[a], %[b]'
+import ./stdlib/*
 
 [module
-	[fn 'main'() -> 'i32'
+	[fn main() -> i32
 	''
-		[const 'a': 'i32' = '10']
-		[const 'b': 'i32' = '32']
+		[const a: i32 = '10']
+		[const b: i32 = '32']
 
-		[let 'result': 'i32' = [math 'a' + 'b']]
+		[let result: i32 = [math 'a' + 'b']]
 
-		[return 'result' : 'i32']
+		[return result : i32]
 	''
 	]
 ]
