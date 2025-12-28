@@ -90,8 +90,9 @@ impl<'s> Expr<Borrowed<'s>> {
     pub fn parse(parser: &mut Parser<'s>, end_mode: ParseMode) -> ParseResult<'s, Self> {
         log!("Starting on {:?}", parser.current_expr());
         let expr = match parser.current_expr()?.expect("Expr::parse on no token") {
-            ExprToken::Ident(_) => MappingApplication::parse(parser).map(Into::into),
-            ExprToken::Symbol('.') => MappingApplication::parse(parser).map(Into::into),
+            ExprToken::Ident(_) | ExprToken::Symbol('.') => {
+                MappingApplication::parse(parser).map(Into::into)
+            }
             ExprToken::TemplateStringDelimiter(n) => {
                 TemplateString::parse(parser, n).map(Into::into)
             }

@@ -57,7 +57,7 @@ impl<'s> TemplateString<Borrowed<'s>> {
                             pieces.push(TemplatePiece::Char(ch))
                         }
                         '\r' => {}
-                        c => panic!("Unknown escape sequence: {c:?}"),
+                        c => panic!("Unknown escape sequence: {c:?} in {:?}", parser.ctx()),
                     }
                     parser.advance();
                 }

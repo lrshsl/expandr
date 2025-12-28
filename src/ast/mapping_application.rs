@@ -125,7 +125,7 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
         });
         log!(
             "Found the following matching overloads: {:#?}",
-            matching_mappings.clone()
+            matching_mappings.clone().collect::<Vec<_>>()
         );
 
         let Some(mapping) = matching_mappings.next() else {
@@ -167,8 +167,13 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
                                         Expanded::Int(x) => Expr::Integer(x),
                                     },
                                     ParamType::Ident => {
-                                        let Expr::PathIdent(id) = next_arg else {
-                                            panic!("Expected an ident");
+                                        let id = match next_arg {
+                                            Expr::PathIdent(id) => id,
+                                            Expr::MappingApplication(MappingApplication {
+                                                name,
+                                                args,
+                                            }) if args.is_empty() => name,
+                                            _ => unreachable!("Expected an ident"),
                                         };
                                         Expr::String(id.original_src)
                                     }

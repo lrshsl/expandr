@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Expr, ExprToken, Parsable, Parser, PathIdent},
+    ast::{Expr, ExprToken, MappingApplication, Parsable, Parser, PathIdent},
     errors::parse_error::ParseResult,
     source_type::SourceType,
     unexpected_eof, unexpected_token,
@@ -53,7 +53,7 @@ impl MappingParam {
                 | Expr::String(_)
                 | Expr::StrRef(_)
                 | Expr::TemplateString(_)
-                | Expr::MappingApplication { .. }
+                | Expr::MappingApplication(_)
                 | Expr::PathIdent(_),
             ) => true,
 
@@ -64,9 +64,21 @@ impl MappingParam {
                 },
                 Expr::PathIdent(_),
             ) => true,
+            (
+                Self::ParamExpr {
+                    typ: ParamType::Ident,
+                    ..
+                },
+                Expr::MappingApplication(appl),
+            ) if appl.args.is_empty() => true, // In Expr::parse, idents are also parsed as mapping
+            // applications
 
             // Raw literal matches
             (Self::Ident(self_value), Expr::PathIdent(other_value)) => self_value == other_value,
+            (
+                Self::Ident(self_value),
+                Expr::MappingApplication(MappingApplication { name, args }),
+            ) if args.is_empty() => self_value == name,
             (Self::Symbol(self_value), Expr::LiteralSymbol(other_value)) => {
                 self_value == other_value
             }

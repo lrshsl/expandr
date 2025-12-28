@@ -5,11 +5,27 @@ module {
 }
 '
 
-map fn [name:ident]() -> [ret:ident] [body] => '
-llvm.func @[name]() -> [ret] {
+map decl [name:ident]() -> [type:ident] =>
+   'llvm.func @[name]() -> [type]'
+
+map decl [name:ident]([args]) -> [type:ident] =>
+   'llvm.func @[name]([args]) -> [type]'
+
+
+map fn [name:ident]() -> [ret:ident] [body] =>
+'
+[decl [name]() -> [ret]] {
 [body]
 }
 '
+
+map fn [name:ident]([args]) -> [ret:ident] [body] =>
+'
+[decl [name]([args]) -> [ret]] {
+[body]
+}
+'
+
 
 map
 	return [name:ident] : [type:ident]
@@ -20,6 +36,12 @@ map
 	const [name:ident] : [type:ident] = [value]
 =>
 	'%[name] = llvm.mlir.constant([value] : [type]) : [type]'
+
+map
+   const [name:ident]@[nr] : str = [value]
+=>
+   'lllvm.mlir.global internal constant @[name]("[value]\\00")
+      {addr_space = [nr] : i32}'
 
 map
 	let [name:ident] : [type:ident] = [expr]
