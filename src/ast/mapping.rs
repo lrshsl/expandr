@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    errors::parse_error::ParseResult, parser::ParseMode, source_type::Borrowed,
+    errors::parse_error::ParseResult, parser::TokenizationMode, source_type::Borrowed,
     source_type::SourceType, unexpected_token,
 };
 
@@ -70,7 +70,7 @@ impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
             }
             ExprToken::Symbol('[') => {
                 parser.advance();
-                let expr = Expr::parse(parser, ParseMode::Expr);
+                let expr = Expr::parse(parser, TokenizationMode::Expr);
                 parser.skip(ExprToken::Symbol(']'), file!(), line!())?;
                 expr
             }

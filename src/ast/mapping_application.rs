@@ -10,7 +10,7 @@ use crate::{
     errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
     expand::Expanded,
     log,
-    parser::ParseMode,
+    parser::TokenizationMode,
     source_type::{Borrowed, Owned, SourceType},
     undefined_mapping, unexpected_token, Parsable as _,
 };
@@ -47,15 +47,8 @@ impl<'s> MappingApplication<Borrowed<'s>> {
                     }
                     ExprToken::Symbol('[') => {
                         parser.advance();
-                        args.push(Expr::parse(parser, ParseMode::Expr)?);
+                        args.push(Expr::parse(parser, TokenizationMode::Expr)?);
                         parser.skip(ExprToken::Symbol(']'), file!(), line!())?;
-                    }
-                    ExprToken::String(value) => {
-                        args.push(Expr::StrRef(value));
-                        parser.advance();
-                    }
-                    ExprToken::TemplateStringDelimiter(n) => {
-                        args.push(TemplateString::parse(parser, n)?.into());
                     }
                     ExprToken::Ident(value) => {
                         args.push(PathIdent::from_str(value).into());
@@ -64,6 +57,13 @@ impl<'s> MappingApplication<Borrowed<'s>> {
                     ExprToken::Symbol(s) => {
                         args.push(Expr::LiteralSymbol(s));
                         parser.advance();
+                    }
+                    ExprToken::String(value) => {
+                        args.push(Expr::StrRef(value));
+                        parser.advance();
+                    }
+                    ExprToken::TemplateStringDelimiter(n) => {
+                        args.push(TemplateString::parse(parser, n)?.into());
                     }
                     ExprToken::Integer(int) => {
                         args.push(Expr::Integer(int));
@@ -167,15 +167,16 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
                                         Expanded::Int(x) => Expr::Integer(x),
                                     },
                                     ParamType::Ident => {
-                                        let id = match next_arg {
-                                            Expr::PathIdent(id) => id,
-                                            Expr::MappingApplication(MappingApplication {
-                                                name,
-                                                args,
-                                            }) if args.is_empty() => name,
+                                        let strval = match next_arg {
+                                            Expr::PathIdent(id) => id.original_src,
+                                            Expr::MappingApplication(appl)
+                                                if appl.args.is_empty() =>
+                                            {
+                                                appl.expand(ctx)?.into_string()
+                                            }
                                             _ => unreachable!("Expected an ident"),
                                         };
-                                        Expr::String(id.original_src)
+                                        Expr::String(strval)
                                     }
                                 });
 

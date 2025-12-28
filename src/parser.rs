@@ -22,14 +22,14 @@ pub trait Parsable<'s> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ParseMode {
+pub enum TokenizationMode {
     Expr,
     Raw,
 }
 
 #[derive(Debug, Clone)]
 pub struct Parser<'s> {
-    pub mode: ParseMode,
+    pub mode: TokenizationMode,
     pub expr_lexer: ExprLexer<'s>,
     pub raw_lexer: RawLexer<'s>,
     current_expr: Option<Result<ExprToken<'s>, LogosError<'s>>>,
@@ -46,7 +46,7 @@ impl<'s> Parser<'s> {
         let expr_lexer = ExprToken::lexer_with_extras(src, ctx.clone());
         let raw_lexer = RawToken::lexer_with_extras(src, ctx);
         let mut s = Self {
-            mode: ParseMode::Expr,
+            mode: TokenizationMode::Expr,
             expr_lexer,
             raw_lexer,
             current_expr: None,
@@ -57,14 +57,14 @@ impl<'s> Parser<'s> {
         s
     }
 
-    pub fn switch_mode(&mut self, mode: ParseMode) {
+    pub fn switch_mode(&mut self, mode: TokenizationMode) {
         if self.mode != mode {
             self.mode = mode;
             match mode {
-                ParseMode::Expr => {
+                TokenizationMode::Expr => {
                     self.expr_lexer = self.raw_lexer.clone().morph();
                 }
-                ParseMode::Raw => {
+                TokenizationMode::Raw => {
                     self.raw_lexer = self.expr_lexer.clone().morph();
                 }
             }
@@ -73,14 +73,14 @@ impl<'s> Parser<'s> {
 
     pub fn advance(&mut self) {
         match self.mode {
-            ParseMode::Expr => {
+            TokenizationMode::Expr => {
                 self.current_expr = self.expr_lexer.next();
                 self.expr_lexer.extras.column += self.expr_lexer.slice().len();
                 if let Some(ref file) = self.log_file {
                     log_lexer!(file, "Expr: {:?}", self.current_expr);
                 }
             }
-            ParseMode::Raw => {
+            TokenizationMode::Raw => {
                 self.current_raw = self.raw_lexer.next();
                 self.raw_lexer.extras.cur_slice = self.raw_lexer.slice().to_string();
                 if let Some(ref file) = self.log_file {
@@ -93,7 +93,7 @@ impl<'s> Parser<'s> {
     pub fn current_expr(&self) -> LexerResult<Option<ExprToken<'s>>> {
         assert_eq!(
             self.mode,
-            ParseMode::Expr,
+            TokenizationMode::Expr,
             "Warning: Parser::current_expr called while in Raw mode"
         );
         self.current_expr
@@ -111,7 +111,7 @@ impl<'s> Parser<'s> {
     pub fn current_raw(&self) -> LexerResult<Option<RawToken<'s>>> {
         assert_eq!(
             self.mode,
-            ParseMode::Raw,
+            TokenizationMode::Raw,
             "Warning: Parser::current_raw called while in Expr mode"
         );
         self.current_raw
@@ -128,19 +128,19 @@ impl<'s> Parser<'s> {
 
     pub fn current(&self) -> LexerResult<Option<Token<'s>>> {
         match self.mode {
-            ParseMode::Expr => self.current_expr().map(|x| x.map(Into::into)),
-            ParseMode::Raw => self.current_raw().map(|x| x.map(Into::into)),
+            TokenizationMode::Expr => self.current_expr().map(|x| x.map(Into::into)),
+            TokenizationMode::Raw => self.current_raw().map(|x| x.map(Into::into)),
         }
     }
 
     pub fn ctx(&self) -> Box<FileContext> {
         let mut ctx = match self.mode {
-            ParseMode::Expr => self.expr_lexer.extras.clone(),
-            ParseMode::Raw => self.raw_lexer.extras.clone(),
+            TokenizationMode::Expr => self.expr_lexer.extras.clone(),
+            TokenizationMode::Raw => self.raw_lexer.extras.clone(),
         };
         ctx.cur_slice = match self.mode {
-            ParseMode::Expr => self.expr_lexer.slice().to_string(),
-            ParseMode::Raw => self.raw_lexer.slice().to_string(),
+            TokenizationMode::Expr => self.expr_lexer.slice().to_string(),
+            TokenizationMode::Raw => self.raw_lexer.slice().to_string(),
         };
         // Only get the line when needed
         ctx.cur_line = self
@@ -155,8 +155,8 @@ impl<'s> Parser<'s> {
 
     pub fn slice(&self) -> &'s str {
         match self.mode {
-            ParseMode::Expr => self.expr_lexer.slice(),
-            ParseMode::Raw => self.raw_lexer.slice(),
+            TokenizationMode::Expr => self.expr_lexer.slice(),
+            TokenizationMode::Raw => self.raw_lexer.slice(),
         }
     }
 
@@ -224,14 +224,14 @@ mod parser_tests {
         assert_eq!(p.current(), expr(ExprToken::TemplateStringDelimiter(1)));
 
         // switch into raw
-        p.switch_mode(ParseMode::Raw);
+        p.switch_mode(TokenizationMode::Raw);
         p.advance();
         assert_eq!(p.current(), raw(RawToken::RawPart("raw mode here")));
         p.advance();
         assert_eq!(p.current(), raw(RawToken::TemplateStringDelimiter(1)));
 
         // back to expr
-        p.switch_mode(ParseMode::Expr);
+        p.switch_mode(TokenizationMode::Expr);
         p.advance();
         assert_eq!(p.current(), expr(ExprToken::Map));
 
@@ -248,14 +248,14 @@ mod parser_tests {
         assert_eq!(p.current(), expr(ExprToken::TemplateStringDelimiter(1)));
 
         // switch to raw again
-        p.switch_mode(ParseMode::Raw);
+        p.switch_mode(TokenizationMode::Raw);
         p.advance();
         assert_eq!(p.current(), raw(RawToken::RawPart(" ")));
         p.advance();
         assert_eq!(p.current(), raw(RawToken::TemplateStringDelimiter(1)));
 
         // back to expr, should hit EOF
-        p.switch_mode(ParseMode::Expr);
+        p.switch_mode(TokenizationMode::Expr);
         p.advance();
         assert_eq!(p.current(), Ok(None));
     }
@@ -276,7 +276,7 @@ map bar [param] => '''nested [tmplstr 'str']'''
             "#;
 
         let mut p = Parser::new(src, None, None);
-        p.switch_mode(ParseMode::Expr);
+        p.switch_mode(TokenizationMode::Expr);
 
         // ---- First line: map foo => 'bar' ----
         assert_eq!(p.current_expr(), Ok(Some(ExprToken::Map)));
@@ -306,7 +306,7 @@ map bar [param] => '''nested [tmplstr 'str']'''
         assert_eq!(p.ctx().token_start(), 12);
 
         // Switch into Raw mode for 'bar'
-        p.switch_mode(ParseMode::Raw);
+        p.switch_mode(TokenizationMode::Raw);
         p.advance();
         assert_eq!(p.current_raw(), Ok(Some(RawToken::RawPart("bar"))));
         assert_eq!(p.slice(), "bar");
@@ -319,7 +319,7 @@ map bar [param] => '''nested [tmplstr 'str']'''
             Ok(Some(RawToken::TemplateStringDelimiter(1)))
         );
         assert_eq!(p.slice(), "'");
-        p.switch_mode(ParseMode::Expr);
+        p.switch_mode(TokenizationMode::Expr);
 
         // Skip comments and doc strings
 
@@ -355,7 +355,7 @@ map bar [param] => '''nested [tmplstr 'str']'''
         );
         assert_eq!(p.slice(), "'''");
 
-        p.switch_mode(ParseMode::Raw);
+        p.switch_mode(TokenizationMode::Raw);
         p.advance();
         assert_eq!(p.current_raw(), Ok(Some(RawToken::RawPart("nested "))));
         assert_eq!(p.slice(), "nested ");
@@ -365,7 +365,7 @@ map bar [param] => '''nested [tmplstr 'str']'''
         assert_eq!(p.current_raw(), Ok(Some(RawToken::ExprStart)));
         assert_eq!(p.slice(), "[");
 
-        p.switch_mode(ParseMode::Expr);
+        p.switch_mode(TokenizationMode::Expr);
         p.advance();
         assert_eq!(p.current_expr(), Ok(Some(ExprToken::Ident("tmplstr"))));
         assert_eq!(p.slice(), "tmplstr");
@@ -375,7 +375,7 @@ map bar [param] => '''nested [tmplstr 'str']'''
             p.current_expr(),
             Ok(Some(ExprToken::TemplateStringDelimiter(1)))
         );
-        p.switch_mode(ParseMode::Raw);
+        p.switch_mode(TokenizationMode::Raw);
         p.advance();
         assert_eq!(p.current_raw(), Ok(Some(RawToken::RawPart("str"))));
         assert_eq!(p.slice(), "str");
@@ -385,20 +385,20 @@ map bar [param] => '''nested [tmplstr 'str']'''
             p.current_raw(),
             Ok(Some(RawToken::TemplateStringDelimiter(1)))
         );
-        p.switch_mode(ParseMode::Expr);
+        p.switch_mode(TokenizationMode::Expr);
         p.advance();
         assert_eq!(p.current_expr(), Ok(Some(ExprToken::Symbol(']'))));
         assert_eq!(p.slice(), "]");
 
         // finish raw string
-        p.switch_mode(ParseMode::Raw);
+        p.switch_mode(TokenizationMode::Raw);
         p.advance();
         assert_eq!(
             p.current_raw(),
             Ok(Some(RawToken::TemplateStringDelimiter(3)))
         );
         assert_eq!(p.slice(), "'''");
-        p.switch_mode(ParseMode::Expr);
+        p.switch_mode(TokenizationMode::Expr);
 
         // ---- [xyz] | expr ----
         p.advance();

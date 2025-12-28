@@ -3,7 +3,7 @@ use crate::{
     errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
     expand::Expandable,
     log,
-    parser::ParseMode,
+    parser::TokenizationMode,
     source_type::{Borrowed, Owned, SourceType},
     unexpected_token,
 };
@@ -87,7 +87,7 @@ impl<S: SourceType> Expandable for Expr<S> {
 }
 
 impl<'s> Expr<Borrowed<'s>> {
-    pub fn parse(parser: &mut Parser<'s>, end_mode: ParseMode) -> ParseResult<'s, Self> {
+    pub fn parse(parser: &mut Parser<'s>, end_mode: TokenizationMode) -> ParseResult<'s, Self> {
         log!("Starting on {:?}", parser.current_expr());
         let expr = match parser.current_expr()?.expect("Expr::parse on no token") {
             ExprToken::Ident(_) | ExprToken::Symbol('.') => {
@@ -104,7 +104,7 @@ impl<'s> Expr<Borrowed<'s>> {
             }
             ExprToken::Symbol('[') => {
                 parser.advance();
-                let expr = Expr::parse(parser, ParseMode::Expr)?;
+                let expr = Expr::parse(parser, TokenizationMode::Expr)?;
                 parser.skip(ExprToken::Symbol(']'), file!(), line!())?;
                 Ok(expr)
             }

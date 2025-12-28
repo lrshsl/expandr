@@ -38,10 +38,10 @@ map
 	'%[name] = llvm.mlir.constant([value] : [type]) : [type]'
 
 map
-   const [name:ident]@[nr] : str = [value]
+   const [name:ident] : <[tp:ident]; [n]> = [value]
 =>
    'lllvm.mlir.global internal constant @[name]("[value]\\00")
-      {addr_space = [nr] : i32}'
+      : llvm.array<[tp] x [n]>'
 
 map
 	let [name:ident] : [type:ident] = [expr]

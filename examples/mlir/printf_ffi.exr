@@ -4,13 +4,27 @@ map voidptr => '!llvm.ptr'
 
 map ptr [name:ident] => 'llvm.mlir.addressof @[name]'
 
+map msg => '"Hello\\0a"'
+map msglen => '7'
+
 module ''''
    [decl printf('!llvm.ptr, ...') -> i32]
-   [const hello_str@0: str = "Helow ouoerld\\0a"]
+   [const hello_str: <i8; msglen> = msg]
 
    [fn main() -> i32 '''
-      [let a: voidptr = [ptr hello_str]]
-   ''']
+
+         [let a: voidptr = [ptr hello_str]]
+
+         %ptr = llvm.getelementptr %a[0, 0] 
+              : (!llvm.ptr) -> !llvm.ptr, !llvm.array<[msglen] x i8>
+
+         %ret = llvm.call @printf(%ptr) vararg(!llvm.func<i32 (ptr, ...)>) 
+              : (!llvm.ptr) -> i32
+
+         [const exit_code: i32 = '0']
+         [return exit_code : i32]
+      '''
+   ]
 ''''
 
 |module {

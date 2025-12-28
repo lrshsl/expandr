@@ -5,7 +5,7 @@ use crate::{
     errors::{expansion_error::ExpansionResult, parse_error::ParseError},
     expand::Expanded,
     lexer::RawToken,
-    parser::ParseMode,
+    parser::TokenizationMode,
     source_type::{Borrowed, Owned, SourceType},
 };
 
@@ -35,7 +35,7 @@ impl<'s> TemplateString<Borrowed<'s>> {
     pub fn parse(parser: &mut Parser<'s>, number_delimiters: usize) -> Result<Self, ParseError> {
         let mut pieces = Vec::new();
 
-        parser.switch_mode(ParseMode::Raw);
+        parser.switch_mode(TokenizationMode::Raw);
         parser.advance();
         loop {
             let tok = parser
@@ -62,9 +62,12 @@ impl<'s> TemplateString<Borrowed<'s>> {
                     parser.advance();
                 }
                 RawToken::ExprStart => {
-                    parser.switch_mode(ParseMode::Expr);
+                    parser.switch_mode(TokenizationMode::Expr);
                     parser.advance();
-                    pieces.push(TemplatePiece::Expr(Expr::parse(parser, ParseMode::Raw)?));
+                    pieces.push(TemplatePiece::Expr(Expr::parse(
+                        parser,
+                        TokenizationMode::Raw,
+                    )?));
                 }
                 RawToken::TemplateStringDelimiter(n) if n == number_delimiters => {
                     break;
@@ -75,7 +78,7 @@ impl<'s> TemplateString<Borrowed<'s>> {
                 RawToken::IgnoredLineContinuation => unreachable!(),
             }
         }
-        parser.switch_mode(ParseMode::Expr);
+        parser.switch_mode(TokenizationMode::Expr);
         parser.advance();
 
         Ok(Self { pieces })

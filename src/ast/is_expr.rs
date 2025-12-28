@@ -2,7 +2,7 @@ use crate::{
     ast::{Expandable, ExprToken, Parsable, Parser},
     context::EvaluationContext,
     errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
-    parser::ParseMode,
+    parser::TokenizationMode,
     source_type::{Borrowed, Owned, SourceType},
 };
 
@@ -32,7 +32,7 @@ impl<'s> Parsable<'s> for IsExpr<Borrowed<'s>> {
         //
         // `is <cond_expr> {`
         parser.skip(ExprToken::Is, file!(), line!())?;
-        let cond_expr = Expr::parse(parser, ParseMode::Expr)?;
+        let cond_expr = Expr::parse(parser, TokenizationMode::Expr)?;
         parser.skip(ExprToken::Symbol('{'), file!(), line!())?;
 
         let mut branches = Vec::new();
@@ -49,12 +49,12 @@ impl<'s> Parsable<'s> for IsExpr<Borrowed<'s>> {
                 parser.advance();
                 MatchExpr::MatchAll
             } else {
-                Expr::parse(parser, ParseMode::Expr)?.into()
+                Expr::parse(parser, TokenizationMode::Expr)?.into()
             };
             //
             // `? <translation>`
             parser.skip(ExprToken::Symbol('?'), file!(), line!())?;
-            let translation = Expr::parse(parser, ParseMode::Expr)?;
+            let translation = Expr::parse(parser, TokenizationMode::Expr)?;
 
             // Optionally a comma `,`
             if parser.current_expr()? == Some(ExprToken::Symbol(',')) {

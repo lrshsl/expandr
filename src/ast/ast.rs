@@ -4,7 +4,7 @@ use crate::{
     expand::{Expandable as _, Expanded},
     lexer::{ExprToken, Token},
     log,
-    parser::ParseMode,
+    parser::TokenizationMode,
     source_type::{Borrowed, Owned, SourceType},
     unexpected_token,
 };
@@ -47,7 +47,7 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
                 }
                 ExprToken::Symbol('[') => {
                     parser.advance();
-                    exprs.push(Expr::parse(parser, ParseMode::Expr)?);
+                    exprs.push(Expr::parse(parser, TokenizationMode::Expr)?);
                     parser.skip(ExprToken::Symbol(']'), file!(), line!())?;
                 }
                 ExprToken::String(strval) => {
@@ -59,7 +59,7 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
                     parser.advance();
                 }
                 ExprToken::Ident(_) => {
-                    exprs.push(Expr::parse(parser, ParseMode::Expr)?);
+                    exprs.push(Expr::parse(parser, TokenizationMode::Expr)?);
                 }
                 tok => unexpected_token!(
                     found   : tok,
