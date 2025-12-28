@@ -53,7 +53,7 @@ impl<'s> TemplateString<Borrowed<'s>> {
                 }
                 RawToken::Escaped(ch) => {
                     match ch {
-                        ch @ ('\n' | '\t' | '\\' | '\'' | '[') => {
+                        ch @ ('\n' | '\t' | '\\' | '\'' | '[' | ']') => {
                             pieces.push(TemplatePiece::Char(ch))
                         }
                         '\r' => {}

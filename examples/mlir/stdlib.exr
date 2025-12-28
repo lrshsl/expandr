@@ -13,15 +13,12 @@ map decl [name:ident]([args]) -> [type:ident] =>
 
 
 map fn [name:ident]() -> [ret:ident] [body] =>
-'
-[decl [name]() -> [ret]] {
+'[decl [name]() -> [ret]] {
 [body]
-}
-'
+}'
 
 map fn [name:ident]([args]) -> [ret:ident] [body] =>
-'
-[decl [name]([args]) -> [ret]] {
+'[decl [name]([args]) -> [ret]] {
 [body]
 }
 '
@@ -40,8 +37,8 @@ map
 map
    const [name:ident] : <[tp:ident]; [n]> = [value]
 =>
-   'lllvm.mlir.global internal constant @[name]("[value]\\00")
-      : llvm.array<[tp] x [n]>'
+   'llvm.mlir.global internal constant @[name]("[value]\\00")
+      : !llvm.array<[n] x [tp]>'
 
 map
 	let [name:ident] : [type:ident] = [expr]
