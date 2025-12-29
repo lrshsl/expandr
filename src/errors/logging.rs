@@ -16,19 +16,22 @@ pub fn _log_ex(
     ctx_line: u32,
     args: fmt::Arguments,
 ) {
-    // Initialize the file once, or get the existing handle
-    let file_lock = LOG_FILE.get_or_init(|| {
-        let f = std::fs::OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(output_file)
-            .expect("Failed to open log file");
-        Mutex::new(f)
-    });
+    #[cfg(debug_assertions)]
+    {
+        // Initialize the file once, or get the existing handle
+        let file_lock = LOG_FILE.get_or_init(|| {
+            let f = std::fs::OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open(output_file)
+                .expect("Failed to open log file");
+            Mutex::new(f)
+        });
 
-    // Lock the mutex to write safely
-    if let Ok(mut file) = file_lock.lock() {
-        let _ = writeln!(file, "[{ctx_file}:{ctx_line}] {}", args);
+        // Lock the mutex to write safely
+        if let Ok(mut file) = file_lock.lock() {
+            let _ = writeln!(file, "[{ctx_file}:{ctx_line}] {}", args);
+        }
     }
 }
 
