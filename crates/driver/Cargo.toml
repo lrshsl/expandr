@@ -1,0 +1,9 @@
+[package]
+name = "expandr-driver"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+expandr-syntax   = { path = "../syntax" }
+expandr-semantic = { path = "../semantic" }
+thiserror = "2.0.17"

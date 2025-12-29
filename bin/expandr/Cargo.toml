@@ -1,0 +1,11 @@
+[package]
+name = "expandr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+expandr-driver = { path = "../../crates/driver" }
+
+clap = { version = "4.5.53", features = ["derive"] }
+anstream = "0.6.20"
+color-print = "0.3.7"

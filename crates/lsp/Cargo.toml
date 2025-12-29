@@ -1,0 +1,10 @@
+[package]
+name = "expandr-lsp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+expandr-syntax = { path = "../syntax" }
+expandr-semantic = { path = "../semantic" }
+tower-lsp = "0.20.0"
+tokio = { version = "1", features = ["full"] }

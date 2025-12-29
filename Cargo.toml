@@ -1,18 +1,10 @@
-[package]
-name = "expandr"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+resolver = "2"
 
-[dependencies]
-anstream = "0.6.20"
-clap = { version = "4.5.53", features = ["derive"] }
-color-print = "0.3.7"
-logos = "0.14.2"
-pest = { version = "2.8.4", optional = true, features = ["pretty-print"] }
-pest_derive = { version = "2.8.4", optional = true }
-thiserror = "2.0.17"
-
-[features]
-default = ["grammar"]
-grammar = ["dep:pest", "dep:pest_derive"]
-
+members = [
+    "crates/syntax",
+    "crates/semantic",
+    "crates/driver",
+    "crates/lsp",
+    "bin/expandr",
+]

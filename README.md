@@ -19,6 +19,44 @@ Where each source code file produces a string when _expanded_. Possible use case
 You can find examples in the [examples'](examples/) directory.
 
 
+## Structure
+
+```
+expandr/
+├─ Cargo.toml            # workspace
+├─ crates/
+│  ├─ syntax/            # lexer + parser + AST
+│  │  ├─ Cargo.toml
+│  │  └─ src/
+│  │     ├─ lib.rs
+│  │     ├─ lexer/
+│  │     ├─ parser/
+│  │     ├─ ast/
+│  │     └─ errors.rs
+│  │
+│  ├─ semantic/          # name resolution, type checking
+│  │  ├─ Cargo.toml
+│  │  └─ src/lib.rs
+│  │
+│  ├─ backend/           # IR + codegen + build
+│  │  ├─ Cargo.toml
+│  │  └─ src/lib.rs
+│  │
+│  ├─ driver/            # orchestration
+│  │  ├─ Cargo.toml
+│  │  └─ src/lib.rs
+│  │
+│  └─ lsp/               # language server
+│     ├─ Cargo.toml
+│     └─ src/main.rs
+│
+└─ bin/
+   └─ expandr/           # CLI binary
+      ├─ Cargo.toml
+      └─ src/main.rs
+```
+
+
 ## Progress
 
 - Create lifetime independent (i.e. owned) `ProgramContext` for deps
