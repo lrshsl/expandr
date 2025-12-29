@@ -8,3 +8,4 @@ expandr-syntax = { path = "../syntax" }
 expandr-semantic = { path = "../semantic" }
 tower-lsp = "0.20.0"
 tokio = { version = "1", features = ["full"] }
+

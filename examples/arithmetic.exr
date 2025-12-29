@@ -14,5 +14,3 @@ map is-answer [answer] => [is answer {
 [is-answer [m 7 * 6]]
 '''
 
-
-| vim: ft=exr

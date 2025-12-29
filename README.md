@@ -32,19 +32,20 @@ expandr/
 │  │     ├─ lexer/
 │  │     ├─ parser/
 │  │     ├─ ast/
-│  │     └─ errors.rs
+│  │     └─ errors/
 │  │
 │  ├─ semantic/          # name resolution, type checking
 │  │  ├─ Cargo.toml
-│  │  └─ src/lib.rs
-│  │
-│  ├─ backend/           # IR + codegen + build
-│  │  ├─ Cargo.toml
-│  │  └─ src/lib.rs
+│  │  └─ src/
+│  │     ├─ ast_expansion/
+│  │     ├─ builtins/
+│  │     ├─ expand.rs
+│  │     ├─ expansion_error.rs
+│  │     └─ lib.rs
 │  │
 │  ├─ driver/            # orchestration
 │  │  ├─ Cargo.toml
-│  │  └─ src/lib.rs
+│  │  └─ src/lib.rs      # top-level build() function
 │  │
 │  └─ lsp/               # language server
 │     ├─ Cargo.toml
@@ -53,7 +54,9 @@ expandr/
 └─ bin/
    └─ expandr/           # CLI binary
       ├─ Cargo.toml
-      └─ src/main.rs
+      └─ src/
+         ├─ cli/
+         └─ main.rs
 ```
 
 
