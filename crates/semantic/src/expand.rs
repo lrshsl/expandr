@@ -1,6 +1,6 @@
-use crate::{
-    context::EvaluationContext, errors::expansion_error::ExpansionResult, source_type::Owned,
-};
+use expandr_syntax::source_type::Owned;
+
+use crate::{context::EvaluationContext, expansion_error::ExpansionResult};
 
 pub trait Expandable {
     fn expand<Ctx: EvaluationContext<Owned>>(self, ctx: &Ctx) -> ExpansionResult;

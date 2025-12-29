@@ -1,9 +1,7 @@
 use std::io::Error as IoError;
 
-use crate::{
-    derive_from,
-    errors::{expansion_error::ExpansionError, parse_error::ParseError},
-};
+use expandr_semantic::{derive_from, expansion_error::ExpansionError};
+use expandr_syntax::errors::parse_error::ParseError;
 
 pub type GeneralResult<T> = Result<T, GeneralError>;
 

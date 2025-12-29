@@ -1,8 +1,10 @@
 use std::fmt;
 
 use crate::{
-    errors::parse_error::ParseResult, lexer::ExprToken, unexpected_eof, unexpected_token, Parsable,
-    Parser,
+    errors::parse_error::ParseResult,
+    lexer::ExprToken,
+    parser::{Parsable, Parser},
+    unexpected_eof, unexpected_token,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -1,3 +1,24 @@
+mod general_error;
+use expandr_syntax::{
+    ast::Ast,
+    errors::parse_error::ParseResult,
+    parser::{Parsable as _, Parser},
+    source_type::Borrowed,
+};
+use std::{
+    collections::HashMap,
+    fs,
+    io::{self, Write as _},
+    path::PathBuf,
+};
+
+use expandr_semantic::{
+    context::{get_owned_context, merge_contexts},
+    expand::{Expandable as _, Expanded},
+};
+use expandr_syntax::{ast::PathIdentRoot, source_type::Owned, ProgramContext};
+pub use general_error::{GeneralError, GeneralResult};
+
 pub type ModuleRegistry = HashMap<PathBuf, ProgramContext<Owned>>;
 
 pub fn build<'s>(
@@ -58,18 +79,10 @@ pub fn build<'s>(
 
     merge_contexts(&mut local_ctx, external_ctx);
 
-    let (prog_output, errs) = ast.expand(&local_ctx);
-
-    output.write_all(&prog_output.into_bytes())?;
-    if !errs.is_empty() {
-        eprintln!(
-            "\nErrors occured in {}: {}",
-            srcname,
-            errs.iter()
-                .map(ToString::to_string)
-                .collect::<Vec<_>>()
-                .join("\n\n")
-        );
+    match ast.expand(&local_ctx) {
+        Ok(Expanded::Str(out_str)) => output.write_all(&out_str.into_bytes())?,
+        Ok(_) => unreachable!(),
+        Err(e) => eprintln!("\nError in {srcname}: {e}"),
     }
 
     registry.insert(path, local_ctx.clone());

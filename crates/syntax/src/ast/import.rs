@@ -1,4 +1,9 @@
-use crate::{ast::PathIdent, errors::parse_error::ParseResult, lexer::ExprToken, Parsable, Parser};
+use crate::{
+    ast::PathIdent,
+    errors::parse_error::ParseResult,
+    lexer::ExprToken,
+    parser::{Parsable, Parser},
+};
 
 #[derive(Clone, Debug)]
 pub struct Import {

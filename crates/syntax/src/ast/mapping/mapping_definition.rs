@@ -1,34 +1,14 @@
 use std::fmt;
 
+use super::{param::Param, params::Params};
 use crate::{
-    errors::parse_error::ParseResult, parser::TokenizationMode, source_type::Borrowed,
-    source_type::SourceType, unexpected_token,
+    ast::{Expr, TemplateString},
+    errors::parse_error::ParseResult,
+    lexer::ExprToken,
+    parser::{Parsable, Parser, TokenizationMode},
+    source_type::{Borrowed, SourceType},
+    unexpected_token,
 };
-
-use super::*;
-
-#[derive(Clone)]
-pub struct Params {
-    pub entries: Vec<MappingParam>,
-}
-
-impl fmt::Debug for Params {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:#?}", self.entries)
-    }
-}
-
-impl Params {
-    pub fn matches_args<S: SourceType>(&self, other: &Vec<Expr<S>>) -> bool {
-        // TODO: convert and compare as Borrowed version
-        self.entries.len() == other.len()
-            && self
-                .entries
-                .iter()
-                .zip(other.iter())
-                .all(|(param, arg)| param.matches_arg(arg))
-    }
-}
 
 #[derive(Debug, Clone)]
 pub enum Mapping<S: SourceType> {
@@ -54,7 +34,7 @@ impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
 
         // Params
         while parser.current_expr()?.expect("Unfinished map definition") != ExprToken::Becomes {
-            params.push(MappingParam::parse(parser)?);
+            params.push(Param::parse(parser)?);
         }
         parser.skip(ExprToken::Becomes, file!(), line!())?;
 

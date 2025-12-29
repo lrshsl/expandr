@@ -1,9 +1,8 @@
 use crate::{
-    ast::{Expandable, ExprToken, Parsable, Parser},
-    context::EvaluationContext,
-    errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
+    ast::{ExprToken, Parsable, Parser},
+    errors::parse_error::ParseResult,
     parser::TokenizationMode,
-    source_type::{Borrowed, Owned, SourceType},
+    source_type::{Borrowed, SourceType},
 };
 
 use super::Expr;
@@ -17,8 +16,8 @@ pub struct IsExpr<S: SourceType> {
 impl<'s> Parsable<'s> for IsExpr<Borrowed<'s>> {
     /// Example:
     /// ```
-    /// use expandr::ast::IsExpr;
-    /// use expandr::{Parsable, Parser};
+    /// use expandr_syntax::ast::IsExpr;
+    /// use expandr_syntax::parser::{Parser, Parsable};
     ///
     /// let src = r#"is 2 {
     ///     .. 0 ? 'Nope'
@@ -70,30 +69,6 @@ impl<'s> Parsable<'s> for IsExpr<Borrowed<'s>> {
             cond_expr: Box::new(cond_expr),
             branches,
         })
-    }
-}
-
-impl<S: SourceType> Expandable for IsExpr<S> {
-    fn expand<Ctx: EvaluationContext<Owned>>(self, ctx: &Ctx) -> ExpansionResult {
-        let cond = self.cond_expr.expand(ctx)?;
-        self.branches
-            .into_iter()
-            .find_map(
-                |Branch {
-                     match_expr,
-                     translation,
-                 }| {
-                    match match_expr {
-                        MatchExpr::MatchAll => Some(translation.expand(ctx)),
-                        MatchExpr::Expr(expr) => match expr.expand(ctx) {
-                            Ok(res) if cond == res => Some(translation.expand(ctx)),
-                            Err(e) => Some(Err(e)),
-                            Ok(_) => None,
-                        },
-                    }
-                },
-            )
-            .expect("No branch matched!")
     }
 }
 

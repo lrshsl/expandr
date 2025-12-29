@@ -1,6 +1,4 @@
-pub(crate) mod general_error;
-pub(crate) mod expansion_error;
-pub(crate) mod lexer_error;
-pub(crate) mod logging;
-pub(crate) mod parse_error;
-pub(super) mod pretty_print;
+pub mod lexer_error;
+pub mod logging;
+pub mod parse_error;
+pub mod pretty_print;

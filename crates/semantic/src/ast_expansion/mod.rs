@@ -1,7 +1,8 @@
-use crate::{
-    lexer::ExprToken,
-    parser::{Parsable, Parser},
+// Used by all files in this module
+pub(self) use crate::{
+    context::EvaluationContext, expand::Expandable, expansion_error::ExpansionResult,
 };
+pub(self) use expandr_syntax::source_type::{Owned, SourceType};
 
 #[macro_export]
 macro_rules! derive_from {
@@ -29,24 +30,7 @@ macro_rules! derive_from {
 }
 
 mod ast;
-pub use ast::Ast;
-
-mod import;
-pub use import::Import;
-
-mod path_ident;
-pub use path_ident::{PathIdent, PathIdentRoot};
-
 mod expr;
-pub use expr::Expr;
-
 mod is_expr;
-pub use is_expr::{Branch, IsExpr, MatchExpr};
-
+mod mapping;
 mod template_string;
-pub use template_string::TemplateString;
-
-mod template_piece;
-pub use template_piece::TemplatePiece;
-
-pub mod mapping;

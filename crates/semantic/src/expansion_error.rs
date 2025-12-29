@@ -1,11 +1,12 @@
 use std::fmt;
 
-use crate::{
-    ast::{Args, PathIdent},
+use expandr_syntax::{
+    ast::{mapping::Args, PathIdent},
     errors::pretty_print::print_raise_ctx,
-    expand::Expanded,
     source_type::Owned,
 };
+
+use crate::expand::Expanded;
 
 pub type ExpansionResult = Result<Expanded, ExpansionError>;
 
@@ -49,7 +50,7 @@ macro_rules! undefined_mapping {
         $msg:expr, $name:expr, $args:expr
     ) => {
         Err(
-            $crate::errors::expansion_error::ExpansionError::UnknownMappingReferenced {
+            $crate::expansion_error::ExpansionError::UnknownMappingReferenced {
                 msg: $msg.to_string(),
                 name: $name.clone(),
                 args: $args.clone(),

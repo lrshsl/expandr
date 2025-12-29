@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{
-    ast::{Mapping, PathIdent},
+use expandr_syntax::{
+    ast::{mapping::Mapping, PathIdent},
     source_type::{Borrowed, Owned, SourceType},
+    ProgramContext,
 };
 
 // General trait for Global and Local contexts / scopes
@@ -11,8 +12,6 @@ pub trait EvaluationContext<S: SourceType> {
     /// This hides whether the underlying mapping was Borrowed or Owned.
     fn lookup(&self, name: &PathIdent) -> Option<&Vec<Mapping<S>>>;
 }
-
-pub type ProgramContext<S> = HashMap<<S as SourceType>::Str, Vec<Mapping<S>>>;
 
 impl<S: SourceType> EvaluationContext<S> for ProgramContext<S>
 where
@@ -38,7 +37,7 @@ pub fn get_owned_context(ctx: ProgramContext<Borrowed<'_>>) -> ProgramContext<Ow
             let owned_key = key.to_owned();
             let owned_mappings = mappings
                 .into_iter()
-                .map(crate::ast::IntoOwned::into_owned)
+                .map(expandr_syntax::IntoOwned::into_owned)
                 .collect();
 
             (owned_key, owned_mappings)

@@ -1,9 +1,9 @@
-use crate::{
-    ast::Args,
-    context::EvaluationContext,
-    errors::expansion_error::ExpansionResult,
+use expandr_syntax::{
+    ast::mapping::Args,
     source_type::{Owned, SourceType},
 };
+
+use crate::{context::EvaluationContext, expansion_error::ExpansionResult};
 
 type BuiltinFn<S, Ctx> = fn(&Ctx, &Args<S>) -> ExpansionResult;
 
@@ -20,10 +20,12 @@ mod builtin_implementations {
     use std::ops;
 
     use crate::{
-        ast::{Args, Expr},
         context::EvaluationContext,
-        errors::expansion_error::ExpansionResult,
         expand::{Expandable as _, Expanded},
+        expansion_error::ExpansionResult,
+    };
+    use expandr_syntax::{
+        ast::{mapping::Args, Expr},
         source_type::{Owned, SourceType},
     };
 

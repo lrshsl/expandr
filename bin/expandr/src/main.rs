@@ -1,7 +1,7 @@
 use std::{fs, io, path::PathBuf};
 
 use clap::Parser as _;
-use expandr::{build, ModuleRegistry};
+use expandr_driver::{build, ModuleRegistry};
 
 use crate::cli::{Cli, CliSubCommand, ExpansionArgs};
 
@@ -14,33 +14,8 @@ fn main() {
 
     match cli.command {
         CliSubCommand::Expand(build_args) => expand(build_args),
-        CliSubCommand::Check { input, log_file } => {
-            #[cfg(not(feature = "grammar"))]
-            panic!("Feature 'grammar' is required for this action");
-
-            #[cfg(feature = "grammar")]
-            {
-                let result = match input {
-                    Some(filename) => {
-                        use std::fs;
-
-                        let input_str =
-                            fs::read_to_string(filename).expect("Could not read input file");
-                        expandr::check_grammar(&input_str, log_file)
-                    }
-                    None => {
-                        use std::io;
-
-                        let input_str = io::read_to_string(io::stdin().lock())
-                            .expect("Could not read from stdin");
-                        expandr::check_grammar(&input_str, log_file)
-                    }
-                };
-                if let Err(e) = result {
-                    eprintln!("{e}");
-                    std::process::exit(1);
-                }
-            }
+        CliSubCommand::Check { .. } => {
+            todo!()
         }
     }
 }

@@ -1,11 +1,11 @@
 use crate::{
-    context::{EvaluationContext, ProgramContext},
-    errors::{expansion_error::ExpansionError, parse_error::ParseResult},
-    expand::{Expandable as _, Expanded},
+    ast::mapping::Mapping,
+    errors::parse_error::ParseResult,
     lexer::{ExprToken, Token},
     log,
     parser::TokenizationMode,
-    source_type::{Borrowed, Owned, SourceType},
+    program_context::ProgramContext,
+    source_type::{Borrowed, SourceType},
     unexpected_token,
 };
 
@@ -74,30 +74,5 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
             imports,
             ctx,
         })
-    }
-}
-
-impl<S: SourceType> Ast<S> {
-    /// Imports must be handled already and passed in as argument
-    pub fn expand<Ctx: EvaluationContext<Owned>>(
-        self,
-        imported_ctx: &Ctx,
-    ) -> (String, Vec<ExpansionError>) {
-        let pieces = self.exprs.into_iter().map(|e| e.expand(imported_ctx));
-        let mut errs = Vec::new();
-        let mut out_str = String::new();
-
-        // Expand all pieces, joining into string, collecting errors
-        for piece in pieces {
-            match piece {
-                Ok(Expanded::Str(s)) => out_str.push_str(&s),
-                Ok(Expanded::Int(i)) => out_str.push(
-                    char::from_u32(i.try_into().expect("Negative number?"))
-                        .expect("This isn't a representable unicode character"),
-                ),
-                Err(e) => errs.push(e),
-            }
-        }
-        (out_str, errs)
     }
 }

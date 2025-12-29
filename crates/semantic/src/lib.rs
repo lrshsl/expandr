@@ -1,4 +1,5 @@
-
+pub mod ast_expansion;
 mod builtins;
-mod context;
-mod expand;
+pub mod context;
+pub mod expand;
+pub mod expansion_error;

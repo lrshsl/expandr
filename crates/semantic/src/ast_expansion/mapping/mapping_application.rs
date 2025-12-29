@@ -1,91 +1,16 @@
 use std::collections::HashMap;
 
-use crate::{
+use expandr_syntax::{
     ast::{
-        mapping_param::ParamType, Expandable, Expr, ExprToken, IntoOwned, Mapping, MappingParam,
-        Parser, PathIdent, TemplateString,
+        mapping::{Mapping, MappingApplication, Param, ParamType},
+        Expr,
     },
-    builtins::get_builtin,
-    context::{EvaluationContext, ScopedContext},
-    errors::{expansion_error::ExpansionResult, parse_error::ParseResult},
-    expand::Expanded,
-    log,
-    parser::TokenizationMode,
-    source_type::{Borrowed, Owned, SourceType},
-    undefined_mapping, unexpected_token, Parsable as _,
+    log, IntoOwned as _,
 };
 
-pub type Args<S> = Vec<Expr<S>>;
+use super::*;
 
-#[derive(Debug, Clone)]
-pub struct MappingApplication<S: SourceType> {
-    pub name: PathIdent,
-    pub args: Args<S>,
-}
-
-impl<'s> MappingApplication<Borrowed<'s>> {
-    pub fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
-        {
-            let name = PathIdent::parse(parser)?;
-
-            let mut args = Vec::new();
-            while let Some(token) = parser.current_expr()? {
-                match token {
-                    ExprToken::Symbol(']') => {
-                        // Caller needs to advance
-                        break;
-                    }
-                    ExprToken::Is | ExprToken::Map | ExprToken::Symbol('{') => {
-                        // Start of new expr
-                        // Do not advance any more
-                        //
-                        // '{' is needed for IsExpr:
-                        // `is x {}` => don't include `{}` as args
-                        //
-                        // 'map' and 'is' are used such that mapping definitions don't need `[]`
-                        break;
-                    }
-                    ExprToken::Symbol('[') => {
-                        parser.advance();
-                        args.push(Expr::parse(parser, TokenizationMode::Expr)?);
-                        parser.skip(ExprToken::Symbol(']'), file!(), line!())?;
-                    }
-                    ExprToken::Ident(value) => {
-                        args.push(PathIdent::from_str(value).into());
-                        parser.advance();
-                    }
-                    ExprToken::Symbol(s) => {
-                        args.push(Expr::LiteralSymbol(s));
-                        parser.advance();
-                    }
-                    ExprToken::String(value) => {
-                        args.push(Expr::StrRef(value));
-                        parser.advance();
-                    }
-                    ExprToken::TemplateStringDelimiter(n) => {
-                        args.push(TemplateString::parse(parser, n)?.into());
-                    }
-                    ExprToken::Integer(int) => {
-                        args.push(Expr::Integer(int));
-                        parser.advance();
-                    }
-                    tok => unexpected_token!(
-                        found: tok,
-                        expected: [
-                            Symbol(']' | '[' | '{'),
-                            Symbol(_),
-                            String,
-                            TemplateStringDelimiter,
-                            Ident
-                        ],
-                        @parser.ctx()
-                    )?,
-                };
-            }
-            Ok(Self { name, args })
-        }
-    }
-}
+use crate::{builtins::get_builtin, context::ScopedContext, expand::Expanded, undefined_mapping};
 
 impl<S: SourceType> Expandable for MappingApplication<S> {
     fn expand<Ctx>(self, ctx: &Ctx) -> ExpansionResult
@@ -106,7 +31,7 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
             .args
             .clone() // You can easily get rid of that one
             .into_iter()
-            .map(IntoOwned::into_owned)
+            .map(expandr_syntax::IntoOwned::into_owned)
             .collect();
 
         let Some(name_matches) = ctx.lookup(&self.name) else {
@@ -120,7 +45,7 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
         }
 
         let mut matching_mappings = name_matches.iter().filter(|m| match m {
-            Mapping::ParameterizedMapping(m) => m.params.matches_args(&owned_args),
+            Mapping::ParameterizedMapping(m) => params::matches_args(&m.params, &owned_args),
             Mapping::SimpleMapping(_) => self.args.is_empty(),
         });
         log!(
@@ -155,7 +80,7 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
                 };
                 for param in &mapping.params.entries {
                     match param {
-                        MappingParam::ParamExpr { name, typ, rep } => match rep {
+                        Param::ParamExpr { name, typ, rep } => match rep {
                             None => {
                                 let next_arg = args
                                     .next()
@@ -188,7 +113,7 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
                             }
                             Some(_) => todo!(),
                         },
-                        MappingParam::Symbol(_) | MappingParam::Ident(_) => {
+                        Param::Symbol(_) | Param::Ident(_) => {
                             args.next();
                         }
                     }

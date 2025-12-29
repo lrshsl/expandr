@@ -1,7 +1,6 @@
 use crate::{
-    ast::{Expr, ExprToken, MappingApplication, Parsable, Parser, PathIdent},
+    ast::{ExprToken, Parsable, Parser, PathIdent},
     errors::parse_error::ParseResult,
-    source_type::SourceType,
     unexpected_eof, unexpected_token,
 };
 
@@ -12,7 +11,7 @@ pub enum ParamType {
 }
 
 #[derive(Clone)]
-pub enum MappingParam {
+pub enum Param {
     Ident(PathIdent),
     ParamExpr {
         name: PathIdent,
@@ -22,7 +21,7 @@ pub enum MappingParam {
     Symbol(char),
 }
 
-impl std::fmt::Debug for MappingParam {
+impl std::fmt::Debug for Param {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::ParamExpr {
@@ -41,54 +40,7 @@ impl std::fmt::Debug for MappingParam {
     }
 }
 
-impl MappingParam {
-    pub fn matches_arg<S: SourceType>(&self, arg: &Expr<S>) -> bool {
-        match (self, arg) {
-            (
-                Self::ParamExpr {
-                    typ: ParamType::Expr,
-                    ..
-                },
-                Expr::Integer(_)
-                | Expr::String(_)
-                | Expr::StrRef(_)
-                | Expr::TemplateString(_)
-                | Expr::MappingApplication(_)
-                | Expr::PathIdent(_),
-            ) => true,
-
-            (
-                Self::ParamExpr {
-                    typ: ParamType::Ident,
-                    ..
-                },
-                Expr::PathIdent(_),
-            ) => true,
-            (
-                Self::ParamExpr {
-                    typ: ParamType::Ident,
-                    ..
-                },
-                Expr::MappingApplication(appl),
-            ) if appl.args.is_empty() => true, // In Expr::parse, idents are also parsed as mapping
-            // applications
-
-            // Raw literal matches
-            (Self::Ident(self_value), Expr::PathIdent(other_value)) => self_value == other_value,
-            (
-                Self::Ident(self_value),
-                Expr::MappingApplication(MappingApplication { name, args }),
-            ) if args.is_empty() => self_value == name,
-            (Self::Symbol(self_value), Expr::LiteralSymbol(other_value)) => {
-                self_value == other_value
-            }
-
-            _ => false,
-        }
-    }
-}
-
-impl<'s> Parsable<'s> for MappingParam {
+impl<'s> Parsable<'s> for Param {
     fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
         match parser
             .current_expr()?

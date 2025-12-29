@@ -1,12 +1,8 @@
-use std::fmt;
-
 use crate::{
-    context::EvaluationContext,
-    errors::{expansion_error::ExpansionResult, parse_error::ParseError},
-    expand::Expanded,
+    errors::parse_error::ParseError,
     lexer::RawToken,
     parser::TokenizationMode,
-    source_type::{Borrowed, Owned, SourceType},
+    source_type::{Borrowed, SourceType},
 };
 
 use super::*;
@@ -14,21 +10,6 @@ use super::*;
 #[derive(Clone, Debug)]
 pub struct TemplateString<S: SourceType> {
     pub pieces: Vec<TemplatePiece<S>>,
-}
-
-impl<S: SourceType> Expandable for TemplateString<S> {
-    fn expand<Ctx: EvaluationContext<Owned>>(self, ctx: &Ctx) -> ExpansionResult {
-        let mut result = String::new();
-        for piece in self.pieces.into_iter() {
-            match piece {
-                TemplatePiece::Char(ch) => result.push(ch),
-                TemplatePiece::StrVal(s) => result.push_str(s.as_ref()),
-                TemplatePiece::Expr(Expr::PathIdent(id)) => result.push_str(&id.to_string()),
-                TemplatePiece::Expr(expr) => result.push_str(&expr.expand(ctx)?.into_string()),
-            }
-        }
-        Ok(Expanded::Str(result))
-    }
 }
 
 impl<'s> TemplateString<Borrowed<'s>> {
@@ -82,22 +63,5 @@ impl<'s> TemplateString<Borrowed<'s>> {
         parser.advance();
 
         Ok(Self { pieces })
-    }
-}
-
-#[derive(Clone)]
-pub enum TemplatePiece<S: SourceType> {
-    StrVal(S::Str),
-    Char(char),
-    Expr(Expr<S>),
-}
-
-impl<S: SourceType> fmt::Debug for TemplatePiece<S> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Expr(expr) => write!(f, "Expr({expr:?})"),
-            TemplatePiece::StrVal(s) => write!(f, "{s:?}"),
-            TemplatePiece::Char(ch) => write!(f, "{ch:?}"),
-        }
     }
 }

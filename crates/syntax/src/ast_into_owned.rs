@@ -1,13 +1,10 @@
 use crate::{
     ast::{
-        is_expr::{Branch, MatchExpr},
-        mapping::ParameterizedMapping,
-        template_string::TemplatePiece,
+        mapping::{Mapping, MappingApplication, ParameterizedMapping},
+        Branch, Expr, IsExpr, MatchExpr, TemplatePiece, TemplateString,
     },
     source_type::{Owned, SourceType},
 };
-
-use super::*;
 
 pub trait IntoOwned {
     type Owned;

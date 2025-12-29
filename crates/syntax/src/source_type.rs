@@ -1,6 +1,6 @@
 use std::{fmt::Debug, marker::PhantomData};
 
-use crate::ast::IntoOwned;
+use crate::IntoOwned;
 
 /// How to represent the source
 pub trait SourceType: Clone + Debug + IntoOwned {
