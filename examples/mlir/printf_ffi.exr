@@ -11,7 +11,7 @@ map msglen => '7'
 
 module ''''
    [decl printf('!llvm.ptr, ...') -> i32]
-   [const hello_str: <i8; msglen> = msg]
+   [global const hello_str: <i8; msglen> = msg]
 
    [fn main() -> i32 '''
 
