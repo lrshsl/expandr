@@ -20,8 +20,8 @@ use crate::{
     source_type::Borrowed,
 };
 
-pub fn parse<'s>(source: &'s str) -> ParseResult<'s, Ast<Borrowed<'s>>> {
+pub fn parse<'s>(source: &'s str, src_name: Option<String>) -> ParseResult<'s, Ast<Borrowed<'s>>> {
     // Parse into AST
-    let mut parser = Parser::new(source, None, None);
+    let mut parser = Parser::new(source, src_name, None);
     Ast::parse(&mut parser)
 }

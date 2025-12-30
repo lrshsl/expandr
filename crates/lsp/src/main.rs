@@ -1,8 +1,8 @@
-use tower_lsp::{LspService, Server};
 use crate::server::ServerState;
+use tower_lsp::{LspService, Server};
 
-mod server;
 mod diagnostics;
+mod server;
 
 #[tokio::main]
 async fn main() {

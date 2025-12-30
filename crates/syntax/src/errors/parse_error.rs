@@ -29,8 +29,24 @@ pub enum ParseError {
 
 derive_from!(LexerError for ParseError);
 
+impl ParseError {
+    pub fn ctx(&self) -> &FileContext {
+        match self {
+            Self::LexerError(lexer_err) => lexer_err.ctx(),
+            Self::UnexpectedToken { ctx, .. } => &ctx,
+            Self::UnexpectedEof { ctx, .. } => &ctx,
+        }
+    }
+}
+
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.pretty_print(f, false)
+    }
+}
+
+impl ParseError {
+    pub fn pretty_print(&self, f: &mut impl fmt::Write, color_codes: bool) -> fmt::Result {
         match self {
             ParseError::UnexpectedToken {
                 found,
@@ -39,16 +55,16 @@ impl fmt::Display for ParseError {
                 file,
                 line,
             } => {
-                print_raise_ctx(f, file, *line)?;
-                print_err_ctx(f, ctx)?;
+                print_raise_ctx(f, file, *line, color_codes)?;
+                print_err_ctx(f, ctx, color_codes)?;
                 write!(
                     f,
                     "|  Unexpected token: \"{found}\"\n|  Expecting one of {expected:?}\n"
                 )
             }
             ParseError::UnexpectedEof { ctx, file, line } => {
-                print_raise_ctx(f, file, *line)?;
-                print_err_ctx(f, ctx)?;
+                print_raise_ctx(f, file, *line, color_codes)?;
+                print_err_ctx(f, ctx, color_codes)?;
                 writeln!(f, "|  Unexpected end of file")
             }
             ParseError::LexerError(err) => write!(f, "{err}"),

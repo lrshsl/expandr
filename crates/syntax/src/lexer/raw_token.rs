@@ -1,9 +1,9 @@
 use logos::{Lexer, Logos, Skip};
 
-use crate::lexer::FileContext;
+use crate::lexer::TrackingContext;
 
 #[derive(Logos, Debug, PartialEq, Clone, Copy)]
-#[logos(extras = FileContext)]
+#[logos(extras = TrackingContext)]
 pub enum RawToken<'s> {
     #[regex(r"\\(\n|\r\n)", |lex| {
         lex.extras.line += 1;

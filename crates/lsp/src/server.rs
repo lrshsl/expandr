@@ -45,7 +45,7 @@ impl LanguageServer for ServerState {
     }
 
     async fn shutdown(&self) -> tower_lsp::jsonrpc::Result<()> {
-        Ok(())
+        std::process::exit(0);
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {

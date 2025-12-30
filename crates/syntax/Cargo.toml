@@ -1,7 +1,8 @@
 [package]
 name = "expandr-syntax"
-version = "0.1.0"
-edition = "2021"
+description = "expandr subpackage that handles parsing"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
 logos = "0.14.2"

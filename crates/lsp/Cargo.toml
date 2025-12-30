@@ -1,7 +1,8 @@
 [package]
 name = "expandr-lsp"
-version = "0.1.0"
-edition = "2021"
+description = "LSP for the expandr language"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
 expandr-syntax = { path = "../syntax" }

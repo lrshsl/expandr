@@ -76,7 +76,10 @@ fn expand(cli_args: ExpansionArgs) {
     };
 
     if let Err(e) = result {
-        eprintln!("Expansion failed: {e}");
+        let mut msg = String::new();
+        e.pretty_print(&mut msg, true)
+            .expect("Failed to format an error");
+        eprintln!("Expansion failed:\n{msg}");
         std::process::exit(1);
     }
 }

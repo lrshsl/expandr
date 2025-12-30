@@ -21,8 +21,14 @@ pub enum ExpansionError {
     },
 }
 
-impl<'s> fmt::Display for ExpansionError {
+impl fmt::Display for ExpansionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.pretty_print(f, false)
+    }
+}
+
+impl ExpansionError {
+    pub fn pretty_print(&self, f: &mut impl fmt::Write, color_codes: bool) -> fmt::Result {
         match self {
             ExpansionError::UnknownMappingReferenced {
                 msg,
@@ -31,14 +37,25 @@ impl<'s> fmt::Display for ExpansionError {
                 file,
                 line,
             } => {
-                print_raise_ctx(f, file, *line)?;
-                color_print::cwrite!(
-                    f,
-                    "\
+                print_raise_ctx(f, file, *line, color_codes)?;
+
+                if color_codes {
+                    color_print::cwrite!(
+                        f,
+                        "\
 | Mapping could not be resolved: <italic>{name:?} {args:#?}</>
 | <red>{msg}</>
 "
-                )
+                    )
+                } else {
+                    write!(
+                        f,
+                        "\
+| Mapping could not be resolved: {name:?} {args:#?}
+| {msg}
+"
+                    )
+                }
             }
         }
     }

@@ -82,7 +82,12 @@ pub fn build<'s>(
     match ast.expand(&local_ctx) {
         Ok(Expanded::Str(out_str)) => output.write_all(&out_str.into_bytes())?,
         Ok(_) => unreachable!(),
-        Err(e) => eprintln!("\nError in {srcname}: {e}"),
+        Err(e) => {
+            let mut s = format!("\nError in {srcname}:\n");
+            e.pretty_print(&mut s, true)
+                .expect("Cannot write to stderr");
+            eprintln!("{s}")
+        }
     }
 
     registry.insert(path, local_ctx.clone());

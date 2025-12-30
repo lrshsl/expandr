@@ -1,6 +1,9 @@
 [workspace]
 resolver = "2"
 
+default-members = [
+   "bin/expandr"
+]
 members = [
     "crates/syntax",
     "crates/semantic",
@@ -8,3 +11,9 @@ members = [
     "crates/lsp",
     "bin/expandr",
 ]
+
+# Inherited by sub-packages
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+

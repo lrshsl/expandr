@@ -7,7 +7,7 @@ use crate::{
         lexer_error::{LexerError, LexerResult},
         parse_error::ParseResult,
     },
-    lexer::{ExprToken, FileContext, RawToken, Token},
+    lexer::{ExprToken, FileContext, RawToken, Token, TrackingContext},
     log_lexer,
 };
 
@@ -32,20 +32,19 @@ pub struct Parser<'s> {
     pub mode: TokenizationMode,
     pub expr_lexer: ExprLexer<'s>,
     pub raw_lexer: RawLexer<'s>,
+
+    source_name: Option<String>,
     current_expr: Option<Result<ExprToken<'s>, LogosError<'s>>>,
     current_raw: Option<Result<RawToken<'s>, LogosError<'s>>>,
     log_file: Option<PathBuf>,
 }
 
 impl<'s> Parser<'s> {
-    pub fn new(src: &'s str, filename: Option<String>, log_file: Option<PathBuf>) -> Self {
-        let ctx = FileContext {
-            filename: filename.unwrap_or_else(|| "unknown".to_string()),
-            ..Default::default()
-        };
-        let expr_lexer = ExprToken::lexer_with_extras(src, ctx.clone());
-        let raw_lexer = RawToken::lexer_with_extras(src, ctx);
+    pub fn new(src: &'s str, source_name: Option<String>, log_file: Option<PathBuf>) -> Self {
+        let expr_lexer = ExprToken::lexer_with_extras(src, TrackingContext::default());
+        let raw_lexer = RawToken::lexer_with_extras(src, TrackingContext::default());
         let mut s = Self {
+            source_name,
             mode: TokenizationMode::Expr,
             expr_lexer,
             raw_lexer,
@@ -82,7 +81,6 @@ impl<'s> Parser<'s> {
             }
             TokenizationMode::Raw => {
                 self.current_raw = self.raw_lexer.next();
-                self.raw_lexer.extras.cur_slice = self.raw_lexer.slice().to_string();
                 if let Some(ref file) = self.log_file {
                     log_lexer!(file, "Raw: {:?}", self.current_raw);
                 }
@@ -134,23 +132,35 @@ impl<'s> Parser<'s> {
     }
 
     pub fn ctx(&self) -> Box<FileContext> {
-        let mut ctx = match self.mode {
-            TokenizationMode::Expr => self.expr_lexer.extras.clone(),
-            TokenizationMode::Raw => self.raw_lexer.extras.clone(),
+        let (tracking_ctx, cur_slice, span) = match self.mode {
+            TokenizationMode::Expr => (
+                self.expr_lexer.extras,
+                self.expr_lexer.slice().to_string(),
+                self.expr_lexer.span(),
+            ),
+            TokenizationMode::Raw => (
+                self.raw_lexer.extras,
+                self.raw_lexer.slice().to_string(),
+                self.raw_lexer.span(),
+            ),
         };
-        ctx.cur_slice = match self.mode {
-            TokenizationMode::Expr => self.expr_lexer.slice().to_string(),
-            TokenizationMode::Raw => self.raw_lexer.slice().to_string(),
-        };
-        // Only get the line when needed
-        ctx.cur_line = self
-            .expr_lexer
-            .source()
+
+        // Compute line for error message
+        let src = self.expr_lexer.source();
+        let cur_line = src
             .lines()
-            .nth(ctx.line - 1)
+            .nth(tracking_ctx.line - 1)
             .unwrap_or_default()
             .to_string();
-        Box::new(ctx)
+
+        Box::new(FileContext {
+            source_name: self.source_name.clone(),
+            line: tracking_ctx.line,
+            column: tracking_ctx.column,
+            cur_line,
+            cur_slice,
+            span,
+        })
     }
 
     pub fn slice(&self) -> &'s str {

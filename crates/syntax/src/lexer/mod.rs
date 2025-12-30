@@ -14,25 +14,26 @@ pub enum Token<'s> {
 derive_from!(ExprToken for Token<'s>, lt<'s>);
 derive_from!(RawToken for Token<'s>, lt<'s>);
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct FileContext {
-    pub filename: String,
-    pub cur_line: String,
+#[derive(Debug, Clone, Copy)]
+pub struct TrackingContext {
     pub line: usize,
     pub column: usize,
-    pub cur_slice: String,
 }
 
-impl Default for FileContext {
+impl Default for TrackingContext {
     fn default() -> Self {
-        Self {
-            filename: "unknown".to_string(),
-            cur_line: String::new(),
-            line: 1,
-            column: 1,
-            cur_slice: String::new(),
-        }
+        Self { line: 1, column: 1 }
     }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct FileContext {
+    pub source_name: Option<String>,
+    pub line: usize,
+    pub column: usize,
+    pub cur_line: String,
+    pub cur_slice: String,
+    pub span: logos::Span,
 }
 
 impl FileContext {
@@ -50,13 +51,7 @@ mod tests {
     #[test]
     fn idents() {
         const INPUT: &'static str = " ident i_d3n_t _D _ _1 42-1 a-a _a-8--D";
-        let mut lexer = ExprToken::lexer_with_extras(
-            INPUT,
-            FileContext {
-                filename: "test_set_print".to_string(),
-                ..Default::default()
-            },
-        );
+        let mut lexer = ExprToken::lexer_with_extras(INPUT, TrackingContext::default());
         assert_eq!(lexer.next(), Some(Ok(ExprToken::Ident("ident"))));
         assert_eq!(lexer.next(), Some(Ok(ExprToken::Ident("i_d3n_t"))));
         assert_eq!(lexer.next(), Some(Ok(ExprToken::Ident("_D"))));

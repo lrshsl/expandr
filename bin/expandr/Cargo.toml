@@ -1,7 +1,8 @@
 [package]
 name = "expandr"
-version = "0.1.0"
-edition = "2021"
+description = "Cli interface for the expandr language"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
 expandr-driver = { path = "../../crates/driver" }

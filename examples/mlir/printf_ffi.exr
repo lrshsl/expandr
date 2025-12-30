@@ -2,6 +2,8 @@ import ./stdlib/*
 
 map voidptr => '!llvm.ptr'
 
+map x => y
+
 map ptr [name:ident] => 'llvm.mlir.addressof @[name]'
 
 map msg => 'Hello\\0a'

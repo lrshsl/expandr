@@ -1,9 +1,9 @@
 use logos::{Logos, Skip};
 
-use crate::lexer::FileContext;
+use crate::lexer::TrackingContext;
 
 #[derive(Logos, Debug, PartialEq, Clone, Copy)]
-#[logos(extras = FileContext)]
+#[logos(extras = TrackingContext)]
 pub enum ExprToken<'s> {
     // Keywords
     #[token(r"map", priority = 5)]

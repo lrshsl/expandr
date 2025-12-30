@@ -1,7 +1,8 @@
 [package]
 name = "expandr-semantic"
-version = "0.1.0"
-edition = "2021"
+description = "expandr subpackage that handles expansion of the AST"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
 expandr-syntax = { path = "../syntax" }
