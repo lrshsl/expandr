@@ -7,3 +7,5 @@ edition.workspace = true
 expandr-syntax   = { path = "../syntax" }
 expandr-semantic = { path = "../semantic" }
 thiserror = "2.0.17"
+anyhow = "1.0.100"
+anstream = "0.6.21"

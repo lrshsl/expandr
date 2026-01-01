@@ -2,34 +2,16 @@ use std::fmt;
 
 use crate::lexer::FileContext;
 
-pub fn print_raise_ctx(
-    f: &mut impl fmt::Write,
-    file: &str,
-    line: u32,
-    color_codes: bool,
-) -> fmt::Result {
-    if color_codes {
-        color_print::cwrite!(
-            f,
-            "\n\
+pub fn print_raise_ctx(f: &mut impl fmt::Write, file: &str, line: u32) -> fmt::Result {
+    color_print::cwrite!(
+        f,
+        "\n\
 | <bold,red>Error</> raised from <blue>{file}:{line}</>\n\
 |\n"
-        )
-    } else {
-        write!(
-            f,
-            "\n\
-| Error raised from {file}:{line}\n\
-|\n"
-        )
-    }
+    )
 }
 
-pub fn print_err_ctx(
-    f: &mut impl fmt::Write,
-    file_ctx: &FileContext,
-    color_codes: bool,
-) -> fmt::Result {
+pub fn print_err_ctx(f: &mut impl fmt::Write, file_ctx: &FileContext) -> fmt::Result {
     let FileContext {
         source_name,
         cur_line,
@@ -45,23 +27,12 @@ pub fn print_err_ctx(
     let padding = " ".repeat(token_start.saturating_sub(1));
     let markers = "^".repeat(token_len);
 
-    if color_codes {
-        color_print::cwrite!(
-            f,
-            "\
+    color_print::cwrite!(
+        f,
+        "\
 |  <blue>{filename}:{line}:{token_start}</> at '{cur_slice}'
 |  <italic>{cur_line}</>
 |  {padding}<red>{markers}</>
 "
-        )
-    } else {
-        write!(
-            f,
-            "\
-|  {filename}:{line}:{token_start} at '{cur_slice}'
-|  {cur_line}
-|  {padding}{markers}
-"
-        )
-    }
+    )
 }

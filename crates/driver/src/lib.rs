@@ -1,4 +1,4 @@
-mod general_error;
+use anyhow::{anyhow, Context};
 use expandr_syntax::{
     ast::Ast,
     errors::parse_error::ParseResult,
@@ -17,62 +17,77 @@ use expandr_semantic::{
     expand::{Expandable as _, Expanded},
 };
 use expandr_syntax::{ast::PathIdentRoot, source_type::Owned, ProgramContext};
-pub use general_error::{GeneralError, GeneralResult};
 
 pub type ModuleRegistry = HashMap<PathBuf, ProgramContext<Owned>>;
 
-pub fn build<'s>(
+// (Signature assumed based on context)
+pub fn build(
     path: PathBuf,
     source: String,
     output: &mut impl io::Write,
-    registry: &mut ModuleRegistry,
+    registry: &mut HashMap<PathBuf, ProgramContext<Owned>>,
     ast_logfile: Option<&PathBuf>,
     ctx_logfile: Option<&PathBuf>,
-) -> GeneralResult<ProgramContext<Owned>> {
-    // Parse / get AST
-    let srcname = path.file_stem().unwrap().to_str().unwrap();
-    let ast = get_ast(srcname.to_string(), &source, None)?;
+) -> anyhow::Result<ProgramContext<Owned>> {
+    // 1. Safe Path Parsing
+    // handle non-UTF8 paths or root paths gracefully
+    let srcname = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .ok_or_else(|| anyhow!("Invalid filename or non-UTF8 path: {:?}", path))?;
 
-    // (Maybe) write AST to file
-    if let Some(file) = ast_logfile {
-        let file = fs::File::create(file)?;
-        write!(&file, "{:#?}", ast.exprs)?;
+    let ast = get_ast(srcname.to_string(), &source, None)
+        .with_context(|| format!("Failed to parse AST for {:?}", path))?;
+
+    // 2. Logging with Context (No expect/panic)
+    if let Some(ref file_path) = ast_logfile {
+        let file = fs::File::create(file_path)
+            .with_context(|| format!("Failed to create AST logfile at {:?}", file_path))?;
+        write!(&file, "{:#?}", ast.exprs)
+            .with_context(|| format!("Failed to write to AST logfile at {:?}", file_path))?;
     }
 
-    // (Maybe) write context to file
-    if let Some(file) = ctx_logfile {
-        let file = fs::File::create(file)?;
-        write!(&file, "{:#?}", ast.ctx)?;
+    if let Some(ref file_path) = ctx_logfile {
+        let file = fs::File::create(file_path)
+            .with_context(|| format!("Failed to create Context logfile at {:?}", file_path))?;
+        write!(&file, "{:#?}", ast.ctx)
+            .with_context(|| format!("Failed to write to Context logfile at {:?}", file_path))?;
     }
 
     let mut local_ctx = get_owned_context(ast.ctx.clone());
     let mut external_ctx = ProgramContext::new();
 
     for dep in &ast.imports {
-        // Resolve the full path of the dependency
-        let err_msg = format!("Could not find dependency: {dep:?}");
         let dep_path = match dep.path.root {
-            PathIdentRoot::File => path.parent().expect(&err_msg).join(&dep.path.path_parts[0]),
+            PathIdentRoot::File => path
+                .parent()
+                .ok_or_else(|| anyhow!("Source file {:?} has no parent directory", path))?
+                .join(&dep.path.path_parts[0]),
             PathIdentRoot::Directory => {
-                let dep_file = dep.path.path_parts.first().expect(&err_msg);
+                let dep_file = dep
+                    .path
+                    .path_parts
+                    .first()
+                    .ok_or_else(|| anyhow!("Import path is empty: {:?}", dep))?;
                 path.with_file_name(dep_file).with_extension("exr")
             }
             PathIdentRoot::Crate => todo!("Crate handling"),
         };
 
-        // Canonicalize to ensure cache hits work (e.g., ./lib.rs vs lib.rs)
-        println!("dep: {dep_path:?}");
         let dep_path = fs::canonicalize(&dep_path).unwrap_or(dep_path);
 
         if let Some(cached_ctx) = registry.get(&dep_path) {
-            // If we have already built this module, just merge its context
             merge_contexts(&mut external_ctx, cached_ctx.clone());
         } else {
-            // If not, load and recurse
-            let dep_src = fs::read_to_string(&dep_path)?;
+            let dep_src = fs::read_to_string(&dep_path).with_context(|| {
+                format!("Failed to read dependency source file: {:?}", dep_path)
+            })?;
 
             let mut sink = io::sink();
-            let dep_ctx = build(dep_path.clone(), dep_src, &mut sink, registry, None, None)?;
+
+            // Add context to the recursive build call
+            let dep_ctx = build(dep_path.clone(), dep_src, &mut sink, registry, None, None)
+                .with_context(|| format!("Failed to compile dependency: {:?}", dep_path))?;
 
             merge_contexts(&mut external_ctx, dep_ctx);
         }
@@ -81,13 +96,14 @@ pub fn build<'s>(
     merge_contexts(&mut local_ctx, external_ctx);
 
     match ast.expand(&local_ctx) {
-        Ok(Expanded::Str(out_str)) => output.write_all(&out_str.into_bytes())?,
+        Ok(Expanded::Str(out_str)) => {
+            output
+                .write_all(out_str.as_bytes())
+                .context("Failed to write expanded output to buffer")?;
+        }
         Ok(_) => unreachable!(),
         Err(e) => {
-            let mut s = format!("\nError in {srcname}:\n");
-            e.pretty_print(&mut s, true)
-                .expect("Cannot write to stderr");
-            eprintln!("{s}")
+            anstream::eprintln!("\nError in {srcname}. Trying to recover. Error message:\n{e}");
         }
     }
 

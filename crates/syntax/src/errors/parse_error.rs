@@ -41,12 +41,6 @@ impl ParseError {
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.pretty_print(f, false)
-    }
-}
-
-impl ParseError {
-    pub fn pretty_print(&self, f: &mut impl fmt::Write, color_codes: bool) -> fmt::Result {
         match self {
             ParseError::UnexpectedToken {
                 found,
@@ -55,16 +49,16 @@ impl ParseError {
                 file,
                 line,
             } => {
-                print_raise_ctx(f, file, *line, color_codes)?;
-                print_err_ctx(f, ctx, color_codes)?;
+                print_raise_ctx(f, file, *line)?;
+                print_err_ctx(f, ctx)?;
                 write!(
                     f,
                     "|  Unexpected token: \"{found}\"\n|  Expecting one of {expected:?}\n"
                 )
             }
             ParseError::UnexpectedEof { ctx, file, line } => {
-                print_raise_ctx(f, file, *line, color_codes)?;
-                print_err_ctx(f, ctx, color_codes)?;
+                print_raise_ctx(f, file, *line)?;
+                print_err_ctx(f, ctx)?;
                 writeln!(f, "|  Unexpected end of file")
             }
             ParseError::LexerError(err) => write!(f, "{err}"),

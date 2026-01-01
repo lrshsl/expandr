@@ -36,7 +36,7 @@ fn integration_exr_files() {
             None,
             None,
         ) {
-            eprintln!("{e}")
+            anstream::eprintln!("{e}")
         }
 
         let expected = fs::read_to_string(&expected_path).unwrap();

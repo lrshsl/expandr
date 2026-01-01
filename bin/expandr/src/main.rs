@@ -6,6 +6,8 @@ use expandr_driver::{build, ModuleRegistry};
 use crate::cli::{Cli, CliSubCommand, ExpansionArgs};
 
 mod cli;
+#[cfg(test)]
+mod tests;
 
 fn main() {
     let cli = Cli::parse();
@@ -76,10 +78,7 @@ fn expand(cli_args: ExpansionArgs) {
     };
 
     if let Err(e) = result {
-        let mut msg = String::new();
-        e.pretty_print(&mut msg, true)
-            .expect("Failed to format an error");
-        eprintln!("Expansion failed:\n{msg}");
+        anstream::eprintln!("Expansion failed:\n{}", e);
         std::process::exit(1);
     }
 }
