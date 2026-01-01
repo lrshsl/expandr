@@ -55,6 +55,7 @@ impl<'s> TemplateString<Borrowed<'s>> {
                 }
                 RawToken::TemplateStringDelimiter(_) => {
                     pieces.push(TemplatePiece::StrVal(parser.raw_lexer.slice()));
+                    parser.advance();
                 }
                 RawToken::IgnoredLineContinuation => unreachable!(),
             }

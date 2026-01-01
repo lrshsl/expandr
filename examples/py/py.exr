@@ -1,0 +1,8 @@
+
+
+map enum [name:ident]: [variants]
+=>
+'import enum
+
+class [name](enum.Enum):[variants]'
+

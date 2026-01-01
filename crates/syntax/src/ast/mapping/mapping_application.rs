@@ -26,7 +26,7 @@ impl<'s> MappingApplication<Borrowed<'s>> {
                         // Caller needs to advance
                         break;
                     }
-                    ExprToken::Is | ExprToken::Map | ExprToken::Symbol('{') => {
+                    ExprToken::Is | ExprToken::Map => {
                         // Start of new expr
                         // Do not advance any more
                         //

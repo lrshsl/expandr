@@ -50,10 +50,11 @@ pub fn build<'s>(
 
     for dep in &ast.imports {
         // Resolve the full path of the dependency
+        let err_msg = format!("Could not find dependency: {dep:?}");
         let dep_path = match dep.path.root {
-            PathIdentRoot::File => path.parent().unwrap().join(&dep.path.path_parts[0]),
+            PathIdentRoot::File => path.parent().expect(&err_msg).join(&dep.path.path_parts[0]),
             PathIdentRoot::Directory => {
-                let dep_file = dep.path.path_parts.first().unwrap();
+                let dep_file = dep.path.path_parts.first().expect(&err_msg);
                 path.with_file_name(dep_file).with_extension("exr")
             }
             PathIdentRoot::Crate => todo!("Crate handling"),

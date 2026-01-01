@@ -19,11 +19,11 @@ impl<'s> Parsable<'s> for IsExpr<Borrowed<'s>> {
     /// use expandr_syntax::ast::IsExpr;
     /// use expandr_syntax::parser::{Parser, Parsable};
     ///
-    /// let src = r#"is 2 {
+    /// let src = r#"is 2 [
     ///     .. 0 ? 'Nope'
     ///     .. 1 ? 'Also no'
     ///     .. _ ? 'Yes'
-    /// }"#;
+    /// ]"#;
     /// let mut parser = Parser::new(src, None, None);
     /// assert!(IsExpr::parse(&mut parser).is_ok());
     /// ```
@@ -32,11 +32,11 @@ impl<'s> Parsable<'s> for IsExpr<Borrowed<'s>> {
         // `is <cond_expr> {`
         parser.skip(ExprToken::Is, file!(), line!())?;
         let cond_expr = Expr::parse(parser, TokenizationMode::Expr)?;
-        parser.skip(ExprToken::Symbol('{'), file!(), line!())?;
+        parser.skip(ExprToken::Symbol('['), file!(), line!())?;
 
         let mut branches = Vec::new();
         loop {
-            if parser.current_expr()? == Some(ExprToken::Symbol('}')) {
+            if parser.current_expr()? == Some(ExprToken::Symbol(']')) {
                 parser.advance();
                 break;
             }
