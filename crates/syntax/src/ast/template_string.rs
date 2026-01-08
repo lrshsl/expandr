@@ -3,6 +3,7 @@ use crate::{
     lexer::RawToken,
     parser::TokenizationMode,
     source_type::{Borrowed, SourceType},
+    unexpected_eof,
 };
 
 use super::*;
@@ -13,17 +14,22 @@ pub struct TemplateString<S: SourceType> {
 }
 
 impl<'s> TemplateString<Borrowed<'s>> {
-    pub fn parse(parser: &mut Parser<'s>, number_delimiters: usize) -> Result<Self, ParseError> {
+    pub fn parse(parser: &mut Parser<'s>, end_token: RawToken) -> Result<Self, ParseError> {
         let mut pieces = Vec::new();
 
         parser.switch_mode(TokenizationMode::Raw);
         parser.advance();
         loop {
-            let tok = parser
+            let Some(tok) = parser
                 .current_raw()
                 .expect("TemplateString::parse called on err token")
-                .expect("TemplateString::parse called on no token");
+            else {
+                unexpected_eof!(parser.ctx())?
+            };
             match tok {
+                t if t == end_token => {
+                    break;
+                }
                 RawToken::RawPart(s) => {
                     pieces.push(TemplatePiece::StrVal(s));
                     parser.advance();
@@ -34,13 +40,19 @@ impl<'s> TemplateString<Borrowed<'s>> {
                 }
                 RawToken::Escaped(ch) => {
                     match ch {
-                        ch @ ('\n' | '\t' | '\\' | '\'' | '[' | ']') => {
+                        ch @ ('\n' | '\t' | '\\' | '\'' | '[' | ']' | '}' | '{') => {
                             pieces.push(TemplatePiece::Char(ch))
                         }
                         '\r' => {}
                         c => panic!("Unknown escape sequence: {c:?} in {:?}", parser.ctx()),
                     }
                     parser.advance();
+                }
+                RawToken::BlockEnd => {
+                    // When not expecting a block end (`end_token != BlockEnd`)
+                    // Just insert escaped version?
+                    pieces.push(TemplatePiece::Char(']'));
+                    pieces.push(TemplatePiece::Char(']'));
                 }
                 RawToken::ExprStart => {
                     parser.switch_mode(TokenizationMode::Expr);
@@ -49,9 +61,6 @@ impl<'s> TemplateString<Borrowed<'s>> {
                         parser,
                         TokenizationMode::Raw,
                     )?));
-                }
-                RawToken::TemplateStringDelimiter(n) if n == number_delimiters => {
-                    break;
                 }
                 RawToken::TemplateStringDelimiter(_) => {
                     pieces.push(TemplatePiece::StrVal(parser.raw_lexer.slice()));

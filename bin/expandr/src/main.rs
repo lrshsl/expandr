@@ -34,51 +34,48 @@ fn expand(cli_args: ExpansionArgs) {
     };
 
     let default_ast_logfile = PathBuf::from(&source_name).with_extension("ast");
-    let ast_logfile = cli_args.ast.as_ref().or(if cli_args.all {
-        Some(&default_ast_logfile)
-    } else {
-        None
-    });
+    let ast_logfile = cli_args
+        .log_ast
+        .as_ref()
+        .or(cli_args.all.then_some(&default_ast_logfile));
 
     let default_ctx_logfile = PathBuf::from(&source_name).with_extension("ctx");
-    let ctx_logfile = cli_args.symbols.as_ref().or(if cli_args.all {
-        Some(&default_ctx_logfile)
-    } else {
-        None
-    });
+    let ctx_logfile = cli_args
+        .log_context
+        .as_ref()
+        .or(cli_args.all.then_some(&default_ctx_logfile));
 
-    let mut module_registry = ModuleRegistry::new();
+    let default_tok_logfile = PathBuf::from(&source_name).with_extension("tok");
+    let tok_logfile = cli_args
+        .log_symbols
+        .as_ref()
+        .or(cli_args.all.then_some(&default_tok_logfile));
 
-    let result = match cli_args.output.as_ref() {
-        None => {
-            let mut output = io::stdout().lock();
-
-            build(
-                source_name,
-                source,
-                &mut output,
-                &mut module_registry,
-                ast_logfile,
-                ctx_logfile,
-            )
+    let mut output: Box<dyn io::Write> = match cli_args.output.as_ref() {
+        Some(path) => {
+            let file = fs::File::create(path).expect("Could not create output file");
+            Box::new(file)
         }
-        Some(ref output_file) => {
-            let mut output_file =
-                fs::File::create(output_file).expect("Could not open output file");
-
-            build(
-                source_name,
-                source,
-                &mut output_file,
-                &mut module_registry,
-                ast_logfile,
-                ctx_logfile,
-            )
+        None => {
+            // We generally want to lock stdout for performance if writing a lot
+            Box::new(io::stdout().lock())
         }
     };
 
+    let mut module_registry = ModuleRegistry::new();
+
+    let result = build(
+        source_name,
+        source,
+        &mut output,
+        &mut module_registry,
+        ast_logfile,
+        ctx_logfile,
+        tok_logfile.cloned(),
+    );
+
     if let Err(e) = result {
-        anstream::eprintln!("Expansion failed:\n{}", e);
+        anstream::eprintln!("Expansion failed:\n{e:#}");
         std::process::exit(1);
     }
 }

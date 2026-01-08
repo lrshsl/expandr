@@ -76,7 +76,7 @@ impl<'s> Parsable<'s> for Param {
                     None => unexpected_eof!(parser.ctx())?,
                     tok => unexpected_token!(
                             found: tok,
-                            expected: [ExprToken::Symbol('*' | '?' | '{' | ']')],
+                            expected: [Symbol('*' | '?' | '{' | ']')],
                             @ parser.ctx()
                     )?,
                 };
@@ -92,7 +92,7 @@ impl<'s> Parsable<'s> for Param {
                         }
                         tok => unexpected_token!(
                             found: tok,
-                            expected: [ExprToken::Ident],
+                            expected: [Ident],
                             @ parser.ctx()
                         )?,
                     };

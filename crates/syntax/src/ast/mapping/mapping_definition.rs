@@ -4,7 +4,7 @@ use super::{param::Param, params::Params};
 use crate::{
     ast::{Expr, TemplateString},
     errors::parse_error::ParseResult,
-    lexer::ExprToken,
+    lexer::{ExprToken, RawToken},
     parser::{Parsable, Parser, TokenizationMode},
     source_type::{Borrowed, SourceType},
     unexpected_token,
@@ -44,9 +44,11 @@ impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
                 parser.advance();
                 Ok(Expr::StrRef(value))
             }
+            ExprToken::BlockStart => {
+                TemplateString::parse(parser, RawToken::BlockEnd).map(Into::into)
+            }
             ExprToken::TemplateStringDelimiter(n) => {
-                let s = TemplateString::parse(parser, n)?;
-                Ok(Expr::TemplateString(s))
+                TemplateString::parse(parser, RawToken::TemplateStringDelimiter(n)).map(Into::into)
             }
             ExprToken::Symbol('[') => {
                 parser.advance();
@@ -58,7 +60,7 @@ impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
                 unexpected_token!(
                     found: tok,
                     expected: [
-                        String(_), TemplateStringDelimiter(_),
+                        String, BlockStart, TemplateStringDelimiter,
                         Symbol('[')],
                     @ parser.ctx())
             }

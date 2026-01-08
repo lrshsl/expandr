@@ -14,7 +14,7 @@ pub enum RawToken<'s> {
 
     // RawPart: Any sequence that can be used directly. It must not contain escape codes or
     // newline characters.
-    #[regex(r#"[^\[\\'\n\r]+"#, |lex| {
+    #[regex(r#"([^\[\]\\'\n\r]+)|\]"#, |lex| {
         lex.extras.column += lex.slice().len();
         lex.slice()
     })]
@@ -31,6 +31,9 @@ pub enum RawToken<'s> {
 
     #[token("[", |lex| { lex.extras.column += 1; })]
     ExprStart,
+
+    #[token(r"]]")]
+    BlockEnd,
 
     #[regex(r#"(')+"#, |lex| {
         let n =lex.slice().len();

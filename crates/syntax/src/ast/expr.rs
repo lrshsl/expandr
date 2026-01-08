@@ -1,6 +1,7 @@
 use crate::{
     ast::mapping::MappingApplication,
     errors::parse_error::ParseResult,
+    lexer::RawToken,
     log,
     parser::TokenizationMode,
     source_type::{Borrowed, SourceType},
@@ -60,8 +61,11 @@ impl<'s> Expr<Borrowed<'s>> {
             ExprToken::Ident(_) | ExprToken::Symbol('.') => {
                 MappingApplication::parse(parser).map(Into::into)
             }
+            ExprToken::BlockStart => {
+                TemplateString::parse(parser, RawToken::BlockEnd).map(Into::into)
+            }
             ExprToken::TemplateStringDelimiter(n) => {
-                TemplateString::parse(parser, n).map(Into::into)
+                TemplateString::parse(parser, RawToken::TemplateStringDelimiter(n)).map(Into::into)
             }
             ExprToken::String(value) => Ok(Self::StrRef(value)),
             ExprToken::Is => IsExpr::parse(parser).map(Into::into),
@@ -77,7 +81,7 @@ impl<'s> Expr<Borrowed<'s>> {
             }
             tok => unexpected_token!(
                     found: tok,
-                    expected: [String, Ident, Is, Symbol('[' | '.')],
+                    expected: [String, Integer, Ident, Is, Symbol('[' | '.'), BlockStart, TemplateStringDelimiter],
                     @parser.ctx()
             ),
         };

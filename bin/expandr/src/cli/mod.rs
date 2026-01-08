@@ -37,9 +37,13 @@ pub struct ExpansionArgs {
 
     /// Emit the ast to FILE
     #[arg(long, value_name = "FILE")]
-    pub ast: Option<PathBuf>,
+    pub log_ast: Option<PathBuf>,
+
+    /// Emit the context (all mappings) to FILE
+    #[arg(long, value_name = "FILE")]
+    pub log_context: Option<PathBuf>,
 
     /// Emit the lexer logs to FILE
     #[arg(long, value_name = "FILE")]
-    pub symbols: Option<PathBuf>,
+    pub log_symbols: Option<PathBuf>,
 }

@@ -28,6 +28,7 @@ pub fn build(
     registry: &mut HashMap<PathBuf, ProgramContext<Owned>>,
     ast_logfile: Option<&PathBuf>,
     ctx_logfile: Option<&PathBuf>,
+    token_logfile: Option<PathBuf>,
 ) -> anyhow::Result<ProgramContext<Owned>> {
     // 1. Safe Path Parsing
     // handle non-UTF8 paths or root paths gracefully
@@ -36,7 +37,7 @@ pub fn build(
         .and_then(|s| s.to_str())
         .ok_or_else(|| anyhow!("Invalid filename or non-UTF8 path: {:?}", path))?;
 
-    let ast = get_ast(srcname.to_string(), &source, None)
+    let ast = get_ast(srcname.to_string(), &source, token_logfile)
         .with_context(|| format!("Failed to parse AST for {:?}", path))?;
 
     // 2. Logging with Context (No expect/panic)
@@ -76,20 +77,29 @@ pub fn build(
 
         let dep_path = fs::canonicalize(&dep_path).unwrap_or(dep_path);
 
-        if let Some(cached_ctx) = registry.get(&dep_path) {
-            merge_contexts(&mut external_ctx, cached_ctx.clone());
-        } else {
-            let dep_src = fs::read_to_string(&dep_path).with_context(|| {
-                format!("Failed to read dependency source file: {:?}", dep_path)
-            })?;
+        match registry.get(&dep_path) {
+            Some(cached_ctx) => merge_contexts(&mut external_ctx, cached_ctx.clone()),
+            None => {
+                let dep_src = fs::read_to_string(&dep_path).with_context(|| {
+                    format!("Failed to read dependency source file: {:?}", dep_path)
+                })?;
 
-            let mut sink = io::sink();
+                let mut sink = io::sink();
 
-            // Add context to the recursive build call
-            let dep_ctx = build(dep_path.clone(), dep_src, &mut sink, registry, None, None)
+                // Add context to the recursive build call
+                let dep_ctx = build(
+                    dep_path.clone(),
+                    dep_src,
+                    &mut sink,
+                    registry,
+                    None,
+                    None,
+                    None,
+                )
                 .with_context(|| format!("Failed to compile dependency: {:?}", dep_path))?;
 
-            merge_contexts(&mut external_ctx, dep_ctx);
+                merge_contexts(&mut external_ctx, dep_ctx);
+            }
         }
     }
 
@@ -103,7 +113,7 @@ pub fn build(
         }
         Ok(_) => unreachable!(),
         Err(e) => {
-            anstream::eprintln!("\nError in {srcname}. Trying to recover. Error message:\n{e}");
+            anstream::eprintln!("\nError in {srcname}. Trying to recover. Error message:\n{e:#}");
         }
     }
 

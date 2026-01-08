@@ -1,7 +1,7 @@
 use crate::{
     ast::mapping::Mapping,
     errors::parse_error::ParseResult,
-    lexer::{ExprToken, Token},
+    lexer::{ExprToken, RawToken, Token},
     log,
     parser::TokenizationMode,
     program_context::ProgramContext,
@@ -54,8 +54,15 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
                     exprs.push(Expr::StrRef(strval));
                     parser.advance()
                 }
+                ExprToken::BlockStart => {
+                    exprs.push(TemplateString::parse(parser, RawToken::BlockEnd)?.into());
+                    parser.advance();
+                }
                 ExprToken::TemplateStringDelimiter(n) => {
-                    exprs.push(TemplateString::parse(parser, n)?.into());
+                    // Read template string until next sequence of the same number template string delimiters
+                    exprs.push(
+                        TemplateString::parse(parser, RawToken::TemplateStringDelimiter(n))?.into(),
+                    );
                     parser.advance();
                 }
                 ExprToken::Ident(_) => {
@@ -63,7 +70,7 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
                 }
                 tok => unexpected_token!(
                     found   : tok,
-                    expected: [ExprToken::Import, ExprToken::Map, ExprToken::Symbol('['), ExprToken::String(_)],
+                    expected: [Import, Map, Symbol('['), String, BlockStart, TemplateStringDelimiter, Ident],
                     @ parser.ctx()
                 )?,
             }

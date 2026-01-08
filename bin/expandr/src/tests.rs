@@ -35,8 +35,9 @@ fn integration_exr_files() {
             &mut registry,
             None,
             None,
+            None,
         ) {
-            anstream::eprintln!("{e}")
+            anstream::eprintln!("{e:#}")
         }
 
         let expected = fs::read_to_string(&expected_path).unwrap();

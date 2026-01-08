@@ -37,6 +37,9 @@ pub enum ExprToken<'s> {
     }, priority = 4)]
     String(&'s str),
 
+    #[token(r"[[")]
+    BlockStart,
+
     #[regex(r#"(')+"#, |lex| {
         lex.slice().len()
     }, priority = 4)]

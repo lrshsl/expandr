@@ -1,8 +1,13 @@
 
 
 map enum [name:ident]: [variants]
-=>
-'import enum
+=> '
+import enum
 
-class [name](enum.Enum):[variants]'
+class [name](enum.Enum):[variants]
+'
+
+map print [s] => 'print([s])'
+
+map f [s] => 'f"[s]"'
 

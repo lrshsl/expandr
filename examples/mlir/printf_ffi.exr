@@ -2,8 +2,6 @@ import ./stdlib/*
 
 map voidptr => '!llvm.ptr'
 
-map x => y
-
 map ptr [name:ident] => 'llvm.mlir.addressof @[name]'
 
 map msg => 'Hello\\0a'
@@ -35,7 +33,7 @@ module ''''
 |  // 2. Define a global string constant
 |  // We include \0A (newline) and \00 (null terminator) explicitly.
 |  llvm.mlir.global internal constant @hello_str("Hello from MLIR!\0A\00") 
-|    {addr_space = 0 : i32}
+|    : llvm.array<7 * i8>
 |
 |  llvm.func @main() -> i32 {
 |    // 3. Get the address of the global string
