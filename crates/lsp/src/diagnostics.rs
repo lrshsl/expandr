@@ -1,6 +1,20 @@
+use expandr_syntax::FileContext;
 use tower_lsp::lsp_types::*;
 
 use crate::server::ServerState;
+
+fn get_range(ctx: &FileContext) -> tower_lsp::lsp_types::Range {
+    let start_line = ctx.line as u32 - 1;
+    let start_col = ctx.column as u32;
+
+    tower_lsp::lsp_types::Range::new(
+        Position::new(start_line, start_col),
+        Position::new(
+            start_line + ctx.cur_slice.chars().filter(|&ch| ch == '\n').count() as u32,
+            start_col + ctx.cur_slice.len() as u32,
+        ),
+    )
+}
 
 impl ServerState {
     pub(crate) async fn publish_diagnostics(&self, uri: Url) {
@@ -21,19 +35,8 @@ impl ServerState {
         let diagnostics = match expandr_syntax::parse(src, Some(filename)) {
             Ok(_) => Vec::new(),
             Err(parse_err) => {
-                let ctx = parse_err.ctx();
-                let range = tower_lsp::lsp_types::Range::new(
-                    Position {
-                        line: ctx.line as u32 - 1,
-                        character: ctx.column as u32,
-                    },
-                    Position {
-                        line: ctx.line as u32 - 1,
-                        character: (ctx.column + ctx.cur_slice.len()) as u32,
-                    },
-                );
                 vec![Diagnostic {
-                    range,
+                    range: get_range(parse_err.ctx()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     message: parse_err.to_string(),
                     ..Default::default()

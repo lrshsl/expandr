@@ -1,17 +1,16 @@
 pub mod ast;
+pub mod errors;
+pub mod parser;
+pub mod source_type;
 
 mod ast_into_owned;
 pub use ast_into_owned::IntoOwned;
 
-pub mod errors;
-
 mod lexer;
-pub mod parser;
+pub use lexer::FileContext;
 
 mod program_context;
 pub use program_context::ProgramContext;
-
-pub mod source_type;
 
 use crate::{
     ast::Ast,
