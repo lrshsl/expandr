@@ -67,6 +67,7 @@ expandr/
 - [ ] Finish implementing repetition operators (`*`, `+`, `?`)
 - [x] Implement scopes
     - [ ] function scope `>` global scope
+- [ ] Interning symbol names?
 
 
 
@@ -76,6 +77,7 @@ Extend core language:
     - [x] Allow integer variables (resp. mappings)
     - [x] Allow implementation of built-in functions
     - [ ] Basic built-in functions (WIP)
+- [ ] Lists
 - [ ] Namespaces / modules
     - [x] Importing
     - [ ] `pub` / `priv`

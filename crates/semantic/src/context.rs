@@ -1,26 +1,27 @@
 use std::collections::HashMap;
 
 use expandr_syntax::{
-    ast::{mapping::Mapping, PathIdent},
+    ast::{mapping::Mapping, Expr, PathIdent},
     source_type::{Borrowed, Owned, SourceType},
     ProgramContext,
 };
 
-// General trait for Global and Local contexts / scopes
+/// General trait for global and local contexts / scopes
 pub trait EvaluationContext<S: SourceType> {
-    /// Looks up a mapping by name and immediately expands it.
-    /// This hides whether the underlying mapping was Borrowed or Owned.
-    fn lookup(&self, name: &PathIdent) -> Option<&Vec<Mapping<S>>>;
+    /// Look up a mapping, identified by it's name and arguments. First checks in the current
+    /// scope, then its parent scope, then its parent scope and so on.
+    fn lookup(&self, name: &PathIdent, args: &[Expr<Owned>]) -> Option<&Mapping<S>>;
 }
 
-impl<S: SourceType> EvaluationContext<S> for ProgramContext<S>
-where
-    S::Str: std::borrow::Borrow<str> + std::hash::Hash + Eq,
-{
-    fn lookup(&self, path_ident: &PathIdent) -> Option<&Vec<Mapping<S>>> {
-        self.get(path_ident.name())
-    }
+/// Local scope (~= stack frame)
+pub struct ScopedContext<'parent, S: SourceType> {
+    /// Reference to the context below us (Global or another scope)
+    pub parent: &'parent dyn EvaluationContext<S>,
+
+    /// Local variables added by this scope
+    pub locals: HashMap<String, Vec<Mapping<S>>>,
 }
+
 /// Merges another context into this one. Mutates `a` in place.
 ///
 /// If a key (variable/function name) exists in both, the mappings
@@ -43,28 +44,4 @@ pub fn get_owned_context(ctx: ProgramContext<Borrowed<'_>>) -> ProgramContext<Ow
             (owned_key, owned_mappings)
         })
         .collect()
-}
-
-/// Local scope (~= stack frame)
-pub struct ScopedContext<'parent, S>
-where
-    S: SourceType,
-{
-    /// Reference to the context below us (Global or another Scope)
-    pub parent: &'parent dyn EvaluationContext<S>,
-
-    /// Local variables added by this scope
-    pub locals: HashMap<String, Vec<Mapping<S>>>,
-}
-
-impl<'parent, S: SourceType> EvaluationContext<S> for ScopedContext<'parent, S> {
-    fn lookup(&self, path_ident: &PathIdent) -> Option<&Vec<Mapping<S>>> {
-        // Try lookup locally first
-        if let Some(mappings) = self.locals.get(path_ident.name()) {
-            return Some(mappings);
-        }
-
-        // Not found? Delegate to the parent
-        self.parent.lookup(path_ident)
-    }
 }

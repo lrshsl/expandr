@@ -16,22 +16,20 @@ pub fn _log_ex(
     ctx_line: u32,
     args: fmt::Arguments,
 ) {
-    #[cfg(debug_assertions)]
-    {
-        // Initialize the file once, or get the existing handle
-        let file_lock = LOG_FILE.get_or_init(|| {
-            let f = std::fs::OpenOptions::new()
-                .append(true)
-                .create(true)
-                .open(output_file)
-                .expect("Failed to open log file");
-            Mutex::new(f)
-        });
+    // Initialize the file once, or get the existing handle
+    let file_lock = LOG_FILE.get_or_init(|| {
+        println!("DEBUG: Initializing log file at {:?}", output_file.as_ref());
+        let f = std::fs::OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .create(true)
+            .open(output_file)
+            .expect("Failed to open log file");
+        Mutex::new(f)
+    });
 
-        // Lock the mutex to write safely
-        if let Ok(mut file) = file_lock.lock() {
-            let _ = writeln!(file, "[{ctx_file}:{ctx_line}] {}", args);
-        }
+    if let Ok(mut file) = file_lock.lock() {
+        let _ = writeln!(file, "[{ctx_file}:{ctx_line}] {}", args);
     }
 }
 
@@ -45,6 +43,6 @@ macro_rules! log {
 #[macro_export]
 macro_rules! log_lexer {
     ( $file:expr, $($args:tt)* ) => {{
-        $crate::errors::logging::_log_ex($file, file!(), line!(), format_args!($($args)*))
+        $crate::errors::logging::_log_ex($crate::errors::logging::LOG_FILE_PATH, file!(), line!(), format_args!($($args)*))
     }};
 }

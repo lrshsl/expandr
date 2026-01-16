@@ -4,7 +4,13 @@ use crate::IntoOwned;
 
 /// How to represent the source
 pub trait SourceType: Clone + Debug + IntoOwned {
-    type Str: Clone + Debug + PartialEq + Eq + std::hash::Hash + ToString + AsRef<str>;
+    type Str: Clone
+        + Debug
+        + Eq
+        + std::hash::Hash
+        + ToString
+        + AsRef<str>
+        + std::borrow::Borrow<str>;
 }
 
 /// Owned version of SourceType

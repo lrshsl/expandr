@@ -3,3 +3,4 @@ mod builtins;
 pub mod context;
 pub mod expand;
 pub mod expansion_error;
+pub mod mapping_lookup;

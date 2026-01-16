@@ -34,36 +34,10 @@ impl<S: SourceType> Expandable for MappingApplication<S> {
             .map(expandr_syntax::IntoOwned::into_owned)
             .collect();
 
-        let Some(name_matches) = ctx.lookup(&self.name) else {
-            log!("No matching by name found");
+        let Some(mapping) = ctx.lookup(&self.name, &owned_args) else {
+            log!("No matching found");
             undefined_mapping!("Lookup failed", self.name, owned_args)?
         };
-
-        log!("Found the following name matches: {name_matches:#?}");
-        if name_matches.is_empty() {
-            undefined_mapping!("Lookup empty", self.name, owned_args)?
-        }
-
-        let mut matching_mappings = name_matches.iter().filter(|m| match m {
-            Mapping::ParameterizedMapping(m) => params::matches_args(&m.params, &owned_args),
-            Mapping::SimpleMapping(_) => self.args.is_empty(),
-        });
-        log!(
-            "Found the following matching overloads: {:#?}",
-            matching_mappings.clone().collect::<Vec<_>>()
-        );
-
-        let Some(mapping) = matching_mappings.next() else {
-            let msg = format!(
-                "No matching overload for `{}` the given arguments. Mappings with the same name: {name_matches:#?}",
-                self.name
-            );
-            undefined_mapping!(&msg, self.name, owned_args)?
-        };
-        if let Some(second_mapping) = matching_mappings.next() {
-            panic!("Found several matching mappings: {mapping:#?} and {second_mapping:#?} (and possibly more) match for `{:?}`",
-            self)
-        }
 
         log!(
             "Inserting previously resolved definition for `{}`",
