@@ -62,16 +62,44 @@ expandr/
 
 ## Progress
 
-- Create lifetime independent (i.e. owned) `ProgramContext` for deps
 
+### LineModeBlocks
+
+New block mode: Currently, `[[` `]]` blocks produce template strings. I want
+them to instead be `LineModeBlocks`, which parse their interior as if there was
+a expr on each line:
+
+```exr
+python [[
+    def to_float(x) -> float:
+        y = float(x)
+        return y
+]]
+```
+
+Should parse equivalent to
+
+```exr
+[python
+    [def to_float(x) -> float:]
+        [y = float(x)]
+        [return y]
+]
+```
+
+For multi-line exprs, explicit brackets can be used (`[]`).
+
+
+### WIP
+
+- [ ] Line mode blocks (see above)
+    - Indentation? Concatenation?
+    - `is expr` as builtin
 - [ ] Finish implementing repetition operators (`*`, `+`, `?`)
-- [x] Implement scopes
-    - [ ] function scope `>` global scope
-- [ ] Interning symbol names?
+- [ ] Use unnamed mappings and overload only on arguments (S-Expr -> pure pattern matching)
 
 
-
-Extend core language:
+### Extend core language
 
 - [ ] Add number type(s) and arithmetic functions (WIP)
     - [x] Allow integer variables (resp. mappings)
@@ -87,4 +115,5 @@ Extend core language:
         - lisp-like quasi-quoting?
     - [ ] `_` special context variable
 - Optimizations (later)
+    - [ ] Interning symbol names?
 

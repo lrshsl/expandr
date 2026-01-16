@@ -65,6 +65,7 @@ impl<'parent, S: SourceType> EvaluationContext<S> for ScopedContext<'parent, S> 
                 (None, _) => {}
             }
         }
+        // Delegate lookup to parent
         self.parent.lookup(path_ident, args)
     }
 }
