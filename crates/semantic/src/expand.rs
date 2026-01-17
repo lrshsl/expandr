@@ -32,7 +32,7 @@ impl Expanded {
     pub fn into_string(self) -> String {
         match self {
             Self::Str(s) => s,
-            Self::Int(i) => format!("{i}"),
+            Self::Int(i) => i.to_string(),
         }
     }
 }

@@ -19,15 +19,16 @@ impl<'s> Parsable<'s> for IsExpr<Borrowed<'s>> {
     /// use expandr_syntax::ast::IsExpr;
     /// use expandr_syntax::parser::{Parser, Parsable};
     ///
-    /// let src = r#"is 2 [
+    /// let src = r#"is 2 [[
     ///     .. 0 ? 'Nope'
     ///     .. 1 ? 'Also no'
     ///     .. _ ? 'Yes'
-    /// ]"#;
+    /// ]]"#;
     /// let mut parser = Parser::new(src, None, None);
     /// assert!(IsExpr::parse(&mut parser).is_ok());
     /// ```
     fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
+        todo!("Implement new syntax (as builtin if possible)");
         //
         // `is <cond_expr> {`
         parser.skip(ExprToken::Is, file!(), line!())?;

@@ -7,9 +7,9 @@ map ptr [name:ident] => 'llvm.mlir.addressof @[name]'
 map msg => 'Hello\\0a'
 map msglen => '7'
 
-module ''''
-   [decl printf('!llvm.ptr, ...') -> i32]
-   [global const hello_str: <i8; msglen> = msg]
+module [..
+   decl printf('!llvm.ptr, ...') -> i32
+   global const hello_str: <i8; msglen> = msg
 
    [fn main() -> i32 '''
 
@@ -25,7 +25,7 @@ module ''''
          [return exit_code : i32]
       '''
    ]
-''''
+..]
 
 |module {
 |  llvm.func @printf(!llvm.ptr, ...) -> i32

@@ -50,3 +50,6 @@ mod template_piece;
 pub use template_piece::TemplatePiece;
 
 pub mod mapping;
+
+mod block;
+pub use block::Block;

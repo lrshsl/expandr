@@ -1,7 +1,7 @@
 use crate::{
     ast::{
         mapping::{Mapping, MappingApplication, ParameterizedMapping},
-        Branch, Expr, IsExpr, MatchExpr, TemplatePiece, TemplateString,
+        Block, Branch, Expr, IsExpr, MatchExpr, TemplatePiece, TemplateString,
     },
     source_type::{Owned, SourceType},
 };
@@ -22,7 +22,17 @@ impl<S: SourceType> IntoOwned for Expr<S> {
             Expr::PathIdent(s) => Expr::PathIdent(s),
             Expr::LiteralSymbol(c) => Expr::LiteralSymbol(c),
             Expr::MappingApplication(ma) => Expr::MappingApplication(ma.into_owned()),
+            Expr::Block(block) => Expr::Block(block.into_owned()),
             Expr::IsExpr(is_expr) => Expr::IsExpr(is_expr.into_owned()),
+        }
+    }
+}
+
+impl<S: SourceType> IntoOwned for Block<S> {
+    type Owned = Block<Owned>;
+    fn into_owned(self) -> Block<Owned> {
+        Block {
+            exprs: self.exprs.into_iter().map(IntoOwned::into_owned).collect(),
         }
     }
 }

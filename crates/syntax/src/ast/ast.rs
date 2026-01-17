@@ -55,8 +55,8 @@ impl<'s> Parsable<'s> for Ast<Borrowed<'s>> {
                     parser.advance()
                 }
                 ExprToken::BlockStart => {
-                    exprs.push(TemplateString::parse(parser, RawToken::BlockEnd)?.into());
-                    parser.advance();
+                    exprs.push(Block::parse(parser)?.into());
+                    parser.skip(ExprToken::BlockEnd, file!(), line!())?;
                 }
                 ExprToken::TemplateStringDelimiter(n) => {
                     // Read template string until next sequence of the same number template string delimiters

@@ -18,7 +18,6 @@ pub fn _log_ex(
 ) {
     // Initialize the file once, or get the existing handle
     let file_lock = LOG_FILE.get_or_init(|| {
-        println!("DEBUG: Initializing log file at {:?}", output_file.as_ref());
         let f = std::fs::OpenOptions::new()
             .write(true)
             .truncate(true)

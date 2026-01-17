@@ -37,8 +37,11 @@ pub enum ExprToken<'s> {
     }, priority = 4)]
     String(&'s str),
 
-    #[token(r"[[")]
+    #[token(r"[..")]
     BlockStart,
+
+    #[token(r"..]")]
+    BlockEnd,
 
     #[regex(r#"(')+"#, |lex| {
         lex.slice().len()
@@ -56,7 +59,6 @@ pub enum ExprToken<'s> {
         let n = lex.slice().chars().count();
         lex.extras.line += n;
         lex.extras.column = 1;
-        Skip
     }, priority = 10)]
     Newline,
 

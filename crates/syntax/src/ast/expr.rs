@@ -1,5 +1,6 @@
 use crate::{
     ast::mapping::MappingApplication,
+    ast::Block,
     errors::parse_error::ParseResult,
     lexer::RawToken,
     log,
@@ -24,12 +25,14 @@ pub enum Expr<S: SourceType> {
 
     // Compound expressions
     MappingApplication(MappingApplication<S>),
+    Block(Block<S>),
     IsExpr(IsExpr<S>),
 }
 
 derive_from!(TemplateString for Expr where S: SourceType);
 derive_from!(MappingApplication for Expr where S: SourceType);
 derive_from!(IsExpr for Expr where S: SourceType);
+derive_from!(Block for Expr where S: SourceType);
 
 impl<S: SourceType> From<PathIdent> for Expr<S> {
     fn from(s: PathIdent) -> Self {
@@ -49,6 +52,7 @@ impl<S: SourceType> std::fmt::Debug for Expr<S> {
             Self::LiteralSymbol(s) => write!(f, "Symbol '{s}'"),
 
             Self::MappingApplication(m_app) => m_app.fmt(f),
+            Self::Block(b) => b.fmt(f),
             Self::IsExpr(s) => write!(f, "IsExpr({s:#?})"),
         }
     }
@@ -57,39 +61,44 @@ impl<S: SourceType> std::fmt::Debug for Expr<S> {
 impl<'s> Expr<Borrowed<'s>> {
     pub fn parse(parser: &mut Parser<'s>, end_mode: TokenizationMode) -> ParseResult<'s, Self> {
         log!("Starting on {:?}", parser.current_expr());
+        parser.skip_newlines();
         let expr = match parser.current_expr()?.expect("Expr::parse on no token") {
             ExprToken::Symbol(']') => todo!("Decide if and how to allow empty exprs"),
             ExprToken::Ident(_) | ExprToken::Symbol('.') => {
-                MappingApplication::parse(parser).map(Into::into)
+                MappingApplication::parse(parser)?.into()
             }
-            ExprToken::BlockStart => {
-                TemplateString::parse(parser, RawToken::BlockEnd).map(Into::into)
-            }
+            ExprToken::BlockStart => Block::parse(parser)?.into(),
             ExprToken::TemplateStringDelimiter(n) => {
-                TemplateString::parse(parser, RawToken::TemplateStringDelimiter(n)).map(Into::into)
+                TemplateString::parse(parser, RawToken::TemplateStringDelimiter(n))?.into()
             }
-            ExprToken::String(value) => Ok(Self::StrRef(value)),
-            ExprToken::Is => IsExpr::parse(parser).map(Into::into),
+            ExprToken::String(value) => Self::StrRef(value),
+            ExprToken::Is => IsExpr::parse(parser)?.into(),
             ExprToken::Integer(n) => {
                 parser.advance();
-                Ok(Expr::Integer(n))
+                Expr::Integer(n)
             }
             ExprToken::Symbol('[') => {
+                let was_ignoring_newlines = parser.ignoring_newlines;
+                parser.ignore_newlines(true);
+
                 parser.advance();
                 let expr = Expr::parse(parser, TokenizationMode::Expr)?;
+
+                parser.ignore_newlines(was_ignoring_newlines);
                 parser.skip(ExprToken::Symbol(']'), file!(), line!())?;
-                Ok(expr)
+
+                expr
             }
             tok => unexpected_token!(
                     found: tok,
-                    expected: [String, Integer, Ident, Is, Symbol('[' | '.'), BlockStart, TemplateStringDelimiter],
+                    expected: [String, Integer, Ident, Is, Symbol('[' | ']' | '.'), BlockStart, TemplateStringDelimiter],
                     @parser.ctx()
-            ),
+            )?,
         };
         if end_mode != parser.mode {
             parser.switch_mode(end_mode);
             parser.advance();
         }
-        expr
+        Ok(expr)
     }
 }

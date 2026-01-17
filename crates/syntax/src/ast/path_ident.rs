@@ -39,7 +39,7 @@ impl Parsable<'_> for PathIdent {
         };
         parser
             .skip(ExprToken::Ident(s), file!(), line!())
-            .expect(" the best, prepare for the impossible");
+            .expect(" the worst, hope for the best");
         Ok(Self::from_str(s))
     }
 }

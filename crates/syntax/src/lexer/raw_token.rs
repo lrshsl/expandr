@@ -32,8 +32,8 @@ pub enum RawToken<'s> {
     #[token("[", |lex| { lex.extras.column += 1; })]
     ExprStart,
 
-    #[token(r"]]")]
-    BlockEnd,
+    #[token(r"[[")]
+    BlockStart,
 
     #[regex(r#"(')+"#, |lex| {
         let n =lex.slice().len();

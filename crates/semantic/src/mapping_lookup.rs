@@ -80,15 +80,17 @@ fn mapping_matches_args<S: SourceType>(mapping: &Mapping<S>, args: &[Expr<Owned>
 }
 
 fn matches_args<S: SourceType>(params: &Params, args: &[Expr<S>]) -> bool {
-    params
-        .entries
-        .iter()
-        .zip(args.iter())
-        .all(|(param, arg)| matches_arg(param, arg))
+    params.entries.len() == args.len()
+        && params
+            .entries
+            .iter()
+            .zip(args.iter())
+            .all(|(param, arg)| matches_arg(param, arg))
 }
 
 fn matches_arg<S: SourceType>(param: &Param, arg: &Expr<S>) -> bool {
     match (param, arg) {
+        // Evaluated expressions
         (
             Param::ParamExpr {
                 typ: ParamType::Expr,
@@ -99,9 +101,12 @@ fn matches_arg<S: SourceType>(param: &Param, arg: &Expr<S>) -> bool {
             | Expr::StrRef(_)
             | Expr::TemplateString(_)
             | Expr::MappingApplication(_)
-            | Expr::PathIdent(_),
+            | Expr::PathIdent(_)
+            | Expr::Block(_)
+            | Expr::IsExpr(_),
         ) => true,
 
+        // Idents
         (
             Param::ParamExpr {
                 typ: ParamType::Ident,

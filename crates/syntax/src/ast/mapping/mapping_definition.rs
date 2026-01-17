@@ -2,7 +2,7 @@ use std::fmt;
 
 use super::{param::Param, params::Params};
 use crate::{
-    ast::{Expr, TemplateString},
+    ast::{Block, Expr, TemplateString},
     errors::parse_error::ParseResult,
     lexer::{ExprToken, RawToken},
     parser::{Parsable, Parser, TokenizationMode},
@@ -42,29 +42,25 @@ impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
         let translation = match parser.current_expr()?.expect("Unfinished map definition") {
             ExprToken::String(value) => {
                 parser.advance();
-                Ok(Expr::StrRef(value))
+                Expr::StrRef(value)
             }
-            ExprToken::BlockStart => {
-                TemplateString::parse(parser, RawToken::BlockEnd).map(Into::into)
-            }
+            ExprToken::BlockStart => Block::parse(parser)?.into(),
             ExprToken::TemplateStringDelimiter(n) => {
-                TemplateString::parse(parser, RawToken::TemplateStringDelimiter(n)).map(Into::into)
+                TemplateString::parse(parser, RawToken::TemplateStringDelimiter(n))?.into()
             }
             ExprToken::Symbol('[') => {
                 parser.advance();
-                let expr = Expr::parse(parser, TokenizationMode::Expr);
+                let expr = Expr::parse(parser, TokenizationMode::Expr)?;
                 parser.skip(ExprToken::Symbol(']'), file!(), line!())?;
                 expr
             }
-            tok => {
-                unexpected_token!(
+            tok => unexpected_token!(
                     found: tok,
                     expected: [
                         String, BlockStart, TemplateStringDelimiter,
                         Symbol('[')],
-                    @ parser.ctx())
-            }
-        }?;
+                    @ parser.ctx())?,
+        };
         Ok(if params.is_empty() {
             Self::SimpleMapping(translation)
         } else {

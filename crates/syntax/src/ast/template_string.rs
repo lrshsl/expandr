@@ -3,7 +3,6 @@ use crate::{
     lexer::RawToken,
     parser::TokenizationMode,
     source_type::{Borrowed, SourceType},
-    unexpected_eof,
 };
 
 use super::*;
@@ -20,13 +19,14 @@ impl<'s> TemplateString<Borrowed<'s>> {
         parser.switch_mode(TokenizationMode::Raw);
         parser.advance();
         loop {
-            let Some(tok) = parser
+            match parser
                 .current_raw()
-                .expect("TemplateString::parse called on err token")
-            else {
-                unexpected_eof!(parser.ctx())?
-            };
-            match tok {
+                .expect("TemplateString::parse called on errorous token")
+                .ok_or_else(|| ParseError::UnexpectedEof {
+                    ctx: (parser.ctx()),
+                    file: file!(),
+                    line: line!(),
+                })? {
                 t if t == end_token => {
                     break;
                 }
@@ -48,11 +48,11 @@ impl<'s> TemplateString<Borrowed<'s>> {
                     }
                     parser.advance();
                 }
-                RawToken::BlockEnd => {
-                    // When not expecting a block end (`end_token != BlockEnd`)
-                    // Just insert escaped version?
-                    pieces.push(TemplatePiece::Char(']'));
-                    pieces.push(TemplatePiece::Char(']'));
+                RawToken::BlockStart => {
+                    parser.switch_mode(TokenizationMode::Expr);
+                    parser.advance();
+                    assert_eq!(parser.current_expr(), Ok(Some(ExprToken::BlockStart)));
+                    pieces.push(TemplatePiece::Expr(Block::parse(parser)?.into()));
                 }
                 RawToken::ExprStart => {
                     parser.switch_mode(TokenizationMode::Expr);
@@ -63,7 +63,7 @@ impl<'s> TemplateString<Borrowed<'s>> {
                     )?));
                 }
                 RawToken::TemplateStringDelimiter(_) => {
-                    pieces.push(TemplatePiece::StrVal(parser.raw_lexer.slice()));
+                    pieces.push(TemplatePiece::StrVal(parser.slice()));
                     parser.advance();
                 }
                 RawToken::IgnoredLineContinuation => unreachable!(),

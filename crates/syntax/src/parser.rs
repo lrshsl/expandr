@@ -29,9 +29,11 @@ pub enum TokenizationMode {
 
 #[derive(Debug, Clone)]
 pub struct Parser<'s> {
-    pub mode: TokenizationMode,
-    pub expr_lexer: ExprLexer<'s>,
-    pub raw_lexer: RawLexer<'s>,
+    pub(crate) mode: TokenizationMode,
+    pub(crate) ignoring_newlines: bool,
+
+    expr_lexer: ExprLexer<'s>,
+    raw_lexer: RawLexer<'s>,
 
     source_name: Option<String>,
     current_expr: Option<Result<ExprToken<'s>, LogosError<'s>>>,
@@ -46,6 +48,7 @@ impl<'s> Parser<'s> {
         let mut s = Self {
             source_name,
             mode: TokenizationMode::Expr,
+            ignoring_newlines: true,
             expr_lexer,
             raw_lexer,
             current_expr: None,
@@ -70,18 +73,37 @@ impl<'s> Parser<'s> {
         }
     }
 
+    /// Start skipping newlines from now onwards
+    pub fn ignore_newlines(&mut self, new_value: bool) {
+        self.ignoring_newlines = new_value;
+    }
+
+    /// Skip newlines while the current expr token is a newline
+    pub fn skip_newlines(&mut self) {
+        while let Some(Ok(ExprToken::Newline)) = self.current_expr {
+            self.current_expr = self.expr_lexer.next();
+            self.expr_lexer.extras.column += self.expr_lexer.slice().len();
+        }
+    }
+
     pub fn advance(&mut self) {
         match self.mode {
             TokenizationMode::Expr => {
                 self.current_expr = self.expr_lexer.next();
                 self.expr_lexer.extras.column += self.expr_lexer.slice().len();
-                if let Some(ref file) = self.log_file {
+                if self.ignoring_newlines {
+                    while let Some(Ok(ExprToken::Newline)) = self.current_expr {
+                        self.current_expr = self.expr_lexer.next();
+                        self.expr_lexer.extras.column += self.expr_lexer.slice().len();
+                    }
+                }
+                if let Some(_) = self.log_file {
                     log_lexer!(file, "Expr: {:?}", self.current_expr);
                 }
             }
             TokenizationMode::Raw => {
                 self.current_raw = self.raw_lexer.next();
-                if let Some(ref file) = self.log_file {
+                if let Some(_) = self.log_file {
                     log_lexer!(file, "Raw: {:?}", self.current_raw);
                 }
             }

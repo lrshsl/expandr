@@ -4,14 +4,14 @@ use super::*;
 
 impl<S: SourceType> Expandable for Expr<S> {
     fn expand<Ctx: EvaluationContext<Owned>>(self, ctx: &Ctx) -> ExpansionResult {
-        use crate::expand::Expanded::{Int, Str};
+        use crate::expand::Expanded as E;
 
         match self {
-            Expr::String(val) => Ok(Str(val)),
-            Expr::StrRef(val) => Ok(Str(val.to_string())),
+            Expr::String(val) => Ok(E::Str(val)),
+            Expr::StrRef(val) => Ok(E::Str(val.to_string())),
 
             Expr::TemplateString(tmpl_string) => tmpl_string.expand(ctx),
-            Expr::Integer(val) => Ok(Int(val)),
+            Expr::Integer(val) => Ok(E::Int(val)),
 
             Expr::PathIdent(ident) => {
                 // This branch is called when an argument is an Ident although the mapping expects
@@ -29,6 +29,7 @@ impl<S: SourceType> Expandable for Expr<S> {
             }
 
             Expr::IsExpr(is_expr) => is_expr.expand(ctx),
+            Expr::Block(block) => block.expand(ctx),
             Expr::MappingApplication(mapping_application) => mapping_application.expand(ctx),
         }
     }
