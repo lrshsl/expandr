@@ -23,81 +23,33 @@ You can find examples in the [examples'](examples/) directory.
 
 ```
 expandr/
-├─ Cargo.toml            # workspace
 ├─ crates/
-│  ├─ syntax/            # lexer + parser + AST
-│  │  ├─ Cargo.toml
-│  │  └─ src/
-│  │     ├─ lib.rs
-│  │     ├─ lexer/
-│  │     ├─ parser/
-│  │     ├─ ast/
-│  │     └─ errors/
-│  │
-│  ├─ semantic/          # name resolution, type checking
-│  │  ├─ Cargo.toml
-│  │  └─ src/
-│  │     ├─ ast_expansion/
-│  │     ├─ builtins/
-│  │     ├─ expand.rs
-│  │     ├─ expansion_error.rs
-│  │     └─ lib.rs
-│  │
-│  ├─ driver/            # orchestration
-│  │  ├─ Cargo.toml
-│  │  └─ src/lib.rs      # top-level build() function
-│  │
-│  └─ lsp/               # language server
-│     ├─ Cargo.toml
-│     └─ src/main.rs
+│  ├─ syntax            # lexer + parser + AST
+│  ├─ semantic          # name resolution, type checking
+│  ├─ driver            # orchestration
+│  └─ lsp               # language server
 │
-└─ bin/
-   └─ expandr/           # CLI binary
-      ├─ Cargo.toml
-      └─ src/
-         ├─ cli/
-         └─ main.rs
+└─ bin/expandr          # CLI binary
 ```
 
 
 ## Progress
 
 
-### LineModeBlocks
+### Active WIP
 
-New block mode: Currently, `[[` `]]` blocks produce template strings. I want
-them to instead be `LineModeBlocks`, which parse their interior as if there was
-a expr on each line:
-
-```exr
-python [[
-    def to_float(x) -> float:
-        y = float(x)
-        return y
-]]
-```
-
-Should parse equivalent to
-
-```exr
-[python
-    [def to_float(x) -> float:]
-        [y = float(x)]
-        [return y]
-]
-```
-
-For multi-line exprs, explicit brackets can be used (`[]`).
-
-
-### WIP
-
-- [ ] Line mode blocks (see above)
-    - Indentation? Concatenation?
-    - `is expr` as builtin
+- [x] Line mode blocks
+    - Indentation?
+    - [ ] `is expr` as builtin
 - [ ] Finish implementing repetition operators (`*`, `+`, `?`)
 - [ ] Use unnamed mappings and overload only on arguments (S-Expr -> pure pattern matching)
 
+
+### Niceties
+
+- Lsp
+- Shell completion for cli
+- TS grammar
 
 ### Extend core language
 
@@ -116,4 +68,10 @@ For multi-line exprs, explicit brackets can be used (`[]`).
     - [ ] `_` special context variable
 - Optimizations (later)
     - [ ] Interning symbol names?
+
+
+### Implement libraries
+
+- LLVM backed stdlib
+- Py translator (fun)
 

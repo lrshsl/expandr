@@ -56,9 +56,7 @@ impl<'s> Parsable<'s> for Mapping<Borrowed<'s>> {
             }
             tok => unexpected_token!(
                     found: tok,
-                    expected: [
-                        String, BlockStart, TemplateStringDelimiter,
-                        Symbol('[')],
+                    expected: [String, BlockStart, TemplateStringDelimiter, Symbol('[')],
                     @ parser.ctx())?,
         };
         Ok(if params.is_empty() {

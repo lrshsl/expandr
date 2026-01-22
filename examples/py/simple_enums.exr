@@ -1,13 +1,12 @@
 import ./py
 
+enum Color: [..
+'  white = 255, 255, 255'
+'   black = 0, 0, 0'
+'   red   = 255, 0, 0'
+'   green = 255, 0, 0'
+'   blue  = 255, 0, 0'
+..]
 
-[enum Color: [[
-   white = 255, 255, 255
-   black = 0, 0, 0
-   red   = 255, 0, 0
-   green = 255, 0, 0
-   blue  = 255, 0, 0
-]] ]
-
-[print [f 'color: {Color.red.value}']]
+print [f 'color: {Color.red.value}']
 

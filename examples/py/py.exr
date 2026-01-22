@@ -1,5 +1,4 @@
 
-
 map enum [name:ident]: [variants]
 => '
 import enum
