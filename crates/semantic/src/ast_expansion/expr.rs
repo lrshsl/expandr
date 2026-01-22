@@ -28,7 +28,6 @@ impl<S: SourceType> Expandable for Expr<S> {
                 unreachable!("Should not try to expand a literal symbol: {s}")
             }
 
-            Expr::IsExpr(is_expr) => is_expr.expand(ctx),
             Expr::Block(block) => block.expand(ctx),
             Expr::MappingApplication(mapping_application) => mapping_application.expand(ctx),
         }

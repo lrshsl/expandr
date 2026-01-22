@@ -40,9 +40,6 @@ pub use path_ident::{PathIdent, PathIdentRoot};
 mod expr;
 pub use expr::Expr;
 
-mod is_expr;
-pub use is_expr::{Branch, IsExpr, MatchExpr};
-
 mod template_string;
 pub use template_string::TemplateString;
 

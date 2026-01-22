@@ -32,6 +32,5 @@ macro_rules! derive_from {
 mod ast;
 mod block;
 mod expr;
-mod is_expr;
 mod mapping_application;
 mod template_string;

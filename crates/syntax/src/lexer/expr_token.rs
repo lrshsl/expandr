@@ -12,12 +12,6 @@ pub enum ExprToken<'s> {
     #[token(r"import", priority = 5)]
     Import,
 
-    #[token(r"is", priority = 5)]
-    Is,
-
-    #[token(r"..", priority = 5)]
-    DDot,
-
     #[token(r"=>", priority = 5)]
     Becomes,
 

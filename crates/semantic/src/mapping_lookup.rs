@@ -102,8 +102,7 @@ fn matches_arg<S: SourceType>(param: &Param, arg: &Expr<S>) -> bool {
             | Expr::TemplateString(_)
             | Expr::MappingApplication(_)
             | Expr::PathIdent(_)
-            | Expr::Block(_)
-            | Expr::IsExpr(_),
+            | Expr::Block(_),
         ) => true,
 
         // Idents

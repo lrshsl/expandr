@@ -26,12 +26,10 @@ pub enum Expr<S: SourceType> {
     // Compound expressions
     MappingApplication(MappingApplication<S>),
     Block(Block<S>),
-    IsExpr(IsExpr<S>),
 }
 
 derive_from!(TemplateString for Expr where S: SourceType);
 derive_from!(MappingApplication for Expr where S: SourceType);
-derive_from!(IsExpr for Expr where S: SourceType);
 derive_from!(Block for Expr where S: SourceType);
 
 impl<S: SourceType> From<PathIdent> for Expr<S> {
@@ -53,7 +51,6 @@ impl<S: SourceType> std::fmt::Debug for Expr<S> {
 
             Self::MappingApplication(m_app) => m_app.fmt(f),
             Self::Block(b) => b.fmt(f),
-            Self::IsExpr(s) => write!(f, "IsExpr({s:#?})"),
         }
     }
 }
@@ -72,7 +69,6 @@ impl<'s> Expr<Borrowed<'s>> {
                 TemplateString::parse(parser, RawToken::TemplateStringDelimiter(n))?.into()
             }
             ExprToken::String(value) => Self::StrRef(value),
-            ExprToken::Is => IsExpr::parse(parser)?.into(),
             ExprToken::Integer(n) => {
                 parser.advance();
                 Expr::Integer(n)
@@ -91,7 +87,7 @@ impl<'s> Expr<Borrowed<'s>> {
             }
             tok => unexpected_token!(
                     found: tok,
-                    expected: [String, Integer, Ident, Is, Symbol('[' | ']' | '.'), BlockStart, TemplateStringDelimiter],
+                    expected: [String, Integer, Ident, Symbol('[' | ']' | '.'), BlockStart, TemplateStringDelimiter],
                     @parser.ctx()
             )?,
         };

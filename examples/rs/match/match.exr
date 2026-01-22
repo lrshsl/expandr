@@ -1,0 +1,6 @@
+
+map match [cond] {
+   [ [b_cond] => [b_translation] *],
+} => [
+]
+
