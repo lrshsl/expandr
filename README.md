@@ -21,7 +21,7 @@ You can find examples in the [examples'](examples/) directory.
 
 ```
 expandr/
-├─ crates/
+├─ crates
 │  ├─ syntax            # lexer + parser + AST
 │  ├─ semantic          # name resolution, type checking
 │  ├─ driver            # orchestration
@@ -38,7 +38,7 @@ expandr/
 
 - [x] Line mode blocks
     - Indentation?
-    - [ ] `is expr` as builtin
+    - [ ] `is expr` as builtin - degrade to soft-keyword
 - [ ] Finish implementing repetition operators (`*`, `+`, `?`)
 - [ ] Use unnamed mappings and overload only on arguments (S-Expr -> pure pattern matching)
 
@@ -51,10 +51,9 @@ expandr/
 
 ### Extend core language
 
-- [ ] Add number type(s) and arithmetic functions (WIP)
-    - [x] Allow integer variables (resp. mappings)
-    - [x] Allow implementation of built-in functions
-    - [ ] Basic built-in functions (WIP)
+- [ ] Basic built-in functions (WIP)
+    - [ ] is expr
+    - [ ] arithmetic
 - [ ] Lists
 - [ ] Namespaces / modules
     - [x] Importing
