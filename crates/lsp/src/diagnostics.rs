@@ -1,4 +1,5 @@
-use expandr_syntax::FileContext;
+use expandr_semantic::expand::Expandable as _;
+use expandr_syntax::{FileContext, ProgramContext};
 use tower_lsp::lsp_types::*;
 
 use crate::server::ServerState;
@@ -33,12 +34,26 @@ impl ServerState {
             .to_string();
 
         let diagnostics = match expandr_syntax::parse(src, Some(filename)) {
-            Ok(_) => Vec::new(),
+            Ok(ast) => match ast.expand(&ProgramContext::new()) {
+                Ok(_) => Vec::new(),
+                Err(expansion_err) => {
+                    let msg = expansion_err.to_string();
+                    let stripped = strip_ansi_escapes::strip_str(msg);
+                    vec![Diagnostic {
+                        range: tower_lsp::lsp_types::Range::default(),
+                        severity: Some(DiagnosticSeverity::ERROR),
+                        message: stripped,
+                        ..Default::default()
+                    }]
+                }
+            },
             Err(parse_err) => {
+                let msg = parse_err.to_string();
+                let stripped_msg = strip_ansi_escapes::strip_str(msg);
                 vec![Diagnostic {
                     range: get_range(parse_err.ctx()),
                     severity: Some(DiagnosticSeverity::ERROR),
-                    message: parse_err.to_string(),
+                    message: stripped_msg,
                     ..Default::default()
                 }]
             }

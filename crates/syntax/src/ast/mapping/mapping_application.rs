@@ -16,10 +16,14 @@ pub struct MappingApplication<S: SourceType> {
 
 impl<'s> MappingApplication<Borrowed<'s>> {
     pub fn parse(parser: &mut Parser<'s>) -> ParseResult<'s, Self> {
-        assert!(matches!(
-            parser.current(),
-            Ok(Some(Token::ExprToken(ExprToken::Ident(_))))
-        ));
+        assert!(
+            matches!(
+                parser.current(),
+                Ok(Some(Token::ExprToken(ExprToken::Ident(_))))
+            ),
+            "found {:?} instead",
+            parser.current()
+        );
 
         // (Only) Here we care about newlines (sometimes)
         let name = PathIdent::parse(parser)?;

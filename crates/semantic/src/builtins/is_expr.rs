@@ -36,7 +36,8 @@ pub fn is_expr<S: SourceType, Ctx: EvaluationContext<Owned>>(
         };
 
         // Branching pattern that matches
-        if pattern_matches_expanded(&condition, &b_cond.clone().expand(ctx)?) {
+        if matches!(b_cond, Expr::PathIdent(p) if p.original_src == "_")
+            || pattern_matches_expanded(&condition, &b_cond.clone().expand(ctx)?) {
             skip_arg!(args, Expr::LiteralSymbol('?'));
 
             let translation = args
@@ -61,7 +62,9 @@ pub fn is_expr<S: SourceType, Ctx: EvaluationContext<Owned>>(
 
 fn pattern_matches_expanded(expr: &Expanded, pattern: &Expanded) -> bool {
     match (expr, pattern) {
-        (Expanded::Str(expr_str), Expanded::Str(pattern_str)) => expr_str == pattern_str,
+        (Expanded::Str(expr_str), Expanded::Str(pattern_str)) => {
+            expr_str == pattern_str
+        }
         _ => false,
     }
 }

@@ -30,7 +30,7 @@ pub fn print_err_ctx(f: &mut impl fmt::Write, file_ctx: &FileContext) -> fmt::Re
     color_print::cwrite!(
         f,
         "\
-|  <blue>{filename}:{line}:{token_start}</> at '{cur_slice}'
+|  <blue>{filename}:{line}:{token_start}</> at {cur_slice:?}
 |  <italic>{cur_line}</>
 |  {padding}<red>{markers}</>
 "

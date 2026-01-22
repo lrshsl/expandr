@@ -2,49 +2,64 @@ map msg => 'Hi there'
 map msglen => '9'
 map arch => '64bit'
 
+map section .[name:ident] => [is name {
+   'text' ? ''
+section .text
+global _start
+'',
+
+   _ ? 'section .[name]',
+}]
+
 map reg [x] => [is arch {
-   .. '16bit' ? '[x]'
-   .. '32bit' ? 'e[x]'
-   .. '64bit' ? 'r[x]'
+   '16bit' ? '[x]',
+   '32bit' ? 'e[x]',
+   '64bit' ? 'r[x]',
 }]
 
 map var [name] [value] => '''
 [name] db [value]
 '''
 
-map fn [name] [children] => '''
+map fn [name:ident] [children] => ''
 [name]: [children]
-'''
+''
 
-map print [msg] [len] => '''
-   ; print [msg]
-   mov [reg 'ax'], 1
-   mov [reg 'di'], 1
-   mov [reg 'si'], [msg]
-   mov [reg 'dx'], [len]
-   syscall
-'''
+map fn main [children] => ''
+_start: [children]
+''
 
-'''
-section .data
-   [var 'msg' '"[msg]",0xa']
+map mov [src] -> [dst] => 'mov [dst], [src]'
+map mov [dst] <- [src] => 'mov [dst], [src]'
 
-section .text
-   global _start
+map print [msg] [len] => [..
+'   ; print [msg]'
+   mov [reg 'ax'] <- 1
+   mov [reg 'di'] <- 1
+   mov [reg 'si'] <- [msg]
+   mov [reg 'dx'] <- [len]
+'  syscall'
+..]
 
-[fn 'exit' ''
-   mov [reg 'ax'], 60
-   xor [reg 'di'], [reg 'di'] ; status=0
-   syscall
-'']
+[..
 
-[fn '_start'
-   ''[print 'msg' [msglen]]
-   call exit
-   ''
-]
-'''
+   section .data
+      [var 'msg' '"[msg]",0xa']
 
+   section .text
+
+   fn exit [..
+       mov [reg 'ax'] <- 60
+   '   xor [reg 'di'], [reg 'di'] ; status=0'
+   '   syscall'
+   ..]
+
+   fn main [..
+      print 'msg' [msglen]
+   '   call exit'
+   ..]
+
+..]
 
 
 || Produces:

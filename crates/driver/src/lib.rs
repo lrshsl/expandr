@@ -113,7 +113,9 @@ pub fn build(
         }
         Ok(_) => unreachable!(),
         Err(e) => {
-            anstream::eprintln!("\nError in {srcname}. Trying to recover. Error message:\n{e:#}");
+            anstream::eprintln!(
+                "\nError in {srcname}.exr. Trying to recover. Error message:\n{e:#}"
+            );
         }
     }
 

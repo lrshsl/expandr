@@ -31,7 +31,6 @@ impl<'s> Parsable<'s> for Block<Borrowed<'s>> {
 
         // `..]`
         parser.skip(ExprToken::BlockEnd, file!(), line!())?;
-
         parser.ignore_newlines(true);
 
         Ok(Self { exprs })

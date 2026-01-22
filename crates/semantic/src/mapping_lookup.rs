@@ -39,11 +39,7 @@ where
             return None;
         };
 
-        // More than one full match (ambiguous)?
-        if let Some(_) = arg_matches.next() {
-            panic!("Several mappings matched, don't know which one to choose:\n\n{formatted_mapping}\n\nAll Candidates: {arg_matches_copy:#?}");
-        }
-
+        // TODO: Precedence for raw idents vs exprs
         Some(first_arg_match)
     }
 }
@@ -56,14 +52,7 @@ impl<'parent, S: SourceType> EvaluationContext<S> for ScopedContext<'parent, S> 
             let mut arg_matches = name_matches
                 .iter()
                 .filter(|&m| mapping_matches_args(m, args));
-            match (arg_matches.next(), arg_matches.next()) {
-                (Some(a), None) => return Some(a),
-                (Some(a), Some(b)) => {
-                    let formatted_mapping = format!("Name: {path_ident}\nArgs: {args:#?}");
-                    panic!("Several mappings matched, don't know which one to choose:\n\n{formatted_mapping}\n\nFirst two candidates: [{a:#?},\n{b:#?}]")
-                }
-                (None, _) => {}
-            }
+            return arg_matches.next();
         }
         // Delegate lookup to parent
         self.parent.lookup(path_ident, args)
